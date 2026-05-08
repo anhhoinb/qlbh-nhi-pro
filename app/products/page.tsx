@@ -1,0 +1,238 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+} from "firebase/firestore";
+
+import { db } from "@/lib/firebase";
+
+export default function ProductsPage() {
+
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+
+  const [search, setSearch] = useState("");
+
+  const [loading, setLoading] = useState(true);
+
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+
+    const unsubscribe = onSnapshot(
+      collection(db, "products"),
+      (snapshot) => {
+
+        const data: any[] = [];
+
+        snapshot.forEach((docItem) => {
+
+          data.push({
+            id: docItem.id,
+            ...docItem.data(),
+          });
+
+        });
+
+        setProducts(data);
+
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+
+  }, []);
+
+  const addProduct = async () => {
+
+    if (!name || !price) {
+      alert("Nhập đầy đủ thông tin");
+      return;
+    }
+
+    const normalizedName =
+      name.trim().toLowerCase();
+
+    const checkDuplicate = products.find(
+      (item) =>
+        item.name
+          ?.trim()
+          ?.toLowerCase() === normalizedName
+    );
+
+    if (checkDuplicate) {
+      alert("Sản phẩm đã tồn tại");
+      return;
+    }
+
+    await addDoc(collection(db, "products"), {
+      name: name.trim(),
+      price: Number(price),
+      createdAt: new Date(),
+    });
+
+    setName("");
+    setPrice("");
+  };
+
+  const deleteProduct = async (id: string) => {
+
+    const confirmDelete = confirm(
+      "Bạn có chắc muốn xóa?"
+    );
+
+    if (!confirmDelete) return;
+
+    await deleteDoc(doc(db, "products", id));
+  };
+
+  const filteredProducts = products.filter(
+    (item) =>
+      item.name
+        ?.toLowerCase()
+        .includes(search.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="p-10 text-2xl">
+        Đang tải sản phẩm...
+      </div>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-gray-100 p-6">
+
+      <div className="max-w-6xl mx-auto">
+
+        <h1 className="text-4xl font-bold text-blue-700 mb-8">
+          Quản lý sản phẩm
+        </h1>
+
+        <div className="bg-white p-6 rounded-3xl shadow mb-8">
+
+          <div className="grid md:grid-cols-2 gap-4">
+
+            <input
+              type="text"
+              placeholder="Tên sản phẩm"
+              className="border p-4 rounded-2xl text-black"
+              value={name}
+              onChange={(e) =>
+                setName(e.target.value)
+              }
+            />
+
+            <input
+              type="number"
+              placeholder="Giá bán"
+              className="border p-4 rounded-2xl text-black"
+              value={price}
+              onChange={(e) =>
+                setPrice(e.target.value)
+              }
+            />
+
+          </div>
+
+          <button
+            onClick={addProduct}
+            className="mt-5 bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-2xl"
+          >
+            + Thêm sản phẩm
+          </button>
+
+        </div>
+
+        <div className="bg-white p-6 rounded-3xl shadow mb-6">
+
+          <input
+            type="text"
+            placeholder="Tìm kiếm sản phẩm..."
+            className="w-full border p-4 rounded-2xl text-black"
+            value={search}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
+          />
+
+        </div>
+
+        <div className="bg-white rounded-3xl shadow overflow-hidden">
+
+          <table className="w-full">
+
+            <thead className="bg-blue-700 text-white">
+
+              <tr>
+
+                <th className="p-4 text-left">
+                  Tên sản phẩm
+                </th>
+
+                <th className="p-4 text-left">
+                  Giá bán
+                </th>
+
+                <th className="p-4 text-left">
+                  Hành động
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {filteredProducts.map((item) => (
+
+                <tr
+                  key={item.id}
+                  className="border-b hover:bg-gray-50"
+                >
+
+                  <td className="p-4 text-black">
+                    {item.name}
+                  </td>
+
+                  <td className="p-4 text-black">
+                    {Number(item.price)
+                      .toLocaleString()}đ
+                  </td>
+
+                  <td className="p-4">
+
+                    <button
+                      onClick={() =>
+                        deleteProduct(item.id)
+                      }
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl"
+                    >
+                      Xóa
+                    </button>
+
+                  </td>
+
+                </tr>
+
+              ))}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+    </main>
+  );
+}
