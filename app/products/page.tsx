@@ -8,20 +8,16 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  updateDoc,
 } from "firebase/firestore";
 
 import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
-
-import {
   db,
-  storage,
 } from "@/lib/firebase";
 
 export default function ProductsPage() {
+
+  // ADD PRODUCT
 
   const [name, setName] =
     useState("");
@@ -38,17 +34,38 @@ export default function ProductsPage() {
   const [stock, setStock] =
     useState("");
 
+  // SEARCH
+
   const [search, setSearch] =
     useState("");
+
+  // DATA
 
   const [loading, setLoading] =
     useState(true);
 
-  const [imageFile, setImageFile] =
-    useState<any>(null);
-
   const [products, setProducts] =
     useState<any[]>([]);
+
+  // EDIT MODAL
+
+  const [editingProduct, setEditingProduct] =
+    useState<any>(null);
+
+  const [editName, setEditName] =
+    useState("");
+
+  const [editPrice, setEditPrice] =
+    useState("");
+
+  const [editImportPrice, setEditImportPrice] =
+    useState("");
+
+  const [editCapitalPrice, setEditCapitalPrice] =
+    useState("");
+
+  const [editStock, setEditStock] =
+    useState("");
 
   // LOAD PRODUCTS
 
@@ -114,8 +131,6 @@ export default function ProductsPage() {
         return;
       }
 
-      // CHECK TRÙNG
-
       const normalizedName =
         name
           .trim()
@@ -139,43 +154,6 @@ export default function ProductsPage() {
         return;
       }
 
-      // UPLOAD IMAGE
-
-      let imageUrl = "";
-
-      if (imageFile) {
-
-        try {
-
-          const imageRef = ref(
-            storage,
-            `products/${Date.now()}-${imageFile.name}`
-          );
-
-          await uploadBytes(
-            imageRef,
-            imageFile
-          );
-
-          imageUrl =
-            await getDownloadURL(
-              imageRef
-            );
-
-        } catch (error) {
-
-          console.log(error);
-
-          alert(
-            "Upload ảnh lỗi"
-          );
-
-        }
-
-      }
-
-      // SAVE FIRESTORE
-
       await addDoc(
         collection(
           db,
@@ -198,9 +176,6 @@ export default function ProductsPage() {
           stock:
             Number(stock || 0),
 
-          image:
-            imageUrl,
-
           createdAt:
             new Date(),
 
@@ -211,8 +186,6 @@ export default function ProductsPage() {
         "Thêm sản phẩm thành công"
       );
 
-      // RESET
-
       setName("");
 
       setPrice("");
@@ -222,10 +195,6 @@ export default function ProductsPage() {
       setCapitalPrice("");
 
       setStock("");
-
-      setImageFile(null);
-
-      // RELOAD
 
       loadProducts();
 
@@ -241,7 +210,100 @@ export default function ProductsPage() {
 
   };
 
-  // DELETE
+  // OPEN EDIT MODAL
+
+  const openEditModal =
+    (item: any) => {
+
+      setEditingProduct(item);
+
+      setEditName(
+        item.name || ""
+      );
+
+      setEditPrice(
+        String(item.price || 0)
+      );
+
+      setEditImportPrice(
+        String(
+          item.import_price || 0
+        )
+      );
+
+      setEditCapitalPrice(
+        String(
+          item.capital_price || 0
+        )
+      );
+
+      setEditStock(
+        String(item.stock || 0)
+      );
+
+    };
+
+  // SAVE EDIT
+
+  const saveEditProduct =
+    async () => {
+
+      if (!editingProduct)
+        return;
+
+      try {
+
+        await updateDoc(
+          doc(
+            db,
+            "products",
+            editingProduct.id
+          ),
+          {
+
+            name:
+              editName,
+
+            price:
+              Number(editPrice),
+
+            import_price:
+              Number(
+                editImportPrice
+              ),
+
+            capital_price:
+              Number(
+                editCapitalPrice
+              ),
+
+            stock:
+              Number(editStock),
+
+          }
+        );
+
+        alert(
+          "Cập nhật thành công"
+        );
+
+        setEditingProduct(null);
+
+        loadProducts();
+
+      } catch (error) {
+
+        console.log(error);
+
+        alert(
+          "Cập nhật thất bại"
+        );
+
+      }
+
+    };
+
+  // DELETE PRODUCT
 
   const deleteProduct =
     async (
@@ -314,7 +376,7 @@ export default function ProductsPage() {
           Quản lý sản phẩm
         </h1>
 
-        {/* FORM */}
+        {/* ADD FORM */}
 
         <div className="bg-white p-6 rounded-3xl shadow mb-8">
 
@@ -380,18 +442,6 @@ export default function ProductsPage() {
               }
             />
 
-            <input
-              type="file"
-              accept="image/*"
-              className="border p-4 rounded-2xl text-black"
-              onChange={(e) =>
-                setImageFile(
-                  e.target
-                    .files?.[0]
-                )
-              }
-            />
-
           </div>
 
           <button
@@ -433,10 +483,6 @@ export default function ProductsPage() {
               <tr>
 
                 <th className="p-4 text-left">
-                  Ảnh
-                </th>
-
-                <th className="p-4 text-left">
                   Tên sản phẩm
                 </th>
 
@@ -474,25 +520,6 @@ export default function ProductsPage() {
                     className="border-b hover:bg-gray-50"
                   >
 
-                    <td className="p-4">
-
-                      {item.image ? (
-
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-20 h-20 object-cover rounded-xl"
-                          loading="lazy"
-                        />
-
-                      ) : (
-
-                        <div className="w-20 h-20 bg-gray-200 rounded-xl" />
-
-                      )}
-
-                    </td>
-
                     <td className="p-4 text-black">
                       {item.name}
                     </td>
@@ -521,16 +548,31 @@ export default function ProductsPage() {
 
                     <td className="p-4">
 
-                      <button
-                        onClick={() =>
-                          deleteProduct(
-                            item.id
-                          )
-                        }
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl"
-                      >
-                        Xóa
-                      </button>
+                      <div className="flex gap-2">
+
+                        <button
+                          onClick={() =>
+                            openEditModal(
+                              item
+                            )
+                          }
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl"
+                        >
+                          Sửa
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            deleteProduct(
+                              item.id
+                            )
+                          }
+                          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl"
+                        >
+                          Xóa
+                        </button>
+
+                      </div>
 
                     </td>
 
@@ -546,6 +588,150 @@ export default function ProductsPage() {
         </div>
 
       </div>
+
+      {/* EDIT MODAL */}
+
+      {editingProduct && (
+
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+          <div className="bg-white p-8 rounded-3xl w-full max-w-xl">
+
+            <h2 className="text-3xl font-bold mb-6 text-black">
+              Sửa sản phẩm
+            </h2>
+
+            <div className="space-y-4">
+
+  <div>
+
+    <label className="block mb-2 font-semibold text-black">
+      Tên sản phẩm
+    </label>
+
+    <input
+      type="text"
+      placeholder="Tên sản phẩm"
+      className="w-full border p-4 rounded-2xl text-black"
+      value={editName}
+      onChange={(e) =>
+        setEditName(
+          e.target.value
+        )
+      }
+    />
+
+  </div>
+
+  <div>
+
+    <label className="block mb-2 font-semibold text-black">
+      Giá bán
+    </label>
+
+    <input
+      type="number"
+      placeholder="Giá bán"
+      className="w-full border p-4 rounded-2xl text-black"
+      value={editPrice}
+      onChange={(e) =>
+        setEditPrice(
+          e.target.value
+        )
+      }
+    />
+
+  </div>
+
+  <div>
+
+    <label className="block mb-2 font-semibold text-black">
+      Giá nhập
+    </label>
+
+    <input
+      type="number"
+      placeholder="Giá nhập"
+      className="w-full border p-4 rounded-2xl text-black"
+      value={editImportPrice}
+      onChange={(e) =>
+        setEditImportPrice(
+          e.target.value
+        )
+      }
+    />
+
+  </div>
+
+  <div>
+
+    <label className="block mb-2 font-semibold text-black">
+      Giá vốn
+    </label>
+
+    <input
+      type="number"
+      placeholder="Giá vốn"
+      className="w-full border p-4 rounded-2xl text-black"
+      value={editCapitalPrice}
+      onChange={(e) =>
+        setEditCapitalPrice(
+          e.target.value
+        )
+      }
+    />
+
+  </div>
+
+  <div>
+
+    <label className="block mb-2 font-semibold text-black">
+      Tồn kho
+    </label>
+
+    <input
+      type="number"
+      placeholder="Tồn kho"
+      className="w-full border p-4 rounded-2xl text-black"
+      value={editStock}
+      onChange={(e) =>
+        setEditStock(
+          e.target.value
+        )
+      }
+    />
+
+  </div>
+
+</div>
+
+            <div className="flex gap-3 mt-6">
+
+              <button
+                onClick={saveEditProduct}
+                className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-2xl"
+              >
+                Lưu
+              </button>
+
+              <button
+                onClick={() =>
+                  setEditingProduct(
+                    null
+                  )
+                }
+                className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-2xl"
+              >
+                Hủy
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
 
     </main>
 
