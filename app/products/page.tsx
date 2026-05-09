@@ -7,7 +7,7 @@ import {
   collection,
   deleteDoc,
   doc,
-  onSnapshot,
+  getDocs,
 } from "firebase/firestore";
 
 import {
@@ -50,32 +50,52 @@ export default function ProductsPage() {
   const [products, setProducts] =
     useState<any[]>([]);
 
-  useEffect(() => {
+ useEffect(() => {
 
-    const unsubscribe = onSnapshot(
-      collection(db, "products"),
-      (snapshot) => {
+  const loadProducts =
+    async () => {
+
+      try {
+
+        const querySnapshot =
+          await getDocs(
+            collection(
+              db,
+              "products"
+            )
+          );
 
         const data: any[] = [];
 
-        snapshot.forEach((docItem) => {
+        querySnapshot.forEach(
+          (docItem) => {
 
-          data.push({
-            id: docItem.id,
-            ...docItem.data(),
-          });
+            data.push({
+              id: docItem.id,
+              ...docItem.data(),
+            });
 
-        });
+          }
+        );
 
         setProducts(data);
 
-        setLoading(false);
+      } catch (error) {
+
+        console.log(error);
+
+        alert(
+          "Không tải được sản phẩm"
+        );
+
       }
-    );
 
-    return () => unsubscribe();
+      setLoading(false);
+    };
 
-  }, []);
+  loadProducts();
+
+}, []);
 
   const addProduct = async () => {
 
