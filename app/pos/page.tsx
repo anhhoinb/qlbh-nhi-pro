@@ -291,15 +291,25 @@ const addToCart = (product: any) => {
       return;
     }
 
-    await addDoc(collection(db, "orders"), {
+    const orderCode =
+  `DH${Date.now()}`;
 
-      items: cart,
+await addDoc(
+  collection(db, "orders"),
+  {
 
-      total,
+    order_code:
+      orderCode,
 
-      createdAt: new Date(),
+    items: cart,
 
-    });
+    total,
+
+    createdAt:
+      new Date(),
+
+  }
+);
 
     for (const item of cart) {
 
