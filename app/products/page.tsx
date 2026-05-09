@@ -107,7 +107,36 @@ export default function ProductsPage() {
 
     let imageUrl = "";
 
-    if (imageFile) {
+    let imageUrl = "";
+
+try {
+
+  if (imageFile) {
+
+    const imageRef = ref(
+      storage,
+      `products/${Date.now()}-${imageFile.name}`
+    );
+
+    await uploadBytes(
+      imageRef,
+      imageFile
+    );
+
+    imageUrl =
+      await getDownloadURL(
+        imageRef
+      );
+  }
+
+} catch (error) {
+
+  console.log(error);
+
+  alert(
+    "Upload ảnh lỗi, sản phẩm vẫn sẽ được thêm"
+  );
+}
 
       const imageRef = ref(
         storage,
