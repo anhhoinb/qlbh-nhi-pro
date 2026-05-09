@@ -10,12 +10,7 @@ import {
   auth,
 } from "@/lib/firebase";
 
-import { useRouter }
-  from "next/navigation";
-
 export default function LoginPage() {
-
-  const router = useRouter();
 
   const [email, setEmail] =
     useState("");
@@ -47,7 +42,9 @@ export default function LoginPage() {
 
       alert("Đăng nhập thành công");
 
-      router.push("/dashboard");
+      // chuyển trang chắc chắn
+      window.location.href =
+        "/products";
 
     } catch (error) {
 

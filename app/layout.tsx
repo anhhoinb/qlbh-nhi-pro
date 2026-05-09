@@ -2,8 +2,6 @@ import "./globals.css";
 
 import Sidebar from "@/components/Sidebar";
 
-import AuthGuard from "@/components/AuthGuard";
-
 export default function RootLayout({
   children,
 }: {
@@ -15,19 +13,15 @@ export default function RootLayout({
 
       <body>
 
-        <AuthGuard>
+        <div className="flex">
 
-          <div className="flex">
+          <Sidebar />
 
-            <Sidebar />
+          <main className="flex-1">
+            {children}
+          </main>
 
-            <main className="flex-1">
-              {children}
-            </main>
-
-          </div>
-
-        </AuthGuard>
+        </div>
 
       </body>
 
