@@ -15,13 +15,27 @@ import { db } from "@/lib/firebase";
 export default function ProductsPage() {
 
   const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
 
-  const [search, setSearch] = useState("");
+  const [price, setPrice] =
+    useState("");
 
-  const [loading, setLoading] = useState(true);
+  const [importPrice, setImportPrice] =
+    useState("");
 
-  const [products, setProducts] = useState<any[]>([]);
+  const [capitalPrice, setCapitalPrice] =
+    useState("");
+
+  const [stock, setStock] =
+    useState("");
+
+  const [search, setSearch] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [products, setProducts] =
+    useState<any[]>([]);
 
   useEffect(() => {
 
@@ -53,36 +67,64 @@ export default function ProductsPage() {
   const addProduct = async () => {
 
     if (!name || !price) {
+
       alert("Nhập đầy đủ thông tin");
+
       return;
     }
 
     const normalizedName =
       name.trim().toLowerCase();
 
-    const checkDuplicate = products.find(
-      (item) =>
-        item.name
-          ?.trim()
-          ?.toLowerCase() === normalizedName
-    );
+    const checkDuplicate =
+      products.find(
+        (item) =>
+          item.name
+            ?.trim()
+            ?.toLowerCase() ===
+          normalizedName
+      );
 
     if (checkDuplicate) {
+
       alert("Sản phẩm đã tồn tại");
+
       return;
     }
 
-    await addDoc(collection(db, "products"), {
-      name: name.trim(),
-      price: Number(price),
-      createdAt: new Date(),
-    });
+    await addDoc(
+      collection(db, "products"),
+      {
+        name: name.trim(),
+
+        price: Number(price),
+
+        import_price:
+          Number(importPrice || 0),
+
+        capital_price:
+          Number(capitalPrice || 0),
+
+        stock: Number(stock || 0),
+
+        createdAt: new Date(),
+      }
+    );
 
     setName("");
+
     setPrice("");
+
+    setImportPrice("");
+
+    setCapitalPrice("");
+
+    setStock("");
   };
 
-  const deleteProduct = async (id: string) => {
+  const deleteProduct = async (
+    id: string
+  ) => {
 
     const confirmDelete = confirm(
       "Bạn có chắc muốn xóa?"
@@ -90,17 +132,23 @@ export default function ProductsPage() {
 
     if (!confirmDelete) return;
 
-    await deleteDoc(doc(db, "products", id));
+    await deleteDoc(
+      doc(db, "products", id)
+    );
   };
 
-  const filteredProducts = products.filter(
-    (item) =>
-      item.name
-        ?.toLowerCase()
-        .includes(search.toLowerCase())
-  );
+  const filteredProducts =
+    products.filter(
+      (item) =>
+        item.name
+          ?.toLowerCase()
+          .includes(
+            search.toLowerCase()
+          )
+    );
 
   if (loading) {
+
     return (
       <div className="p-10 text-2xl">
         Đang tải sản phẩm...
@@ -111,7 +159,7 @@ export default function ProductsPage() {
   return (
     <main className="min-h-screen bg-gray-100 p-6">
 
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
 
         <h1 className="text-4xl font-bold text-blue-700 mb-8">
           Quản lý sản phẩm
@@ -138,6 +186,40 @@ export default function ProductsPage() {
               value={price}
               onChange={(e) =>
                 setPrice(e.target.value)
+              }
+            />
+
+            <input
+              type="number"
+              placeholder="Giá nhập"
+              className="border p-4 rounded-2xl text-black"
+              value={importPrice}
+              onChange={(e) =>
+                setImportPrice(
+                  e.target.value
+                )
+              }
+            />
+
+            <input
+              type="number"
+              placeholder="Giá vốn"
+              className="border p-4 rounded-2xl text-black"
+              value={capitalPrice}
+              onChange={(e) =>
+                setCapitalPrice(
+                  e.target.value
+                )
+              }
+            />
+
+            <input
+              type="number"
+              placeholder="Tồn kho"
+              className="border p-4 rounded-2xl text-black"
+              value={stock}
+              onChange={(e) =>
+                setStock(e.target.value)
               }
             />
 
@@ -179,7 +261,19 @@ export default function ProductsPage() {
                 </th>
 
                 <th className="p-4 text-left">
+                  Giá nhập
+                </th>
+
+                <th className="p-4 text-left">
                   Giá bán
+                </th>
+
+                <th className="p-4 text-left">
+                  Giá vốn
+                </th>
+
+                <th className="p-4 text-left">
+                  Tồn kho
                 </th>
 
                 <th className="p-4 text-left">
@@ -192,38 +286,59 @@ export default function ProductsPage() {
 
             <tbody>
 
-              {filteredProducts.map((item) => (
+              {filteredProducts.map(
+                (item) => (
 
-                <tr
-                  key={item.id}
-                  className="border-b hover:bg-gray-50"
-                >
+                  <tr
+                    key={item.id}
+                    className="border-b hover:bg-gray-50"
+                  >
 
-                  <td className="p-4 text-black">
-                    {item.name}
-                  </td>
+                    <td className="p-4 text-black">
+                      {item.name}
+                    </td>
 
-                  <td className="p-4 text-black">
-                    {Number(item.price)
-                      .toLocaleString()}đ
-                  </td>
+                    <td className="p-4 text-black">
+                      {Number(
+                        item.import_price || 0
+                      ).toLocaleString()}đ
+                    </td>
 
-                  <td className="p-4">
+                    <td className="p-4 text-black">
+                      {Number(
+                        item.price || 0
+                      ).toLocaleString()}đ
+                    </td>
 
-                    <button
-                      onClick={() =>
-                        deleteProduct(item.id)
-                      }
-                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl"
-                    >
-                      Xóa
-                    </button>
+                    <td className="p-4 text-black">
+                      {Number(
+                        item.capital_price || 0
+                      ).toLocaleString()}đ
+                    </td>
 
-                  </td>
+                    <td className="p-4 text-black">
+                      {item.stock || 0}
+                    </td>
 
-                </tr>
+                    <td className="p-4">
 
-              ))}
+                      <button
+                        onClick={() =>
+                          deleteProduct(
+                            item.id
+                          )
+                        }
+                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl"
+                      >
+                        Xóa
+                      </button>
+
+                    </td>
+
+                  </tr>
+
+                )
+              )}
 
             </tbody>
 
