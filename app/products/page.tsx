@@ -105,9 +105,7 @@ export default function ProductsPage() {
       return;
     }
 
-    let imageUrl = "";
-
-    let imageUrl = "";
+  let imageUrl = "";
 
 try {
 
@@ -137,22 +135,6 @@ try {
     "Upload ảnh lỗi, sản phẩm vẫn sẽ được thêm"
   );
 }
-
-      const imageRef = ref(
-        storage,
-        `products/${Date.now()}-${imageFile.name}`
-      );
-
-      await uploadBytes(
-        imageRef,
-        imageFile
-      );
-
-      imageUrl =
-        await getDownloadURL(
-          imageRef
-        );
-    }
 
     await addDoc(
       collection(db, "products"),
