@@ -403,6 +403,16 @@ await addDoc(
                 >
 
                   <h2 className="font-bold text-lg text-black">
+                    {product.image && (
+
+  <img
+    src={product.image}
+    alt={product.name}
+    className="w-full h-40 object-cover rounded-2xl mb-3"
+    loading="lazy"
+  />
+
+)}
                     {product.name}
                   </h2>
 

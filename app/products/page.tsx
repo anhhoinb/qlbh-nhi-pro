@@ -365,6 +365,7 @@ try {
                           src={item.image}
                           alt={item.name}
                           className="w-20 h-20 object-cover rounded-xl"
+loading="lazy"
                         />
 
                       ) : (
