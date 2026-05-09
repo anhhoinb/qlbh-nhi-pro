@@ -85,11 +85,14 @@ export default function OrdersPage() {
                 className="border-b hover:bg-gray-50"
               >
 
-                <td className="p-4">
-                  {item.id}
+                <td className="p-4 text-black font-semibold">
+
+                  {item.order_code ||
+                    item.id}
+
                 </td>
 
-                <td className="p-4">
+                <td className="p-4 text-black">
 
                   {typeof item.customer_name === "object"
                     ? item.customer_name?.name
@@ -103,7 +106,7 @@ export default function OrdersPage() {
 
                 </td>
 
-                <td className="p-4">
+                <td className="p-4 text-black">
 
                   {Number(
                     item.total ||
@@ -113,7 +116,7 @@ export default function OrdersPage() {
 
                 </td>
 
-                <td className="p-4">
+                <td className="p-4 text-black">
 
                   {item.createdAt
                     ? new Date(

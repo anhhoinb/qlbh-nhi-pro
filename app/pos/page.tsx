@@ -291,8 +291,9 @@ const addToCart = (product: any) => {
       return;
     }
 
-    const orderCode =
-  `DH${Date.now()}`;
+const orderCode =
+  "DH" +
+  Date.now();
 
 await addDoc(
   collection(db, "orders"),
