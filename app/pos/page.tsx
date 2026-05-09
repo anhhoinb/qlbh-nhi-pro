@@ -468,30 +468,55 @@ const addToCart = (product: any) => {
 
                   <div className="flex items-center gap-3 mt-3">
 
-                    <button
-                      onClick={() =>
-                        decreaseQty(item.id)
-                      }
-                      className="bg-gray-200 px-3 py-1 rounded-lg"
-                    >
-                      -
-                    </button>
+  <button
+    onClick={() =>
+      decreaseQty(item.id)
+    }
+    className="bg-gray-200 px-3 py-1 rounded-lg"
+  >
+    -
+  </button>
 
-                    <span className="text-black font-semibold">
-                      {item.quantity}
-                    </span>
+  <input
+    type="number"
+    min="1"
+    value={item.quantity}
+    onChange={(e) => {
 
-                    <button
-                      onClick={() =>
-                        increaseQty(item.id)
-                      }
-                      className="bg-gray-200 px-3 py-1 rounded-lg"
-                    >
-                      +
-                    </button>
+      const value =
+        Number(e.target.value);
 
-                  </div>
+      setCart((prev: any[]) =>
 
+        prev.map((cartItem) =>
+
+          cartItem.id === item.id
+            ? {
+                ...cartItem,
+                quantity:
+                  value > 0
+                    ? value
+                    : 1,
+              }
+            : cartItem
+
+        )
+
+      );
+    }}
+    className="w-20 border rounded-lg p-2 text-center text-black"
+  />
+
+  <button
+    onClick={() =>
+      increaseQty(item.id)
+    }
+    className="bg-gray-200 px-3 py-1 rounded-lg"
+  >
+    +
+  </button>
+
+</div>
                 </div>
 
               ))}
