@@ -10,11 +10,21 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 
-import { db } from "@/lib/firebase";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
+
+import {
+  db,
+  storage,
+} from "@/lib/firebase";
 
 export default function ProductsPage() {
 
-  const [name, setName] = useState("");
+  const [name, setName] =
+    useState("");
 
   const [price, setPrice] =
     useState("");
@@ -27,6 +37,9 @@ export default function ProductsPage() {
 
   const [stock, setStock] =
     useState("");
+
+  const [imageFile, setImageFile] =
+    useState<any>(null);
 
   const [search, setSearch] =
     useState("");
@@ -92,6 +105,26 @@ export default function ProductsPage() {
       return;
     }
 
+    let imageUrl = "";
+
+    if (imageFile) {
+
+      const imageRef = ref(
+        storage,
+        `products/${Date.now()}-${imageFile.name}`
+      );
+
+      await uploadBytes(
+        imageRef,
+        imageFile
+      );
+
+      imageUrl =
+        await getDownloadURL(
+          imageRef
+        );
+    }
+
     await addDoc(
       collection(db, "products"),
       {
@@ -107,6 +140,8 @@ export default function ProductsPage() {
 
         stock: Number(stock || 0),
 
+        image: imageUrl,
+
         createdAt: new Date(),
       }
     );
@@ -120,6 +155,8 @@ export default function ProductsPage() {
     setCapitalPrice("");
 
     setStock("");
+
+    setImageFile(null);
   };
 
   const deleteProduct = async (
@@ -223,6 +260,17 @@ export default function ProductsPage() {
               }
             />
 
+            <input
+              type="file"
+              accept="image/*"
+              className="border p-4 rounded-2xl text-black"
+              onChange={(e) =>
+                setImageFile(
+                  e.target.files?.[0]
+                )
+              }
+            />
+
           </div>
 
           <button
@@ -255,6 +303,10 @@ export default function ProductsPage() {
             <thead className="bg-blue-700 text-white">
 
               <tr>
+
+                <th className="p-4 text-left">
+                  Ảnh
+                </th>
 
                 <th className="p-4 text-left">
                   Tên sản phẩm
@@ -293,6 +345,24 @@ export default function ProductsPage() {
                     key={item.id}
                     className="border-b hover:bg-gray-50"
                   >
+
+                    <td className="p-4">
+
+                      {item.image ? (
+
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-20 h-20 object-cover rounded-xl"
+                        />
+
+                      ) : (
+
+                        <div className="w-20 h-20 bg-gray-200 rounded-xl" />
+
+                      )}
+
+                    </td>
 
                     <td className="p-4 text-black">
                       {item.name}
