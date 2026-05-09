@@ -1,21 +1,41 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp }
+  from "firebase/app";
 
-import { getAuth } from "firebase/auth";
+import {
+  getAuth,
+} from "firebase/auth";
 
-import { getFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+} from "firebase/firestore";
+
+import {
+  getStorage,
+} from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAhGuKGWrIPTeRk1ffIhRkclP4QlCW2vsM",
-  authDomain: "qlbh-nhi-pro.firebaseapp.com",
+
+  apiKey:
+    "AIzaSyAhGuKGWrIPTeRk1ffIhRkclP4QlCW2vsM",
+
+  authDomain:
+    "qlbh-nhi-pro.firebaseapp.com",
+
   databaseURL:
     "https://qlbh-nhi-pro-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "qlbh-nhi-pro",
+
+  projectId:
+    "qlbh-nhi-pro",
+
   storageBucket:
     "qlbh-nhi-pro.firebasestorage.app",
+
   messagingSenderId:
     "359966884057",
+
   appId:
     "1:359966884057:web:67ed2c7e5b0c1fb6c73ec8",
+
   measurementId:
     "G-LL2WSC5W7E",
 };
@@ -28,3 +48,6 @@ export const auth =
 
 export const db =
   getFirestore(app);
+
+export const storage =
+  getStorage(app);
