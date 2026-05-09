@@ -17,6 +17,8 @@ export default function POSPage() {
   const [products, setProducts] = useState<any[]>([]);
 
   const [cart, setCart] = useState<any[]>([]);
+  const [vat, setVat] =
+  useState("0");
 
   const [search, setSearch] =
     useState("");
@@ -168,119 +170,334 @@ const addToCart = (product: any) => {
 
   };
 
-  const printBill = () => {
+ const printBill = () => {
 
-    const billWindow =
-      window.open("", "_blank");
+  const billWindow =
+    window.open("", "_blank");
 
-    if (!billWindow) return;
+  if (!billWindow) return;
 
-    const itemsHtml = cart.map((item) => `
-
-      <tr>
-        <td>${item.name}</td>
-        <td>${item.quantity}</td>
-        <td>
-          ${Number(item.price).toLocaleString()}đ
-        </td>
-      </tr>
-
-    `).join("");
-
-    const total = cart.reduce(
-      (sum, item) =>
-        sum +
-        Number(item.price) * item.quantity,
-      0
-    );
-
-    billWindow.document.write(`
-
-      <html>
-
-        <head>
-
-          <title>Hóa đơn</title>
-
-          <style>
-
-            body {
-              font-family: Arial;
-              padding: 20px;
-            }
-
-            table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-
-            td, th {
-              border-bottom: 1px solid #ddd;
-              padding: 8px;
-              text-align: left;
-            }
-
-            h1 {
-              text-align: center;
-            }
-
-          </style>
-
-        </head>
-
-        <body>
-
-          <h1>QLBH Nhi Pro</h1>
-
-          <p>
-            Ngày:
-            ${new Date().toLocaleString()}
-          </p>
-
-          <table>
-
-            <thead>
-
-              <tr>
-
-                <th>Sản phẩm</th>
-                <th>SL</th>
-                <th>Giá</th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              ${itemsHtml}
-
-            </tbody>
-
-          </table>
-
-          <h2>
-            Tổng:
-            ${total.toLocaleString()}đ
-          </h2>
-
-        </body>
-
-      </html>
-
-    `);
-
-    billWindow.document.close();
-
-    billWindow.print();
-  };
-
-  const total = cart.reduce(
+  const subtotal =
+  cart.reduce(
     (sum, item) =>
       sum +
-      Number(item.price) * item.quantity,
+      Number(item.price) *
+        item.quantity,
     0
   );
+
+const vatAmount =
+  subtotal *
+  (Number(vat) / 100);
+
+const total =
+  subtotal + vatAmount;
+
+  const itemsHtml = cart.map(
+    (item, index) => `
+
+      <tr>
+
+        <td>
+          ${index + 1}
+        </td>
+
+        <td>
+          ${item.name}
+        </td>
+
+        <td>
+          ${item.quantity}
+        </td>
+
+        <td>
+          ${Number(item.price)
+            .toLocaleString()}đ
+        </td>
+
+        <td>
+          ${(
+            Number(item.price) *
+            item.quantity
+          ).toLocaleString()}đ
+        </td>
+
+      </tr>
+
+    `
+  ).join("");
+
+  billWindow.document.write(`
+
+    <html>
+
+      <head>
+
+        <title>
+          Hóa đơn bán hàng
+        </title>
+
+        <style>
+
+  @page {
+
+    size: A5;
+    margin: 10mm;
+
+  }
+
+  body {
+
+    font-family: Arial;
+    color: #000;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+
+    display: flex;
+    justify-content: center;
+
+  }
+
+  .bill-container {
+
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+
+  }
+
+  .center {
+
+    text-align: center;
+
+  }
+
+  h1 {
+
+    margin: 0;
+    font-size: 26px;
+
+  }
+
+  .title {
+
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+
+  }
+
+  .shop-info {
+
+    margin-top: 2px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    line-height: 1.3;
+
+  }
+
+  hr {
+
+    margin: 20px 0;
+
+  }
+
+  .info {
+
+    font-size: 12px;
+    line-height: 1.3;
+    margin-bottom: 10px;
+
+  }
+
+  table {
+
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+
+  }
+
+  th {
+
+    background: #eee;
+    font-size: 13px;
+    padding: 5px;
+    text-align: left;
+
+  }
+
+  td {
+
+    border-bottom:
+      1px dashed #999;
+
+    padding: 5px;
+    font-size: 13px;
+    text-align: left;
+
+  }
+
+  .total {
+
+    margin-top: 5px;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: right;
+
+  }
+
+  .thanks {
+
+    text-align: center;
+    margin-top: 15px;
+    font-size: 15px;
+    line-height: 1.5;
+
+  }
+
+</style>
+
+      </head>
+
+      <body>
+
+  <div class="bill-container">
+
+        <div class="center">
+
+          <h1>
+            NhiPro23
+          </h1>
+
+          <div class="shop-info">
+
+            Địa chỉ:
+            TP.HCM
+            <br>
+
+            Hotline:
+            0900 000 000
+
+          </div>
+
+        </div>
+
+        <hr>
+
+        <p style="font-size: 13px; margin: 5px 0;">
+          <strong>
+            Mã đơn:
+          </strong>
+
+          DH${Date.now()}
+        </p>
+
+        <p style="font-size: 13px; margin: 5px 0;">
+          <strong>
+            Ngày:
+          </strong>
+
+          ${new Date()
+            .toLocaleString()}
+        </p>
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>STT</th>
+              <th>SP</th>
+              <th>SL</th>
+              <th>Giá</th>
+              <th>TT</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            ${itemsHtml}
+
+          </tbody>
+
+        </table>
+
+       <div class="total">
+
+  <div>
+    Tạm tính:
+    ${subtotal.toLocaleString()}đ
+  </div>
+
+  <div>
+    VAT:
+    ${vatAmount.toLocaleString()}đ
+  </div>
+
+  <div style="
+    font-size: 12px;
+    margin-top: 5px;
+    font-weight: bold;
+  ">
+    Tổng cộng:
+    ${total.toLocaleString()}đ
+  </div>
+
+</div>
+
+        <div class="thanks">
+
+          Cảm ơn quý khách!
+          <br>
+
+          Hẹn gặp lại ❤️
+
+        </div>
+
+        </div>
+
+</body>
+
+    </html>
+
+  `);
+
+  billWindow.document.close();
+
+  billWindow.focus();
+
+  billWindow.print();
+
+};
+
+  cart.reduce(
+    (sum, item) =>
+      sum +
+      Number(item.price) *
+        item.quantity,
+    0
+  );
+
+const subtotal =
+  cart.reduce(
+    (sum, item) =>
+      sum +
+      Number(item.price) *
+        item.quantity,
+    0
+  );
+
+const vatAmount =
+  subtotal *
+  (Number(vat) / 100);
+
+const total =
+  subtotal + vatAmount;
 
   const checkout = async () => {
 
@@ -545,15 +762,79 @@ await addDoc(
             </div>
 
             <div className="border-t mt-6 pt-6">
+              <div className="mb-4">
 
-              <h3 className="text-2xl font-bold text-black">
+  <label className="block mb-2 font-semibold text-black">
 
-                Tổng:
-                <span className="text-blue-700 ml-2">
-                  {total.toLocaleString()}đ
-                </span>
+    VAT đơn hàng
 
-              </h3>
+  </label>
+
+  <select
+    className="w-full border p-3 rounded-xl text-black"
+    value={vat}
+    onChange={(e) =>
+      setVat(
+        e.target.value
+      )
+    }
+  >
+
+    <option value="0">
+      Không VAT
+    </option>
+
+    <option value="8">
+      VAT 8%
+    </option>
+
+    <option value="10">
+      VAT 10%
+    </option>
+
+  </select>
+
+</div>
+
+              <div className="space-y-2">
+
+  <div className="text-lg text-black">
+
+    Tạm tính:
+
+    <span className="ml-2 font-semibold">
+
+      {subtotal.toLocaleString()}đ
+
+    </span>
+
+  </div>
+
+  <div className="text-lg text-black">
+
+    VAT:
+
+    <span className="ml-2 font-semibold text-orange-600">
+
+      {vatAmount.toLocaleString()}đ
+
+    </span>
+
+  </div>
+
+  <div className="text-3xl font-bold text-red-600">
+
+    Tổng cộng:
+
+    <span className="ml-2">
+
+      {total.toLocaleString()}đ
+
+    </span>
+
+  </div>
+
+</div>
 
               <div className="space-y-3">
 

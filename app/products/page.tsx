@@ -33,6 +33,8 @@ export default function ProductsPage() {
 
   const [stock, setStock] =
     useState("");
+    const [tax, setTax] =
+  useState("");
 
   // SEARCH
 
@@ -66,6 +68,8 @@ export default function ProductsPage() {
 
   const [editStock, setEditStock] =
     useState("");
+    const [editTax, setEditTax] =
+  useState("");
 
   // LOAD PRODUCTS
 
@@ -175,6 +179,8 @@ export default function ProductsPage() {
 
           stock:
             Number(stock || 0),
+            tax:
+  Number(tax || 0),
 
           createdAt:
             new Date(),
@@ -195,6 +201,8 @@ export default function ProductsPage() {
       setCapitalPrice("");
 
       setStock("");
+
+      setTax("");
 
       loadProducts();
 
@@ -240,6 +248,9 @@ export default function ProductsPage() {
       setEditStock(
         String(item.stock || 0)
       );
+      setEditTax(
+  String(item.tax || 0)
+);
 
     };
 
@@ -279,6 +290,8 @@ export default function ProductsPage() {
 
             stock:
               Number(editStock),
+              tax:
+  Number(editTax),
 
           }
         );
@@ -441,6 +454,33 @@ export default function ProductsPage() {
                 )
               }
             />
+            <select
+  className="border p-4 rounded-2xl text-black"
+  value={tax}
+  onChange={(e) =>
+    setTax(
+      e.target.value
+    )
+  }
+>
+
+  <option value="">
+    Chọn VAT
+  </option>
+
+  <option value="0">
+    VAT 0%
+  </option>
+
+  <option value="8">
+    VAT 8%
+  </option>
+
+  <option value="10">
+    VAT 10%
+  </option>
+
+</select>
 
           </div>
 
