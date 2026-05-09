@@ -63,12 +63,48 @@ export default function InventoryPage() {
     loadProducts();
   };
 
+  // TỔNG GIÁ TRỊ KHO
+
+  const totalInventoryValue =
+    products.reduce(
+
+      (sum, item) =>
+
+        sum +
+        (
+          Number(item.stock || 0) *
+          Number(
+            item.capital_price || 0
+          )
+        ),
+
+      0
+    );
+
   return (
     <main className="min-h-screen bg-gray-100 p-6">
 
       <h1 className="text-4xl font-bold text-blue-700 mb-8">
         Quản lý tồn kho
       </h1>
+
+      {/* Tổng giá trị kho */}
+
+      <div className="bg-white rounded-3xl shadow p-6 mb-6">
+
+        <h2 className="text-2xl font-bold text-black">
+
+          Tổng giá trị tồn kho:
+
+          <span className="text-blue-700 ml-3">
+
+            {totalInventoryValue.toLocaleString()}đ
+
+          </span>
+
+        </h2>
+
+      </div>
 
       {loading ? (
 
@@ -91,11 +127,19 @@ export default function InventoryPage() {
                 </th>
 
                 <th className="p-4 text-left">
-                  Giá
+                  Giá bán
+                </th>
+
+                <th className="p-4 text-left">
+                  Giá vốn
                 </th>
 
                 <th className="p-4 text-left">
                   Tồn kho
+                </th>
+
+                <th className="p-4 text-left">
+                  Tổng tồn
                 </th>
 
                 <th className="p-4 text-left">
@@ -108,80 +152,106 @@ export default function InventoryPage() {
 
             <tbody>
 
-              {products.map((item) => (
+              {products.map((item) => {
 
-                <tr
-                  key={item.id}
-                  className="border-b"
-                >
+                const inventoryValue =
 
-                  <td className="p-4 font-semibold">
+                  Number(item.stock || 0) *
 
-                    {item.name}
+                  Number(
+                    item.capital_price || 0
+                  );
 
-                  </td>
+                return (
 
-                  <td className="p-4 text-blue-700">
-
-                    {Number(
-                      item.price || 0
-                    ).toLocaleString()}đ
-
-                  </td>
-
-                  <td
-                    className={`p-4 font-bold ${
-                      Number(item.stock || 0) <= 5
-                        ? "text-red-500"
-                        : "text-green-600"
-                    }`}
+                  <tr
+                    key={item.id}
+                    className="border-b"
                   >
 
-                    {item.stock || 0}
+                    <td className="p-4 font-semibold text-black">
 
-                    {Number(item.stock || 0) <= 5 &&
-                      " ⚠️"}
+                      {item.name}
 
-                  </td>
+                    </td>
 
-                  <td className="p-4">
+                    <td className="p-4 text-blue-700">
 
-                    <div className="flex gap-2">
+                      {Number(
+                        item.price || 0
+                      ).toLocaleString()}đ
 
-                      <button
-                        onClick={() =>
-                          updateStock(
-                            item.id,
-                            Number(item.stock || 0) + 1
-                          )
-                        }
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl"
-                      >
-                        +1
-                      </button>
+                    </td>
 
-                      <button
-                        onClick={() =>
-                          updateStock(
-                            item.id,
-                            Math.max(
-                              0,
-                              Number(item.stock || 0) - 1
+                    <td className="p-4 text-orange-600 font-semibold">
+
+                      {Number(
+                        item.capital_price || 0
+                      ).toLocaleString()}đ
+
+                    </td>
+
+                    <td
+                      className={`p-4 font-bold ${
+                        Number(item.stock || 0) <= 5
+                          ? "text-red-500"
+                          : "text-green-600"
+                      }`}
+                    >
+
+                      {item.stock || 0}
+
+                      {Number(item.stock || 0) <= 5 &&
+                        " ⚠️"}
+
+                    </td>
+
+                    <td className="p-4 font-bold text-purple-700">
+
+                      {inventoryValue.toLocaleString()}đ
+
+                    </td>
+
+                    <td className="p-4">
+
+                      <div className="flex gap-2">
+
+                        <button
+                          onClick={() =>
+                            updateStock(
+                              item.id,
+                              Number(item.stock || 0) + 1
                             )
-                          )
-                        }
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl"
-                      >
-                        -1
-                      </button>
+                          }
+                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl"
+                        >
+                          +1
+                        </button>
 
-                    </div>
+                        <button
+                          onClick={() =>
+                            updateStock(
+                              item.id,
+                              Math.max(
+                                0,
+                                Number(item.stock || 0) - 1
+                              )
+                            )
+                          }
+                          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl"
+                        >
+                          -1
+                        </button>
 
-                  </td>
+                      </div>
 
-                </tr>
+                    </td>
 
-              ))}
+                  </tr>
+
+                );
+
+              })}
 
             </tbody>
 
