@@ -38,19 +38,19 @@ export default function ProductsPage() {
   const [stock, setStock] =
     useState("");
 
-  const [imageFile, setImageFile] =
-    useState<any>(null);
-
   const [search, setSearch] =
     useState("");
 
   const [loading, setLoading] =
     useState(true);
 
+  const [imageFile, setImageFile] =
+    useState<any>(null);
+
   const [products, setProducts] =
     useState<any[]>([]);
 
- useEffect(() => {
+  // LOAD PRODUCTS
 
   const loadProducts =
     async () => {
@@ -93,127 +93,206 @@ export default function ProductsPage() {
       setLoading(false);
     };
 
-  loadProducts();
+  useEffect(() => {
 
-}, []);
+    loadProducts();
+
+  }, []);
+
+  // ADD PRODUCT
 
   const addProduct = async () => {
 
-    if (!name || !price) {
+    try {
 
-      alert("Nhập đầy đủ thông tin");
+      if (!name || !price) {
 
-      return;
-    }
+        alert(
+          "Nhập đầy đủ thông tin"
+        );
 
-    const normalizedName =
-      name.trim().toLowerCase();
-
-    const checkDuplicate =
-      products.find(
-        (item) =>
-          item.name
-            ?.trim()
-            ?.toLowerCase() ===
-          normalizedName
-      );
-
-    if (checkDuplicate) {
-
-      alert("Sản phẩm đã tồn tại");
-
-      return;
-    }
-
-  let imageUrl = "";
-
-try {
-
-  if (imageFile) {
-
-    const imageRef = ref(
-      storage,
-      `products/${Date.now()}-${imageFile.name}`
-    );
-
-    await uploadBytes(
-      imageRef,
-      imageFile
-    );
-
-    imageUrl =
-      await getDownloadURL(
-        imageRef
-      );
-  }
-
-} catch (error) {
-
-  console.log(error);
-
-  alert(
-    "Upload ảnh lỗi, sản phẩm vẫn sẽ được thêm"
-  );
-}
-
-    await addDoc(
-      collection(db, "products"),
-      {
-        name: name.trim(),
-
-        price: Number(price),
-
-        import_price:
-          Number(importPrice || 0),
-
-        capital_price:
-          Number(capitalPrice || 0),
-
-        stock: Number(stock || 0),
-
-        image: imageUrl,
-
-        createdAt: new Date(),
+        return;
       }
-    );
 
-    setName("");
+      // CHECK TRÙNG
 
-    setPrice("");
+      const normalizedName =
+        name
+          .trim()
+          .toLowerCase();
 
-    setImportPrice("");
+      const duplicate =
+        products.find(
+          (item: any) =>
+            item.name
+              ?.trim()
+              ?.toLowerCase() ===
+            normalizedName
+        );
 
-    setCapitalPrice("");
+      if (duplicate) {
 
-    setStock("");
+        alert(
+          "Sản phẩm đã tồn tại"
+        );
 
-    setImageFile(null);
+        return;
+      }
+
+      // UPLOAD IMAGE
+
+      let imageUrl = "";
+
+      if (imageFile) {
+
+        try {
+
+          const imageRef = ref(
+            storage,
+            `products/${Date.now()}-${imageFile.name}`
+          );
+
+          await uploadBytes(
+            imageRef,
+            imageFile
+          );
+
+          imageUrl =
+            await getDownloadURL(
+              imageRef
+            );
+
+        } catch (error) {
+
+          console.log(error);
+
+          alert(
+            "Upload ảnh lỗi"
+          );
+
+        }
+
+      }
+
+      // SAVE FIRESTORE
+
+      await addDoc(
+        collection(
+          db,
+          "products"
+        ),
+        {
+
+          name:
+            name.trim(),
+
+          price:
+            Number(price),
+
+          import_price:
+            Number(importPrice || 0),
+
+          capital_price:
+            Number(capitalPrice || 0),
+
+          stock:
+            Number(stock || 0),
+
+          image:
+            imageUrl,
+
+          createdAt:
+            new Date(),
+
+        }
+      );
+
+      alert(
+        "Thêm sản phẩm thành công"
+      );
+
+      // RESET
+
+      setName("");
+
+      setPrice("");
+
+      setImportPrice("");
+
+      setCapitalPrice("");
+
+      setStock("");
+
+      setImageFile(null);
+
+      // RELOAD
+
+      loadProducts();
+
+    } catch (error) {
+
+      console.log(error);
+
+      alert(
+        "Không thể thêm sản phẩm"
+      );
+
+    }
+
   };
 
-  const deleteProduct = async (
-    id: string
-  ) => {
+  // DELETE
 
-    const confirmDelete = confirm(
-      "Bạn có chắc muốn xóa?"
-    );
+  const deleteProduct =
+    async (
+      id: string
+    ) => {
 
-    if (!confirmDelete) return;
+      const confirmDelete =
+        confirm(
+          "Bạn có chắc muốn xóa?"
+        );
 
-    await deleteDoc(
-      doc(db, "products", id)
-    );
-  };
+      if (!confirmDelete)
+        return;
+
+      try {
+
+        await deleteDoc(
+          doc(
+            db,
+            "products",
+            id
+          )
+        );
+
+        loadProducts();
+
+      } catch (error) {
+
+        console.log(error);
+
+        alert(
+          "Xóa sản phẩm thất bại"
+        );
+
+      }
+
+    };
+
+  // SEARCH
 
   const filteredProducts =
     products.filter(
-      (item) =>
+      (item: any) =>
         item.name
           ?.toLowerCase()
           .includes(
             search.toLowerCase()
           )
     );
+
+  // LOADING
 
   if (loading) {
 
@@ -222,9 +301,11 @@ try {
         Đang tải sản phẩm...
       </div>
     );
+
   }
 
   return (
+
     <main className="min-h-screen bg-gray-100 p-6">
 
       <div className="max-w-7xl mx-auto">
@@ -232,6 +313,8 @@ try {
         <h1 className="text-4xl font-bold text-blue-700 mb-8">
           Quản lý sản phẩm
         </h1>
+
+        {/* FORM */}
 
         <div className="bg-white p-6 rounded-3xl shadow mb-8">
 
@@ -243,7 +326,9 @@ try {
               className="border p-4 rounded-2xl text-black"
               value={name}
               onChange={(e) =>
-                setName(e.target.value)
+                setName(
+                  e.target.value
+                )
               }
             />
 
@@ -253,7 +338,9 @@ try {
               className="border p-4 rounded-2xl text-black"
               value={price}
               onChange={(e) =>
-                setPrice(e.target.value)
+                setPrice(
+                  e.target.value
+                )
               }
             />
 
@@ -287,7 +374,9 @@ try {
               className="border p-4 rounded-2xl text-black"
               value={stock}
               onChange={(e) =>
-                setStock(e.target.value)
+                setStock(
+                  e.target.value
+                )
               }
             />
 
@@ -297,7 +386,8 @@ try {
               className="border p-4 rounded-2xl text-black"
               onChange={(e) =>
                 setImageFile(
-                  e.target.files?.[0]
+                  e.target
+                    .files?.[0]
                 )
               }
             />
@@ -313,19 +403,26 @@ try {
 
         </div>
 
+        {/* SEARCH */}
+
         <div className="bg-white p-6 rounded-3xl shadow mb-6">
 
           <input
             type="text"
             placeholder="Tìm kiếm sản phẩm..."
+            autoComplete="off"
             className="w-full border p-4 rounded-2xl text-black"
             value={search}
             onChange={(e) =>
-              setSearch(e.target.value)
+              setSearch(
+                e.target.value
+              )
             }
           />
 
         </div>
+
+        {/* TABLE */}
 
         <div className="bg-white rounded-3xl shadow overflow-hidden">
 
@@ -370,7 +467,7 @@ try {
             <tbody>
 
               {filteredProducts.map(
-                (item) => (
+                (item: any) => (
 
                   <tr
                     key={item.id}
@@ -385,7 +482,7 @@ try {
                           src={item.image}
                           alt={item.name}
                           className="w-20 h-20 object-cover rounded-xl"
-loading="lazy"
+                          loading="lazy"
                         />
 
                       ) : (
@@ -451,5 +548,7 @@ loading="lazy"
       </div>
 
     </main>
+
   );
+
 }
