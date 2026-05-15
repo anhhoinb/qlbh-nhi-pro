@@ -22,6 +22,15 @@ export default function ProductsPage() {
   const [name, setName] =
     useState("");
 
+    const [costPrice, setCostPrice] =
+  useState("");
+
+  const [productCode, setProductCode] =
+    useState("");
+
+  const [productLocation, setProductLocation] =
+    useState("");
+
   const [price, setPrice] =
     useState("");
 
@@ -33,8 +42,12 @@ export default function ProductsPage() {
 
   const [stock, setStock] =
     useState("");
-    const [tax, setTax] =
-  useState("");
+
+  const [unit, setUnit] =
+    useState("");
+
+  const [tax, setTax] =
+    useState("");
 
   // SEARCH
 
@@ -57,6 +70,12 @@ export default function ProductsPage() {
   const [editName, setEditName] =
     useState("");
 
+  const [editProductCode, setEditProductCode] =
+    useState("");
+
+  const [editProductLocation, setEditProductLocation] =
+    useState("");
+
   const [editPrice, setEditPrice] =
     useState("");
 
@@ -68,8 +87,12 @@ export default function ProductsPage() {
 
   const [editStock, setEditStock] =
     useState("");
-    const [editTax, setEditTax] =
-  useState("");
+
+  const [editUnit, setEditUnit] =
+    useState("");
+
+  const [editTax, setEditTax] =
+    useState("");
 
   // LOAD PRODUCTS
 
@@ -168,8 +191,14 @@ export default function ProductsPage() {
           name:
             name.trim(),
 
+          product_code:
+            productCode.trim(),
+
+          product_location:
+            productLocation.trim(),
+
           price:
-            Number(price),
+            Number(price || 0),
 
           import_price:
             Number(importPrice || 0),
@@ -179,8 +208,12 @@ export default function ProductsPage() {
 
           stock:
             Number(stock || 0),
-            tax:
-  Number(tax || 0),
+
+          unit:
+            unit.trim() || "cái",
+
+          tax:
+            Number(tax || 0),
 
           createdAt:
             new Date(),
@@ -194,6 +227,10 @@ export default function ProductsPage() {
 
       setName("");
 
+      setProductCode("");
+
+      setProductLocation("");
+
       setPrice("");
 
       setImportPrice("");
@@ -201,6 +238,8 @@ export default function ProductsPage() {
       setCapitalPrice("");
 
       setStock("");
+
+      setUnit("");
 
       setTax("");
 
@@ -229,6 +268,14 @@ export default function ProductsPage() {
         item.name || ""
       );
 
+      setEditProductCode(
+        item.product_code || ""
+      );
+
+      setEditProductLocation(
+        item.product_location || ""
+      );
+
       setEditPrice(
         String(item.price || 0)
       );
@@ -248,9 +295,16 @@ export default function ProductsPage() {
       setEditStock(
         String(item.stock || 0)
       );
+
+      setEditUnit(
+        typeof item.unit === "string"
+          ? item.unit
+          : item.unit?.name || "cái"
+      );
+
       setEditTax(
-  String(item.tax || 0)
-);
+        String(item.tax || 0)
+      );
 
     };
 
@@ -273,25 +327,35 @@ export default function ProductsPage() {
           {
 
             name:
-              editName,
+              editName.trim(),
+
+            product_code:
+              editProductCode.trim(),
+
+            product_location:
+              editProductLocation.trim(),
 
             price:
-              Number(editPrice),
+              Number(editPrice || 0),
 
             import_price:
               Number(
-                editImportPrice
+                editImportPrice || 0
               ),
 
             capital_price:
               Number(
-                editCapitalPrice
+                editCapitalPrice || 0
               ),
 
             stock:
-              Number(editStock),
-              tax:
-  Number(editTax),
+              Number(editStock || 0),
+
+            unit:
+              editUnit.trim() || "cái",
+
+            tax:
+              Number(editTax || 0),
 
           }
         );
@@ -359,12 +423,30 @@ export default function ProductsPage() {
 
   const filteredProducts =
     products.filter(
-      (item: any) =>
-        item.name
-          ?.toLowerCase()
-          .includes(
-            search.toLowerCase()
-          )
+      (item: any) => {
+
+        const keyword =
+          search.toLowerCase();
+
+        const itemName =
+          item.name
+            ?.toLowerCase() || "";
+
+        const itemCode =
+          item.product_code
+            ?.toLowerCase() || "";
+
+        const itemLocation =
+          item.product_location
+            ?.toLowerCase() || "";
+
+        return (
+          itemName.includes(keyword) ||
+          itemCode.includes(keyword) ||
+          itemLocation.includes(keyword)
+        );
+
+      }
     );
 
   // LOADING
@@ -393,96 +475,167 @@ export default function ProductsPage() {
 
         <div className="bg-white p-6 rounded-3xl shadow mb-8">
 
-          <div className="grid md:grid-cols-2 gap-4">
+<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
-            <input
-              type="text"
-              placeholder="Tên sản phẩm"
-              className="border p-4 rounded-2xl text-black"
-              value={name}
-              onChange={(e) =>
-                setName(
-                  e.target.value
-                )
-              }
-            />
+  <div className="md:col-span-2">
+    <label className="block mb-2 text-sm font-semibold text-black">
+      Tên sản phẩm <span className="text-red-500">*</span>
+    </label>
 
-            <input
-              type="number"
-              placeholder="Giá bán"
-              className="border p-4 rounded-2xl text-black"
-              value={price}
-              onChange={(e) =>
-                setPrice(
-                  e.target.value
-                )
-              }
-            />
+    <input
+      type="text"
+      placeholder="Nhập tên sản phẩm"
+      className="w-full border p-4 rounded-2xl text-black"
+      value={name}
+      onChange={(e) =>
+        setName(e.target.value)
+      }
+    />
+  </div>
 
-            <input
-              type="number"
-              placeholder="Giá nhập"
-              className="border p-4 rounded-2xl text-black"
-              value={importPrice}
-              onChange={(e) =>
-                setImportPrice(
-                  e.target.value
-                )
-              }
-            />
+  <div className="md:col-span-1">
+    <label className="block mb-2 text-sm font-semibold text-black">
+      Mã sản phẩm
+    </label>
 
-            <input
-              type="number"
-              placeholder="Giá vốn"
-              className="border p-4 rounded-2xl text-black"
-              value={capitalPrice}
-              onChange={(e) =>
-                setCapitalPrice(
-                  e.target.value
-                )
-              }
-            />
+    <input
+      type="text"
+      placeholder="Nhập mã sản phẩm"
+      className="w-full border p-4 rounded-2xl text-black"
+      value={productCode}
+      onChange={(e) =>
+        setProductCode(e.target.value)
+      }
+    />
+  </div>
 
-            <input
-              type="number"
-              placeholder="Tồn kho"
-              className="border p-4 rounded-2xl text-black"
-              value={stock}
-              onChange={(e) =>
-                setStock(
-                  e.target.value
-                )
-              }
-            />
-            <select
-  className="border p-4 rounded-2xl text-black"
-  value={tax}
-  onChange={(e) =>
-    setTax(
-      e.target.value
-    )
-  }
->
+  <div className="md:col-span-1">
+    <label className="block mb-2 text-sm font-semibold text-black">
+      Vị trí sản phẩm
+    </label>
 
-  <option value="">
-    Chọn VAT
-  </option>
+    <input
+      type="text"
+      placeholder="VD: Kệ A1, Ngăn B2"
+      className="w-full border p-4 rounded-2xl text-black"
+      value={productLocation}
+      onChange={(e) =>
+        setProductLocation(e.target.value)
+      }
+    />
+  </div>
 
-  <option value="0">
-    VAT 0%
-  </option>
+  <div className="md:col-span-1">
+    <label className="block mb-2 text-sm font-semibold text-black">
+      Giá bán <span className="text-red-500">*</span>
+    </label>
 
-  <option value="8">
-    VAT 8%
-  </option>
+    <input
+      type="number"
+      placeholder="Nhập giá bán"
+      className="w-full border p-4 rounded-2xl text-black"
+      value={price}
+      onChange={(e) =>
+        setPrice(e.target.value)
+      }
+    />
+  </div>
 
-  <option value="10">
-    VAT 10%
-  </option>
+  <div className="md:col-span-1">
+    <label className="block mb-2 text-sm font-semibold text-black">
+      Giá nhập
+    </label>
 
-</select>
+    <input
+      type="number"
+      placeholder="Nhập giá nhập"
+      className="w-full border p-4 rounded-2xl text-black"
+      value={importPrice}
+      onChange={(e) =>
+        setImportPrice(e.target.value)
+      }
+    />
+  </div>
 
-          </div>
+  <div className="md:col-span-1">
+    <label className="block mb-2 text-sm font-semibold text-black">
+      Giá vốn
+    </label>
+
+    <input
+      type="number"
+      placeholder="Nhập giá vốn"
+      className="w-full border p-4 rounded-2xl text-black"
+      value={costPrice}
+      onChange={(e) =>
+        setCostPrice(e.target.value)
+      }
+    />
+  </div>
+
+  <div className="md:col-span-1">
+    <label className="block mb-2 text-sm font-semibold text-black">
+      Tồn kho <span className="text-red-500">*</span>
+    </label>
+
+    <input
+      type="number"
+      placeholder="Nhập tồn kho"
+      className="w-full border p-4 rounded-2xl text-black"
+      value={stock}
+      onChange={(e) =>
+        setStock(e.target.value)
+      }
+    />
+  </div>
+
+  <div className="md:col-span-1">
+    <label className="block mb-2 text-sm font-semibold text-black">
+      Đơn vị
+    </label>
+
+    <input
+      type="text"
+      placeholder="VD: cái, bộ, mét..."
+      className="w-full border p-4 rounded-2xl text-black"
+      value={unit}
+      onChange={(e) =>
+        setUnit(e.target.value)
+      }
+    />
+  </div>
+
+  <div className="md:col-span-1">
+    <label className="block mb-2 text-sm font-semibold text-black">
+      VAT
+    </label>
+
+    <select
+      className="w-full border p-4 rounded-2xl text-black"
+      value={tax}
+      onChange={(e) =>
+        setTax(e.target.value)
+      }
+    >
+      <option value="">
+        Chọn VAT
+      </option>
+
+      <option value="0">
+        VAT 0%
+      </option>
+
+      <option value="8">
+        VAT 8%
+      </option>
+
+      <option value="10">
+        VAT 10%
+      </option>
+    </select>
+  </div>
+
+</div>
 
           <button
             onClick={addProduct}
@@ -499,7 +652,7 @@ export default function ProductsPage() {
 
           <input
             type="text"
-            placeholder="Tìm kiếm sản phẩm..."
+            placeholder="Tìm theo tên, mã sản phẩm hoặc vị trí..."
             autoComplete="off"
             className="w-full border p-4 rounded-2xl text-black"
             value={search}
@@ -514,9 +667,9 @@ export default function ProductsPage() {
 
         {/* TABLE */}
 
-        <div className="bg-white rounded-3xl shadow overflow-hidden">
+        <div className="bg-white rounded-3xl shadow overflow-x-auto">
 
-          <table className="w-full">
+          <table className="w-full min-w-[1100px]">
 
             <thead className="bg-blue-700 text-white">
 
@@ -524,6 +677,14 @@ export default function ProductsPage() {
 
                 <th className="p-4 text-left">
                   Tên sản phẩm
+                </th>
+
+                <th className="p-4 text-left">
+                  Mã SP
+                </th>
+
+                <th className="p-4 text-left">
+                  Vị trí
                 </th>
 
                 <th className="p-4 text-left">
@@ -540,6 +701,14 @@ export default function ProductsPage() {
 
                 <th className="p-4 text-left">
                   Tồn kho
+                </th>
+
+                <th className="p-4 text-left">
+                  Đơn vị
+                </th>
+
+                <th className="p-4 text-left">
+                  VAT
                 </th>
 
                 <th className="p-4 text-left">
@@ -565,6 +734,14 @@ export default function ProductsPage() {
                     </td>
 
                     <td className="p-4 text-black">
+                      {item.product_code || "---"}
+                    </td>
+
+                    <td className="p-4 text-black">
+                      {item.product_location || "---"}
+                    </td>
+
+                    <td className="p-4 text-black">
                       {Number(
                         item.import_price || 0
                       ).toLocaleString()}đ
@@ -584,6 +761,16 @@ export default function ProductsPage() {
 
                     <td className="p-4 text-black">
                       {item.stock || 0}
+                    </td>
+
+                    <td className="p-4 text-black">
+                      {typeof item.unit === "string"
+                        ? item.unit
+                        : item.unit?.name || "cái"}
+                    </td>
+
+                    <td className="p-4 text-black">
+                      {Number(item.tax || 0)}%
                     </td>
 
                     <td className="p-4">
@@ -635,7 +822,7 @@ export default function ProductsPage() {
 
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
 
-          <div className="bg-white p-8 rounded-3xl w-full max-w-xl">
+          <div className="bg-white p-8 rounded-3xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
 
             <h2 className="text-3xl font-bold mb-6 text-black">
               Sửa sản phẩm
@@ -643,107 +830,203 @@ export default function ProductsPage() {
 
             <div className="space-y-4">
 
-  <div>
+              <div>
 
-    <label className="block mb-2 font-semibold text-black">
-      Tên sản phẩm
-    </label>
+                <label className="block mb-2 font-semibold text-black">
+                  Tên sản phẩm
+                </label>
 
-    <input
-      type="text"
-      placeholder="Tên sản phẩm"
-      className="w-full border p-4 rounded-2xl text-black"
-      value={editName}
-      onChange={(e) =>
-        setEditName(
-          e.target.value
-        )
-      }
-    />
+                <input
+                  type="text"
+                  placeholder="Tên sản phẩm"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={editName}
+                  onChange={(e) =>
+                    setEditName(
+                      e.target.value
+                    )
+                  }
+                />
 
-  </div>
+              </div>
 
-  <div>
+              <div>
 
-    <label className="block mb-2 font-semibold text-black">
-      Giá bán
-    </label>
+                <label className="block mb-2 font-semibold text-black">
+                  Mã sản phẩm
+                </label>
 
-    <input
-      type="number"
-      placeholder="Giá bán"
-      className="w-full border p-4 rounded-2xl text-black"
-      value={editPrice}
-      onChange={(e) =>
-        setEditPrice(
-          e.target.value
-        )
-      }
-    />
+                <input
+                  type="text"
+                  placeholder="VD: SP0001, LED12V..."
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={editProductCode}
+                  onChange={(e) =>
+                    setEditProductCode(
+                      e.target.value
+                    )
+                  }
+                />
 
-  </div>
+              </div>
 
-  <div>
+              <div>
 
-    <label className="block mb-2 font-semibold text-black">
-      Giá nhập
-    </label>
+                <label className="block mb-2 font-semibold text-black">
+                  Vị trí sản phẩm
+                </label>
 
-    <input
-      type="number"
-      placeholder="Giá nhập"
-      className="w-full border p-4 rounded-2xl text-black"
-      value={editImportPrice}
-      onChange={(e) =>
-        setEditImportPrice(
-          e.target.value
-        )
-      }
-    />
+                <input
+                  type="text"
+                  placeholder="VD: Kệ A1, Ngăn B2..."
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={editProductLocation}
+                  onChange={(e) =>
+                    setEditProductLocation(
+                      e.target.value
+                    )
+                  }
+                />
 
-  </div>
+              </div>
 
-  <div>
+              <div>
 
-    <label className="block mb-2 font-semibold text-black">
-      Giá vốn
-    </label>
+                <label className="block mb-2 font-semibold text-black">
+                  Giá bán
+                </label>
 
-    <input
-      type="number"
-      placeholder="Giá vốn"
-      className="w-full border p-4 rounded-2xl text-black"
-      value={editCapitalPrice}
-      onChange={(e) =>
-        setEditCapitalPrice(
-          e.target.value
-        )
-      }
-    />
+                <input
+                  type="number"
+                  placeholder="Giá bán"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={editPrice}
+                  onChange={(e) =>
+                    setEditPrice(
+                      e.target.value
+                    )
+                  }
+                />
 
-  </div>
+              </div>
 
-  <div>
+              <div>
 
-    <label className="block mb-2 font-semibold text-black">
-      Tồn kho
-    </label>
+                <label className="block mb-2 font-semibold text-black">
+                  Giá nhập
+                </label>
 
-    <input
-      type="number"
-      placeholder="Tồn kho"
-      className="w-full border p-4 rounded-2xl text-black"
-      value={editStock}
-      onChange={(e) =>
-        setEditStock(
-          e.target.value
-        )
-      }
-    />
+                <input
+                  type="number"
+                  placeholder="Giá nhập"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={editImportPrice}
+                  onChange={(e) =>
+                    setEditImportPrice(
+                      e.target.value
+                    )
+                  }
+                />
 
-  </div>
+              </div>
 
-</div>
+              <div>
+
+                <label className="block mb-2 font-semibold text-black">
+                  Giá vốn
+                </label>
+
+                <input
+                  type="number"
+                  placeholder="Giá vốn"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={editCapitalPrice}
+                  onChange={(e) =>
+                    setEditCapitalPrice(
+                      e.target.value
+                    )
+                  }
+                />
+
+              </div>
+
+              <div>
+
+                <label className="block mb-2 font-semibold text-black">
+                  Tồn kho
+                </label>
+
+                <input
+                  type="number"
+                  placeholder="Tồn kho"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={editStock}
+                  onChange={(e) =>
+                    setEditStock(
+                      e.target.value
+                    )
+                  }
+                />
+
+              </div>
+
+              <div>
+
+                <label className="block mb-2 font-semibold text-black">
+                  Đơn vị
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="VD: cái, bộ, mét, cuộn..."
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={editUnit}
+                  onChange={(e) =>
+                    setEditUnit(
+                      e.target.value
+                    )
+                  }
+                />
+
+              </div>
+
+              <div>
+
+                <label className="block mb-2 font-semibold text-black">
+                  VAT
+                </label>
+
+                <select
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={editTax}
+                  onChange={(e) =>
+                    setEditTax(
+                      e.target.value
+                    )
+                  }
+                >
+
+                  <option value="">
+                    Chọn VAT
+                  </option>
+
+                  <option value="0">
+                    VAT 0%
+                  </option>
+
+                  <option value="8">
+                    VAT 8%
+                  </option>
+
+                  <option value="10">
+                    VAT 10%
+                  </option>
+
+                </select>
+
+              </div>
+
+            </div>
 
             <div className="flex gap-3 mt-6">
 

@@ -38,6 +38,11 @@ export default function Sidebar() {
       href: "/pos",
     },
 
+      {
+    name: "Mẫu in",
+    href: "/print-template",
+  },
+  
     {
       name: "Sản phẩm",
       href: "/products",

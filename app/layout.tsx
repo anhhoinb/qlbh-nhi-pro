@@ -1,4 +1,8 @@
+"use client";
+
 import "./globals.css";
+
+import { usePathname } from "next/navigation";
 
 import Sidebar from "@/components/Sidebar";
 
@@ -7,6 +11,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
+  const hideSidebar =
+    pathname === "/pos";
 
   return (
     <html lang="vi">
@@ -15,7 +23,7 @@ export default function RootLayout({
 
         <div className="flex">
 
-          <Sidebar />
+          {!hideSidebar && <Sidebar />}
 
           <main className="flex-1">
             {children}
