@@ -1,108 +1,101 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
-import {
-  collection,
-  getDocs,
-} from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
 
-export default function ReportsPage() {
+type OrderItem = {
+  name?: string;
+  productName?: string;
+  quantity?: number;
+  price?: number;
+};
 
-  const [orders, setOrders] =
-    useState<any[]>([]);
+type OrderData = {
+  id: string;
+  total?: number;
+  grand_total?: number;
+  totalAmount?: number;
+  profit?: number;
+  paymentMethod?: string;
+  createdAt?: any;
+  items?: OrderItem[];
+  status?: string;
+};
 
-  const [filteredOrders, setFilteredOrders] =
-    useState<any[]>([]);
+export default function SalesReportPage() {
+  const router = useRouter();
 
-  const [revenue, setRevenue] =
-    useState(0);
+  const [orders, setOrders] = useState<OrderData[]>([]);
+  const [filterType, setFilterType] = useState("7days");
+  const [reportType, setReportType] = useState("daily");
 
-  const [cashRevenue, setCashRevenue] =
-    useState(0);
+  const [hoverChart, setHoverChart] = useState<{
+    index: number;
+    type: "revenue" | "profit";
+  } | null>(null);
 
-  const [bankRevenue, setBankRevenue] =
-    useState(0);
+  const formatMoney = (value: any) => {
+    return Number(value || 0).toLocaleString("vi-VN");
+  };
 
-  const [orderCount, setOrderCount] =
-    useState(0);
+  const getFilterLabel = () => {
+    if (filterType === "today") return "Hôm nay";
+    if (filterType === "yesterday") return "Hôm qua";
+    if (filterType === "7days") return "7 ngày qua";
+    if (filterType === "month") return "Tháng này";
+    if (filterType === "lastMonth") return "Tháng trước";
+    if (filterType === "q1") return "Quý 1";
+    if (filterType === "q2") return "Quý 2";
+    if (filterType === "q3") return "Quý 3";
+    if (filterType === "q4") return "Quý 4";
+    if (filterType === "year") return "Năm nay";
+    if (filterType === "lastYear") return "Năm trước";
 
-  const [todayRevenue, setTodayRevenue] =
-    useState(0);
+    return "Tất cả";
+  };
 
-  const [topProducts, setTopProducts] =
-    useState<any[]>([]);
-
-  const [filterType, setFilterType] =
-    useState("today");
-
-  const [fromDate, setFromDate] =
-    useState("");
-
-  const [toDate, setToDate] =
-    useState("");
-
-  const [selectedOrder, setSelectedOrder] =
-    useState<any>(null);
-
-  const getOrderDate = (order: any) => {
-
-    if (!order.createdAt) {
-      return null;
-    }
+  const getOrderDate = (order: OrderData) => {
+    if (!order.createdAt) return null;
 
     if (order.createdAt.toDate) {
       return order.createdAt.toDate();
     }
 
     if (order.createdAt.seconds) {
-      return new Date(
-        order.createdAt.seconds * 1000
-      );
+      return new Date(order.createdAt.seconds * 1000);
     }
 
-    return new Date(order.createdAt);
+    const date = new Date(order.createdAt);
+
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    return date;
   };
 
-  const formatDateTime = (order: any) => {
-
-    const date = getOrderDate(order);
-
-    if (!date) {
-      return "Chưa có giờ";
-    }
-
-    return date.toLocaleString(
-      "vi-VN",
-      {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }
+  const getOrderTotal = (order: OrderData) => {
+    return Number(
+      order.total ||
+        order.grand_total ||
+        order.totalAmount ||
+        0
     );
   };
 
-  const getOrderCode = (order: any) => {
+  const getOrderProfit = (order: OrderData) => {
+    if (order.profit !== undefined) {
+      return Number(order.profit || 0);
+    }
 
-    return (
-      order.orderCode ||
-      order.orderCodePam ||
-      order.displayOrderCode ||
-      order.code ||
-      order.id ||
-      "Không có mã"
-    );
+    return Math.round(getOrderTotal(order) * 0.35);
   };
 
-  const isSameDay = (
-    date1: Date,
-    date2: Date
-  ) => {
+  const isSameDay = (date1: Date, date2: Date) => {
     return (
       date1.getDate() === date2.getDate() &&
       date1.getMonth() === date2.getMonth() &&
@@ -110,800 +103,760 @@ export default function ReportsPage() {
     );
   };
 
-  const getPaymentMethodText = (order: any) => {
+  const isInQuarter = (
+    date: Date,
+    quarter: number,
+    year: number
+  ) => {
+    const month = date.getMonth();
+    const startMonth = (quarter - 1) * 3;
+    const endMonth = startMonth + 2;
 
-    if (
-      order.paymentMethod === "bank" ||
-      order.paymentMethod === "Chuyển khoản"
-    ) {
-      return "Chuyển khoản";
-    }
-
-    if (
-      order.paymentMethod === "cash" ||
-      order.paymentMethod === "Tiền mặt"
-    ) {
-      return "Tiền mặt";
-    }
-
-    return "Chưa có";
+    return (
+      date.getFullYear() === year &&
+      month >= startMonth &&
+      month <= endMonth
+    );
   };
 
-  const applyFilter = (
-    list: any[],
-    type: string,
-    from: string,
-    to: string
-  ) => {
-
+  const filterOrders = (list: OrderData[]) => {
     const now = new Date();
 
-    const result =
-      list.filter((order) => {
+    return list.filter((order) => {
+      const orderDate = getOrderDate(order);
 
-        const orderDate =
-          getOrderDate(order);
+      if (!orderDate) return false;
 
-        if (!orderDate) {
-          return false;
-        }
-
-        if (type === "today") {
-          return isSameDay(
-            orderDate,
-            now
-          );
-        }
-
-        if (type === "month") {
-          return (
-            orderDate.getMonth() ===
-              now.getMonth() &&
-            orderDate.getFullYear() ===
-              now.getFullYear()
-          );
-        }
-
-        if (type === "year") {
-          return (
-            orderDate.getFullYear() ===
-            now.getFullYear()
-          );
-        }
-
-        if (type === "custom") {
-
-          if (!from || !to) {
-            return true;
-          }
-
-          const fromTime =
-            new Date(from);
-
-          const toTime =
-            new Date(to);
-
-          fromTime.setHours(
-            0,
-            0,
-            0,
-            0
-          );
-
-          toTime.setHours(
-            23,
-            59,
-            59,
-            999
-          );
-
-          return (
-            orderDate >= fromTime &&
-            orderDate <= toTime
-          );
-        }
-
-        return true;
-      });
-
-    setFilteredOrders(result);
-
-    calculateSummary(result);
-  };
-
-  const calculateSummary = (
-    list: any[]
-  ) => {
-
-    let totalRevenue = 0;
-
-    let cashTotal = 0;
-
-    let bankTotal = 0;
-
-    const productMap: any = {};
-
-    list.forEach((order) => {
-
-      const orderTotal =
-        Number(order.total || 0);
-
-      totalRevenue += orderTotal;
-
-      const paymentText =
-        getPaymentMethodText(order);
-
-      if (paymentText === "Tiền mặt") {
-        cashTotal += orderTotal;
+      if (filterType === "today") {
+        return isSameDay(orderDate, now);
       }
 
-      if (paymentText === "Chuyển khoản") {
-        bankTotal += orderTotal;
+      if (filterType === "yesterday") {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        return isSameDay(orderDate, yesterday);
       }
 
-      if (order.items) {
+      if (filterType === "7days") {
+        const start = new Date();
+        start.setDate(start.getDate() - 6);
+        start.setHours(0, 0, 0, 0);
 
-        order.items.forEach(
-          (item: any) => {
+        return orderDate >= start;
+      }
 
-            if (!productMap[item.name]) {
-              productMap[item.name] = 0;
-            }
+      if (filterType === "month") {
+        return (
+          orderDate.getMonth() === now.getMonth() &&
+          orderDate.getFullYear() === now.getFullYear()
+        );
+      }
 
-            productMap[item.name] +=
-              Number(item.quantity || 0);
-
-          }
+      if (filterType === "lastMonth") {
+        const lastMonth = new Date(
+          now.getFullYear(),
+          now.getMonth() - 1,
+          1
         );
 
+        return (
+          orderDate.getMonth() === lastMonth.getMonth() &&
+          orderDate.getFullYear() === lastMonth.getFullYear()
+        );
       }
 
+      if (filterType === "q1") {
+        return isInQuarter(orderDate, 1, now.getFullYear());
+      }
+
+      if (filterType === "q2") {
+        return isInQuarter(orderDate, 2, now.getFullYear());
+      }
+
+      if (filterType === "q3") {
+        return isInQuarter(orderDate, 3, now.getFullYear());
+      }
+
+      if (filterType === "q4") {
+        return isInQuarter(orderDate, 4, now.getFullYear());
+      }
+
+      if (filterType === "year") {
+        return orderDate.getFullYear() === now.getFullYear();
+      }
+
+      if (filterType === "lastYear") {
+        return orderDate.getFullYear() === now.getFullYear() - 1;
+      }
+
+      return true;
     });
-
-    const sortedProducts =
-      Object.entries(productMap)
-        .map(([name, qty]) => ({
-          name,
-          qty,
-        }))
-        .sort(
-          (a: any, b: any) =>
-            b.qty - a.qty
-        )
-        .slice(0, 5);
-
-    setRevenue(totalRevenue);
-
-    setCashRevenue(cashTotal);
-
-    setBankRevenue(bankTotal);
-
-    setOrderCount(list.length);
-
-    setTopProducts(sortedProducts);
   };
 
-  const loadReports = async () => {
+  const filteredOrders = useMemo(() => {
+    return filterOrders(orders);
+  }, [orders, filterType]);
 
-    const querySnapshot =
-      await getDocs(
-        collection(db, "orders")
+  const totalRevenue = filteredOrders.reduce(
+    (sum, order) => sum + getOrderTotal(order),
+    0
+  );
+
+  const totalOrders = filteredOrders.length;
+
+  const returnedOrders = filteredOrders.filter(
+    (order) =>
+      order.status === "returned" ||
+      order.status === "return"
+  ).length;
+
+  const getChartDays = () => {
+    const now = new Date();
+
+    const days: {
+      label: string;
+      date: Date;
+      revenue: number;
+      profit: number;
+    }[] = [];
+
+    if (filterType === "today") {
+      days.push({
+        label: now.toLocaleDateString("vi-VN", {
+          day: "2-digit",
+          month: "2-digit",
+        }),
+        date: now,
+        revenue: 0,
+        profit: 0,
+      });
+
+      return days;
+    }
+
+    if (filterType === "yesterday") {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      days.push({
+        label: yesterday.toLocaleDateString("vi-VN", {
+          day: "2-digit",
+          month: "2-digit",
+        }),
+        date: yesterday,
+        revenue: 0,
+        profit: 0,
+      });
+
+      return days;
+    }
+
+    if (filterType === "month") {
+      const totalDays = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        0
+      ).getDate();
+
+      for (let day = 1; day <= totalDays; day++) {
+        const d = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          day
+        );
+
+        days.push({
+          label: `${String(day).padStart(2, "0")}/${String(
+            now.getMonth() + 1
+          ).padStart(2, "0")}`,
+          date: d,
+          revenue: 0,
+          profit: 0,
+        });
+      }
+
+      return days;
+    }
+
+    if (filterType === "lastMonth") {
+      const lastMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        1
       );
 
-    const data: any[] = [];
+      const totalDays = new Date(
+        lastMonth.getFullYear(),
+        lastMonth.getMonth() + 1,
+        0
+      ).getDate();
 
-    querySnapshot.forEach((docItem) => {
+      for (let day = 1; day <= totalDays; day++) {
+        const d = new Date(
+          lastMonth.getFullYear(),
+          lastMonth.getMonth(),
+          day
+        );
 
-      const order = {
-        id: docItem.id,
-        ...docItem.data(),
-      };
+        days.push({
+          label: `${String(day).padStart(2, "0")}/${String(
+            lastMonth.getMonth() + 1
+          ).padStart(2, "0")}`,
+          date: d,
+          revenue: 0,
+          profit: 0,
+        });
+      }
 
-      data.push(order);
+      return days;
+    }
 
+    if (
+      filterType === "q1" ||
+      filterType === "q2" ||
+      filterType === "q3" ||
+      filterType === "q4"
+    ) {
+      const quarterNumber = Number(filterType.replace("q", ""));
+      const startMonth = (quarterNumber - 1) * 3;
+
+      for (let month = startMonth; month < startMonth + 3; month++) {
+        const d = new Date(now.getFullYear(), month, 1);
+
+        days.push({
+          label: `T${month + 1}`,
+          date: d,
+          revenue: 0,
+          profit: 0,
+        });
+      }
+
+      return days;
+    }
+
+    if (filterType === "year" || filterType === "lastYear") {
+      const year =
+        filterType === "lastYear"
+          ? now.getFullYear() - 1
+          : now.getFullYear();
+
+      for (let month = 0; month < 12; month++) {
+        const d = new Date(year, month, 1);
+
+        days.push({
+          label: `T${month + 1}`,
+          date: d,
+          revenue: 0,
+          profit: 0,
+        });
+      }
+
+      return days;
+    }
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(now.getDate() - i);
+
+      days.push({
+        label: d.toLocaleDateString("vi-VN", {
+          day: "2-digit",
+          month: "2-digit",
+        }),
+        date: d,
+        revenue: 0,
+        profit: 0,
+      });
+    }
+
+    return days;
+  };
+
+  const chartData = useMemo(() => {
+    const days = getChartDays();
+
+    filteredOrders.forEach((order) => {
+      const orderDate = getOrderDate(order);
+
+      if (!orderDate) return;
+
+      let found:
+        | {
+            label: string;
+            date: Date;
+            revenue: number;
+            profit: number;
+          }
+        | undefined;
+
+      if (
+        filterType === "q1" ||
+        filterType === "q2" ||
+        filterType === "q3" ||
+        filterType === "q4" ||
+        filterType === "year" ||
+        filterType === "lastYear"
+      ) {
+        found = days.find(
+          (day) =>
+            day.date.getMonth() === orderDate.getMonth() &&
+            day.date.getFullYear() === orderDate.getFullYear()
+        );
+      } else {
+        found = days.find((day) =>
+          isSameDay(day.date, orderDate)
+        );
+      }
+
+      if (found) {
+        found.revenue += getOrderTotal(order);
+        found.profit += getOrderProfit(order);
+      }
     });
 
-    data.sort((a, b) => {
+    return days;
+  }, [filteredOrders, filterType]);
 
-      const dateA =
-        getOrderDate(a)?.getTime() || 0;
+  const maxChartValue = Math.max(
+    ...chartData.map((item) =>
+      Math.max(item.revenue, item.profit)
+    ),
+    1
+  );
 
-      const dateB =
-        getOrderDate(b)?.getTime() || 0;
+  const chartStep = 500000;
 
-      return dateB - dateA;
+  const chartMax = Math.max(
+    chartStep,
+    Math.ceil(maxChartValue / chartStep) * chartStep
+  );
 
+  const chartLevels = Array.from(
+    {
+      length: chartMax / chartStep + 1,
+    },
+    (_, index) => chartMax - index * chartStep
+  );
+
+  const loadOrders = async () => {
+    const querySnapshot = await getDocs(collection(db, "orders"));
+
+    const data: OrderData[] = [];
+
+    querySnapshot.forEach((docItem) => {
+      data.push({
+        id: docItem.id,
+        ...docItem.data(),
+      } as OrderData);
     });
 
     setOrders(data);
-
-    const today =
-      new Date();
-
-    const todayTotal =
-      data.reduce(
-        (sum, order) => {
-
-          const orderDate =
-            getOrderDate(order);
-
-          if (
-            orderDate &&
-            isSameDay(
-              orderDate,
-              today
-            )
-          ) {
-            return (
-              sum +
-              Number(order.total || 0)
-            );
-          }
-
-          return sum;
-        },
-        0
-      );
-
-    setTodayRevenue(todayTotal);
-
-    applyFilter(
-      data,
-      filterType,
-      fromDate,
-      toDate
-    );
   };
 
   useEffect(() => {
-
-    loadReports();
-
+    loadOrders();
   }, []);
 
-  useEffect(() => {
-
-    applyFilter(
-      orders,
-      filterType,
-      fromDate,
-      toDate
-    );
-
-  }, [
-    filterType,
-    fromDate,
-    toDate,
-    orders,
-  ]);
+  const goToReport = (path: string) => {
+    router.push(path);
+  };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6 text-black">
+    <main className="min-h-screen bg-gray-100 p-5 text-black">
+      <div className="max-w-[1700px] mx-auto space-y-5">
 
-      <h1 className="text-4xl font-bold text-blue-700 mb-8">
-        Báo cáo doanh thu
-      </h1>
+        {/* TOP ACTION */}
+        <div className="flex justify-end">
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded font-semibold">
+            + Thêm báo cáo
+          </button>
+        </div>
 
-      <div className="bg-white rounded-3xl shadow p-6 mb-8">
+        {/* FILTER */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <h1 className="text-2xl font-bold text-gray-800">
+            Báo cáo bán hàng
+          </h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="border bg-white rounded px-4 py-2 outline-none w-full md:w-60"
+          >
+            <option value="today">Hôm nay</option>
+            <option value="yesterday">Hôm qua</option>
+            <option value="7days">7 ngày qua</option>
+            <option value="month">Tháng này</option>
+            <option value="lastMonth">Tháng trước</option>
+            <option value="q1">Quý 1</option>
+            <option value="q2">Quý 2</option>
+            <option value="q3">Quý 3</option>
+            <option value="q4">Quý 4</option>
+            <option value="year">Năm nay</option>
+            <option value="lastYear">Năm ngoái</option>
+            <option value="all">Tất cả</option>
+          </select>
+        </div>
 
-          <div>
-            <label className="block mb-2 font-semibold">
-              Lọc báo cáo
-            </label>
+        {/* REVENUE CHART FULL WIDTH */}
+        <section className="bg-white p-5 rounded shadow-sm">
+          <div className="flex items-start justify-between border-b pb-3 mb-4">
+            <div>
+              <h2 className="font-bold uppercase tracking-wide">
+                Doanh thu cửa hàng
+              </h2>
+
+              <p className="text-gray-500 text-sm">
+                {getFilterLabel()}
+              </p>
+            </div>
+
+            <div className="text-3xl font-bold text-blue-600">
+              {formatMoney(totalRevenue)}
+            </div>
+          </div>
+
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-blue-600 font-semibold text-sm">
+              Theo ngày giao hàng
+            </span>
 
             <select
-              className="w-full border p-3 rounded-xl"
               value={filterType}
-              onChange={(e) =>
-                setFilterType(
-                  e.target.value
-                )
-              }
+              onChange={(e) => setFilterType(e.target.value)}
+              className="text-blue-600 font-semibold text-sm bg-transparent outline-none cursor-pointer"
             >
-              <option value="today">
-                Hôm nay
-              </option>
-
-              <option value="month">
-                Tháng này
-              </option>
-
-              <option value="year">
-                Năm này
-              </option>
-
-              <option value="custom">
-                Tùy chọn
-              </option>
-
-              <option value="all">
-                Tất cả
-              </option>
+              <option value="today">Hôm nay</option>
+              <option value="yesterday">Hôm qua</option>
+              <option value="7days">7 ngày qua</option>
+              <option value="month">Tháng này</option>
+              <option value="lastMonth">Tháng trước</option>
+              <option value="q1">Quý 1</option>
+              <option value="q2">Quý 2</option>
+              <option value="q3">Quý 3</option>
+              <option value="q4">Quý 4</option>
+              <option value="year">Năm nay</option>
+              <option value="lastYear">Năm ngoái</option>
+              <option value="all">Tất cả</option>
             </select>
           </div>
 
-          {filterType === "custom" && (
-            <>
-
-              <div>
-                <label className="block mb-2 font-semibold">
-                  Từ ngày
-                </label>
-
-                <input
-                  type="date"
-                  className="w-full border p-3 rounded-xl"
-                  value={fromDate}
-                  onChange={(e) =>
-                    setFromDate(
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-semibold">
-                  Đến ngày
-                </label>
-
-                <input
-                  type="date"
-                  className="w-full border p-3 rounded-xl"
-                  value={toDate}
-                  onChange={(e) =>
-                    setToDate(
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-
-            </>
-          )}
-
-          <div className="flex items-end">
-            <button
-              onClick={loadReports}
-              className="w-full bg-blue-600 text-white p-3 rounded-xl font-semibold"
-            >
-              Tải lại báo cáo
-            </button>
-          </div>
-
-        </div>
-
-      </div>
-
-      <div className="grid md:grid-cols-4 gap-6 mb-8">
-
-        <div className="bg-white p-6 rounded-3xl shadow">
-
-          <h2 className="text-gray-500">
-            Tổng doanh thu
-          </h2>
-
-          <p className="text-3xl font-bold text-blue-700 mt-3">
-            {revenue.toLocaleString()}đ
-          </p>
-
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl shadow">
-
-          <h2 className="text-gray-500">
-            Tiền mặt
-          </h2>
-
-          <p className="text-3xl font-bold text-green-600 mt-3">
-            {cashRevenue.toLocaleString()}đ
-          </p>
-
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl shadow">
-
-          <h2 className="text-gray-500">
-            Chuyển khoản
-          </h2>
-
-          <p className="text-3xl font-bold text-purple-600 mt-3">
-            {bankRevenue.toLocaleString()}đ
-          </p>
-
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl shadow">
-
-          <h2 className="text-gray-500">
-            Số đơn hàng
-          </h2>
-
-          <p className="text-3xl font-bold text-orange-600 mt-3">
-            {orderCount}
-          </p>
-
-        </div>
-
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
-
-        <div className="bg-white p-6 rounded-3xl shadow">
-
-          <h2 className="text-gray-500">
-            Doanh thu hôm nay
-          </h2>
-
-          <p className="text-3xl font-bold text-green-600 mt-3">
-            {todayRevenue.toLocaleString()}đ
-          </p>
-
-        </div>
-
-        <div className="bg-white rounded-3xl shadow p-6">
-
-          <h2 className="text-2xl font-bold mb-6">
-            Top sản phẩm bán chạy
-          </h2>
-
-          <div className="space-y-4">
-
-            {topProducts.map(
-              (item, index) => (
-
-                <div
-                  key={index}
-                  className="flex justify-between border-b pb-3"
-                >
-
-                  <span className="font-semibold">
-                    {item.name}
-                  </span>
-
-                  <span className="text-blue-700 font-bold">
-                    {item.qty} sản phẩm
-                  </span>
-
-                </div>
-
-              )
-            )}
-
-            {topProducts.length === 0 && (
-              <p className="text-gray-500">
-                Chưa có dữ liệu sản phẩm
-              </p>
-            )}
-
-          </div>
-
-        </div>
-
-      </div>
-
-      <div className="bg-white rounded-3xl shadow p-6">
-
-        <h2 className="text-2xl font-bold mb-6">
-          Danh sách đơn hàng
-        </h2>
-
-        <div className="overflow-x-auto">
-
-          <table className="w-full border-collapse">
-
-            <thead>
-
-              <tr className="border-b bg-gray-50">
-
-                <th className="text-left p-3">
-                  Mã đơn
-                </th>
-
-                <th className="text-left p-3">
-                  Ngày giờ
-                </th>
-
-                <th className="text-left p-3">
-                  Thanh toán
-                </th>
-
-                <th className="text-right p-3">
-                  Tổng tiền
-                </th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {filteredOrders.map(
-                (order, index) => {
-
-                  return (
-                    <tr
-                      key={
-                        order.id || index
-                      }
-                      className="border-b hover:bg-gray-50"
-                    >
-
-                      <td className="p-3">
-                        <button
-                          onClick={() =>
-                            setSelectedOrder(order)
-                          }
-                          className="text-blue-700 font-bold hover:underline"
-                        >
-                          {getOrderCode(order)}
-                        </button>
-                      </td>
-
-                      <td className="p-3">
-                        {formatDateTime(order)}
-                      </td>
-
-                      <td className="p-3">
-                        {getPaymentMethodText(
-                          order
-                        )}
-                      </td>
-
-                      <td className="p-3 text-right font-semibold">
-                        {Number(
-                          order.total || 0
-                        ).toLocaleString()}
-                        đ
-                      </td>
-
-                    </tr>
-                  );
-                }
-              )}
-
-              {filteredOrders.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="p-6 text-center text-gray-500"
+          <div className="relative mt-4">
+            <div className="flex h-[300px]">
+
+              {/* CỘT MỨC DOANH THU BÊN TRÁI */}
+              <div className="w-[85px] h-[230px] relative text-xs text-gray-600">
+                {chartLevels.map((level, index) => (
+                  <div
+                    key={index}
+                    className="absolute right-2 -translate-y-1/2"
+                    style={{
+                      top: `${(index / (chartLevels.length - 1)) * 100}%`,
+                    }}
                   >
-                    Không có đơn hàng trong khoảng thời gian này
-                  </td>
-                </tr>
-              )}
+                    {formatMoney(level)}
+                  </div>
+                ))}
+              </div>
 
-            </tbody>
+              {/* KHU VỰC BIỂU ĐỒ */}
+              <div className="flex-1 overflow-x-auto pb-3">
+                <div className="relative min-w-[1000px] h-[230px] border-b border-gray-300">
 
-          </table>
+                  {/* ĐƯỜNG NGANG THEO MỨC DOANH THU */}
+                  {chartLevels.map((level, index) => (
+                    <div
+                      key={index}
+                      className="absolute left-0 right-0 border-t border-gray-100"
+                      style={{
+                        top: `${(index / (chartLevels.length - 1)) * 100}%`,
+                      }}
+                    />
+                  ))}
 
-        </div>
+                  {/* CỘT DOANH THU + LỢI NHUẬN */}
+                  <div className="absolute inset-0 flex items-end justify-between px-8">
+                    {chartData.map((item, index) => {
+                      const chartInnerHeight = 210;
 
-      </div>
+                      const revenueHeight =
+                        chartMax > 0
+                          ? (item.revenue / chartMax) * chartInnerHeight
+                          : 0;
 
-      {selectedOrder && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+                      const profitHeight =
+                        chartMax > 0
+                          ? (item.profit / chartMax) * chartInnerHeight
+                          : 0;
 
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+                      const tooltipBottom =
+                        Math.max(
+                          Math.max(revenueHeight, profitHeight) - 45,
+                          28
+                        );
 
-            <div className="flex justify-between items-start mb-6">
+                      return (
+                        <div
+                          key={index}
+                          className="relative flex flex-col items-center justify-end h-full min-w-[70px]"
+                        >
+                          {hoverChart && hoverChart.index === index && (
+                            <div
+                              className="absolute left-1/2 -translate-x-1/2 z-30 bg-white border border-gray-300 shadow-lg rounded px-3 py-2 text-sm whitespace-nowrap"
+                              style={{
+                                bottom: `${tooltipBottom}px`,
+                              }}
+                            >
+                              <div className="font-semibold text-gray-800 mb-1">
+                                {item.label}
+                              </div>
 
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                                <span>
+                                  Doanh thu:{" "}
+                                  <b>{formatMoney(item.revenue)}</b>
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-green-500" />
+                                <span>
+                                  Lợi nhuận:{" "}
+                                  <b>{formatMoney(item.profit)}</b>
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-end gap-2 h-[210px]">
+                            <div
+                              className="w-10 bg-blue-400 hover:bg-blue-500 cursor-pointer transition"
+                              style={{
+                                height: `${Math.max(
+                                  item.revenue > 0 ? 4 : 2,
+                                  revenueHeight
+                                )}px`,
+                              }}
+                              onMouseEnter={() =>
+                                setHoverChart({
+                                  index,
+                                  type: "revenue",
+                                })
+                              }
+                              onMouseLeave={() => setHoverChart(null)}
+                            />
+
+                            <div
+                              className="w-4 bg-green-500 hover:bg-green-600 cursor-pointer transition"
+                              style={{
+                                height: `${Math.max(
+                                  item.profit > 0 ? 4 : 2,
+                                  profitHeight
+                                )}px`,
+                              }}
+                              onMouseEnter={() =>
+                                setHoverChart({
+                                  index,
+                                  type: "profit",
+                                })
+                              }
+                              onMouseLeave={() => setHoverChart(null)}
+                            />
+                          </div>
+
+                          <div className="absolute -bottom-7 text-xs text-gray-700 whitespace-nowrap">
+                            {item.label}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-center gap-8 mt-3 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="w-5 h-3 bg-blue-400 inline-block" />
+              Doanh thu
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="w-5 h-3 bg-green-500 inline-block" />
+              Lợi nhuận
+            </div>
+          </div>
+
+          <select
+            value={reportType}
+            onChange={(e) => setReportType(e.target.value)}
+            className="w-full border rounded mt-5 p-3 outline-none"
+          >
+            <option value="daily">Chọn loại báo cáo</option>
+            <option value="revenue">Báo cáo doanh thu</option>
+            <option value="profit">Báo cáo lợi nhuận</option>
+          </select>
+
+          <div className="text-yellow-500 text-sm mt-3">
+            ● Gợi ý
+          </div>
+        </section>
+
+        {/* BOTTOM GRID */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+          <section className="bg-white p-5 rounded shadow-sm min-h-56">
+            <div className="flex justify-between border-b pb-3 mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-blue-700">
-                  Chi tiết đơn hàng
+                <h2 className="font-bold uppercase">
+                  Trả hàng
                 </h2>
 
-                <p className="mt-2 text-gray-600">
-                  Mã đơn:{" "}
-                  <span className="font-bold text-black">
-                    {getOrderCode(selectedOrder)}
-                  </span>
-                </p>
-
-                <p className="text-gray-600">
-                  Ngày giờ:{" "}
-                  <span className="font-semibold text-black">
-                    {formatDateTime(selectedOrder)}
-                  </span>
-                </p>
-
-                <p className="text-gray-600">
-                  Thanh toán:{" "}
-                  <span className="font-semibold text-black">
-                    {getPaymentMethodText(selectedOrder)}
-                  </span>
+                <p className="text-gray-500 text-sm">
+                  {getFilterLabel()}
                 </p>
               </div>
 
+              <div className="text-3xl font-bold text-blue-600">
+                {returnedOrders}
+              </div>
+            </div>
+
+            <div className="space-y-4 text-gray-700">
               <button
-                onClick={() =>
-                  setSelectedOrder(null)
-                }
-                className="bg-red-500 text-white px-4 py-2 rounded-xl font-semibold"
+                type="button"
+                onClick={() => goToReport("/reports/returns/orders")}
+                className="block hover:text-blue-600"
               >
-                Đóng
+                ▣ Trả hàng theo đơn hàng
               </button>
 
+              <button
+                type="button"
+                onClick={() => goToReport("/reports/returns/products")}
+                className="block hover:text-blue-600"
+              >
+                ◈ Trả hàng theo sản phẩm
+              </button>
             </div>
+          </section>
 
-            <div className="overflow-x-auto">
+          <section className="bg-white p-5 rounded shadow-sm min-h-56">
+            <div className="flex justify-between border-b pb-3 mb-4">
+              <div>
+                <h2 className="font-bold uppercase">
+                  Thanh toán
+                </h2>
 
-              <table className="w-full border-collapse">
-
-                <thead>
-
-                  <tr className="border-b bg-gray-50">
-
-                    <th className="text-left p-3">
-                      STT
-                    </th>
-
-                    <th className="text-left p-3">
-                      Sản phẩm
-                    </th>
-
-                    <th className="text-left p-3">
-                      Mã SP
-                    </th>
-
-                    <th className="text-right p-3">
-                      SL
-                    </th>
-
-                    <th className="text-right p-3">
-                      Giá
-                    </th>
-
-                    <th className="text-right p-3">
-                      VAT
-                    </th>
-
-                    <th className="text-right p-3">
-                      Thành tiền
-                    </th>
-
-                  </tr>
-
-                </thead>
-
-                <tbody>
-
-                  {selectedOrder.items &&
-                    selectedOrder.items.map(
-                      (item: any, index: number) => {
-
-                        const price =
-                          Number(item.price || 0);
-
-                        const quantity =
-                          Number(item.quantity || 0);
-
-                        const tax =
-                          Number(item.tax || 0);
-
-                        const itemTotal =
-                          price * quantity;
-
-                        const itemVat =
-                          itemTotal * tax / 100;
-
-                        const finalTotal =
-                          itemTotal + itemVat;
-
-                        return (
-                          <tr
-                            key={index}
-                            className="border-b"
-                          >
-
-                            <td className="p-3">
-                              {index + 1}
-                            </td>
-
-                            <td className="p-3 font-semibold">
-                              {item.name}
-                            </td>
-
-                            <td className="p-3">
-                              {item.product_code ||
-                                item.productCode ||
-                                ""}
-                            </td>
-
-                            <td className="p-3 text-right">
-                              {quantity}{" "}
-                              {item.unit || ""}
-                            </td>
-
-                            <td className="p-3 text-right">
-                              {price.toLocaleString()}đ
-                            </td>
-
-                            <td className="p-3 text-right">
-                              {tax}%
-                            </td>
-
-                            <td className="p-3 text-right font-bold">
-                              {finalTotal.toLocaleString()}đ
-                            </td>
-
-                          </tr>
-                        );
-                      }
-                    )}
-
-                  {(!selectedOrder.items ||
-                    selectedOrder.items.length === 0) && (
-                    <tr>
-                      <td
-                        colSpan={7}
-                        className="p-6 text-center text-gray-500"
-                      >
-                        Đơn hàng này chưa có danh sách sản phẩm
-                      </td>
-                    </tr>
-                  )}
-
-                </tbody>
-
-              </table>
-
-            </div>
-
-            <div className="mt-6 flex justify-end">
-
-              <div className="w-full md:w-80 space-y-2 text-right">
-
-                <div className="flex justify-between">
-                  <span>
-                    Tạm tính:
-                  </span>
-
-                  <span className="font-semibold">
-                    {Number(
-                      selectedOrder.subtotal || 0
-                    ).toLocaleString()}
-                    đ
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span>
-                    VAT:
-                  </span>
-
-                  <span className="font-semibold">
-                    {Number(
-                      selectedOrder.vatAmount || 0
-                    ).toLocaleString()}
-                    đ
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-xl font-bold text-blue-700 border-t pt-3">
-                  <span>
-                    Tổng cộng:
-                  </span>
-
-                  <span>
-                    {Number(
-                      selectedOrder.total || 0
-                    ).toLocaleString()}
-                    đ
-                  </span>
-                </div>
-
+                <p className="text-gray-500 text-sm">
+                  {getFilterLabel()}
+                </p>
               </div>
 
+              <div className="text-3xl font-bold text-blue-600">
+                {formatMoney(totalRevenue)}
+              </div>
             </div>
 
-          </div>
+            <div className="space-y-4 text-gray-700">
+              <button
+                type="button"
+                onClick={() => goToReport("/reports/finance")}
+                className="block hover:text-blue-600"
+              >
+                ▣ Báo cáo thanh toán theo thời gian
+              </button>
+
+              <button
+                type="button"
+                onClick={() => goToReport("/reports/finance")}
+                className="block hover:text-blue-600"
+              >
+                ▣ Báo cáo thanh toán theo nhân viên
+              </button>
+
+              <button
+                type="button"
+                onClick={() => goToReport("/reports/finance")}
+                className="block hover:text-blue-600"
+              >
+                ▣ Báo cáo theo phương thức thanh toán
+              </button>
+
+              <button
+                type="button"
+                onClick={() => goToReport("/reports/finance")}
+                className="block hover:text-blue-600"
+              >
+                ♙ Báo cáo thanh toán theo chi nhánh
+              </button>
+            </div>
+          </section>
+
+          <section className="bg-white p-5 rounded shadow-sm min-h-56">
+            <div className="flex justify-between border-b pb-3 mb-4">
+              <div>
+                <h2 className="font-bold uppercase">
+                  Đơn hàng
+                </h2>
+
+                <p className="text-gray-500 text-sm">
+                  {getFilterLabel()}
+                </p>
+              </div>
+
+              <div className="text-3xl font-bold text-blue-600">
+                {totalOrders}
+              </div>
+            </div>
+
+            <div className="space-y-4 text-gray-700">
+              <button
+                type="button"
+                onClick={() => goToReport("/reports/orders")}
+                className="block hover:text-blue-600"
+              >
+                ▣ Báo cáo thống kê theo đơn hàng
+                <span className="ml-2 text-xs bg-red-500 text-white px-1 rounded">
+                  New
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => goToReport("/reports/products")}
+                className="block hover:text-blue-600"
+              >
+                ▣ Báo cáo thống kê theo sản phẩm
+              </button>
+
+              <button
+                type="button"
+                onClick={() => goToReport("/reports/sales-detail")}
+                className="block hover:text-blue-600"
+              >
+                ▣ Báo cáo bán hàng chi tiết
+              </button>
+            </div>
+          </section>
 
         </div>
-      )}
 
+        {/* CUSTOM REPORT */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">
+            Báo cáo tùy chỉnh
+          </h2>
+
+          <button className="text-gray-600">
+            Tất cả ▾
+          </button>
+        </div>
+
+      </div>
     </main>
   );
 }

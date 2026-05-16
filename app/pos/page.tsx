@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   collection,
@@ -26,16 +26,36 @@ import {
 type OrderTab = {
   id: number;
   cart: any[];
+  customer: any | null;
   useProductVat: boolean;
   paymentMethod: string;
   customerPay: string;
   search: string;
   barcode: string;
   showProductDropdown: boolean;
+  discountType: "percent" | "value";
+  discountValue: string;
+  discountCode: string;
+  splitPayment: {
+    cash: string;
+    bank: string;
+  };
 };
 
 export default function POSPage() {
   const router = useRouter();
+
+  const productSearchRef =
+    useRef<HTMLInputElement | null>(null);
+
+  const customerSearchRef =
+    useRef<HTMLInputElement | null>(null);
+
+  const customerPayRef =
+    useRef<HTMLInputElement | null>(null);
+
+  const paymentMethodRef =
+    useRef<HTMLSelectElement | null>(null);
 
   const formatMoney = (value: any) => {
     return new Intl.NumberFormat("vi-VN").format(
@@ -46,12 +66,20 @@ export default function POSPage() {
   const createEmptyOrder = (id: number): OrderTab => ({
     id,
     cart: [],
+    customer: null,
     useProductVat: true,
     paymentMethod: "cash",
     customerPay: "",
     search: "",
     barcode: "",
     showProductDropdown: false,
+    discountType: "value",
+    discountValue: "",
+    discountCode: "",
+    splitPayment: {
+      cash: "",
+      bank: "",
+    },
   });
 
   const handleLogout =
@@ -64,7 +92,13 @@ export default function POSPage() {
   const [accountName, setAccountName] =
     useState("Tài khoản");
 
+    const [currentUserInfo, setCurrentUserInfo] =
+  useState<any>(null);
+
   const [products, setProducts] =
+    useState<any[]>([]);
+
+  const [customers, setCustomers] =
     useState<any[]>([]);
 
   const [orders, setOrders] =
@@ -77,6 +111,49 @@ export default function POSPage() {
 
   const [showBarcodeInput, setShowBarcodeInput] =
     useState(true);
+
+  const [customerSearch, setCustomerSearch] =
+    useState("");
+
+  const [showCustomerDropdown, setShowCustomerDropdown] =
+    useState(false);
+
+  const [showCustomerForm, setShowCustomerForm] =
+    useState(false);
+
+  const [showShortcutModal, setShowShortcutModal] =
+    useState(false);
+
+  const [showDiscountModal, setShowDiscountModal] =
+    useState(false);
+
+  const [showSplitPaymentModal, setShowSplitPaymentModal] =
+    useState(false);
+
+  const [tempSplitPayment, setTempSplitPayment] =
+    useState({
+      cash: "",
+      bank: "",
+    });
+
+  const [tempDiscountType, setTempDiscountType] =
+    useState<"percent" | "value">("value");
+
+  const [tempDiscountValue, setTempDiscountValue] =
+    useState("");
+
+  const [tempDiscountCode, setTempDiscountCode] =
+    useState("");
+
+  const [newCustomer, setNewCustomer] =
+    useState({
+      name: "",
+      phone: "",
+      code: "",
+      address: "",
+      email: "",
+      taxCode: "",
+    });
 
   const [printTemplate, setPrintTemplate] =
     useState<any>({
@@ -99,6 +176,9 @@ export default function POSPage() {
   const cart =
     currentOrder?.cart || [];
 
+  const selectedCustomer =
+    currentOrder?.customer || null;
+
   const useProductVat =
     currentOrder?.useProductVat ?? true;
 
@@ -116,6 +196,21 @@ export default function POSPage() {
 
   const showProductDropdown =
     currentOrder?.showProductDropdown || false;
+
+  const discountType =
+    currentOrder?.discountType || "value";
+
+  const discountValue =
+    currentOrder?.discountValue || "";
+
+  const discountCode =
+    currentOrder?.discountCode || "";
+
+  const splitPayment =
+    currentOrder?.splitPayment || {
+      cash: "",
+      bank: "",
+    };
 
   const updateCurrentOrder =
     (changes: Partial<OrderTab>) => {
@@ -169,12 +264,81 @@ export default function POSPage() {
     ]);
 
     setActiveOrder(newId);
+    setCustomerSearch("");
+    setShowCustomerDropdown(false);
+  };
+
+  const removeOrder = (orderId: number) => {
+    const orderNeedRemove =
+      orders.find(
+        (order) => order.id === orderId
+      );
+
+    if (!orderNeedRemove) return;
+
+    if (
+      orderNeedRemove.cart.length > 0
+    ) {
+      const confirmDelete =
+        window.confirm(
+          `Đơn ${orderId} đang có sản phẩm. Bạn có chắc muốn xóa đơn này không?`
+        );
+
+      if (!confirmDelete) return;
+    }
+
+    setOrders((prev) => {
+      if (prev.length <= 1) {
+        setActiveOrder(1);
+        setCustomerSearch("");
+
+        return [
+          createEmptyOrder(1),
+        ];
+      }
+
+      const currentIndex =
+        prev.findIndex(
+          (order) =>
+            order.id === orderId
+        );
+
+      const newOrders =
+        prev.filter(
+          (order) =>
+            order.id !== orderId
+        );
+
+      if (activeOrder === orderId) {
+        const nextOrder =
+          newOrders[
+            currentIndex >= newOrders.length
+              ? newOrders.length - 1
+              : currentIndex
+          ];
+
+        setActiveOrder(nextOrder.id);
+
+        setCustomerSearch(
+          nextOrder.customer
+            ? `${nextOrder.customer.name || ""}${
+                nextOrder.customer.phone
+                  ? " - " + nextOrder.customer.phone
+                  : ""
+              }`
+            : ""
+        );
+      }
+
+      return newOrders;
+    });
   };
 
   const resetOrRemoveCurrentOrder = () => {
     setOrders((prev) => {
       if (prev.length <= 1) {
         setActiveOrder(1);
+        setCustomerSearch("");
 
         return [
           createEmptyOrder(1),
@@ -202,29 +366,100 @@ export default function POSPage() {
 
       setActiveOrder(nextOrder.id);
 
+      setCustomerSearch(
+        nextOrder.customer
+          ? `${nextOrder.customer.name || ""}${
+              nextOrder.customer.phone
+                ? " - " + nextOrder.customer.phone
+                : ""
+            }`
+          : ""
+      );
+
       return newOrders;
     });
   };
 
-  useEffect(() => {
-    const unsubscribe =
-      onAuthStateChanged(
-        auth,
-        (user) => {
-          if (user) {
-            setAccountName(
-              user.displayName ||
-              user.email ||
-              "Tài khoản"
-            );
-          } else {
-            setAccountName("Tài khoản");
-          }
-        }
+  const goToNextOrder = () => {
+    if (orders.length <= 1) return;
+
+    const currentIndex =
+      orders.findIndex(
+        (order) =>
+          order.id === activeOrder
       );
 
-    return () => unsubscribe();
-  }, []);
+    const nextIndex =
+      currentIndex >= orders.length - 1
+        ? 0
+        : currentIndex + 1;
+
+    const nextOrder =
+      orders[nextIndex];
+
+    setActiveOrder(nextOrder.id);
+
+    setCustomerSearch(
+      nextOrder.customer
+        ? `${nextOrder.customer.name || ""}${
+            nextOrder.customer.phone
+              ? " - " + nextOrder.customer.phone
+              : ""
+          }`
+        : ""
+    );
+  };
+
+  useEffect(() => {
+    const order =
+      orders.find(
+        (item) =>
+          item.id === activeOrder
+      );
+
+    if (order?.customer) {
+      setCustomerSearch(
+        `${order.customer.name || ""}${
+          order.customer.phone
+            ? " - " + order.customer.phone
+            : ""
+        }`
+      );
+    } else {
+      setCustomerSearch("");
+    }
+
+    setShowCustomerDropdown(false);
+  }, [activeOrder]);
+
+ useEffect(() => {
+  const unsubscribe =
+    onAuthStateChanged(
+      auth,
+      (user) => {
+        if (user) {
+          const name =
+            user.displayName ||
+            user.email ||
+            "Tài khoản";
+
+          setAccountName(name);
+
+          setCurrentUserInfo({
+            uid: user.uid,
+            email: user.email || "",
+            displayName: user.displayName || "",
+            name: name,
+          });
+        } else {
+          setAccountName("Tài khoản");
+          setCurrentUserInfo(null);
+        }
+      }
+    );
+
+  return () => unsubscribe();
+}, []);
 
   useEffect(() => {
     const unsubscribe =
@@ -238,6 +473,27 @@ export default function POSPage() {
             }));
 
           setProducts(productData);
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe =
+      onSnapshot(
+        collection(db, "customers"),
+        (snapshot) => {
+          const customerData =
+            snapshot.docs.map((docItem) => ({
+              id: docItem.id,
+              ...docItem.data(),
+            }));
+
+          setCustomers(customerData);
         },
         (error) => {
           console.log(error);
@@ -550,8 +806,89 @@ export default function POSPage() {
         )
       : 0;
 
-  const total =
+  const rawTotal =
     subtotal + vatAmount;
+
+  const discountAmount =
+    discountType === "percent"
+      ? Math.min(
+          rawTotal,
+          rawTotal *
+            (
+              Number(discountValue || 0) /
+              100
+            )
+        )
+      : Math.min(
+          rawTotal,
+          Number(discountValue || 0)
+        );
+
+  const total =
+    Math.max(
+      rawTotal - discountAmount,
+      0
+    );
+
+  const splitPaymentTotal =
+    Number(splitPayment.cash || 0) +
+    Number(splitPayment.bank || 0);
+
+  const customerPayAmount =
+    paymentMethod === "mixed"
+      ? splitPaymentTotal
+      : Number(customerPay || 0);
+
+  const changeAmount =
+    Math.max(
+      customerPayAmount - total,
+      0
+    );
+
+  const getPaymentMethodText =
+    (method: string) => {
+      if (method === "bank") return "Chuyển khoản";
+      if (method === "mixed") return "CK + TM";
+      return "Tiền mặt";
+    };
+
+  const openSplitPaymentModal = () => {
+    const cashAmount =
+      Number(splitPayment.cash || 0);
+
+    const bankAmount =
+      splitPayment.bank !== ""
+        ? Number(splitPayment.bank || 0)
+        : Math.max(total - cashAmount, 0);
+
+    setTempSplitPayment({
+      cash: String(cashAmount || ""),
+      bank: String(bankAmount || ""),
+    });
+
+    setShowSplitPaymentModal(true);
+  };
+
+  const applySplitPayment = () => {
+    const cash = Number(tempSplitPayment.cash || 0);
+    const bank = Number(tempSplitPayment.bank || 0);
+
+    if (cash < 0 || bank < 0) {
+      alert("Số tiền thanh toán không được nhỏ hơn 0");
+      return;
+    }
+
+    updateCurrentOrder({
+      paymentMethod: "mixed",
+      customerPay: String(cash + bank),
+      splitPayment: {
+        cash: String(cash),
+        bank: String(bank),
+      },
+    });
+
+    setShowSplitPaymentModal(false);
+  };
 
   const printBill =
     (
@@ -595,6 +932,16 @@ export default function POSPage() {
       const phoneHtml =
         printTemplate.phone
           ? `Hotline: ${printTemplate.phone}`
+          : "";
+
+      const customerHtml =
+        selectedCustomer
+          ? `
+            <div class="customer-info">
+              Khách hàng: ${selectedCustomer.name || ""}<br>
+              SĐT: ${selectedCustomer.phone || ""}
+            </div>
+          `
           : "";
 
       const thankYouHtml =
@@ -727,6 +1074,12 @@ export default function POSPage() {
                 text-align: center;
               }
 
+              .customer-info {
+                margin: 8px 0;
+                font-size: 10px;
+                line-height: 1.4;
+              }
+
               .shop-info:empty {
                 display: none;
               }
@@ -793,6 +1146,8 @@ export default function POSPage() {
                 </div>
               </div>
 
+              ${customerHtml}
+
               <hr>
 
               <table>
@@ -823,6 +1178,16 @@ export default function POSPage() {
                   ${formatMoney(vatAmount)}đ
                 </div>
 
+                <div>
+  ${
+    discountAmount > 0
+      ? discountType === "percent"
+        ? `Chiết khấu ${Number(discountValue || 0)}%: ${formatMoney(discountAmount)}đ`
+        : `Chiết khấu: ${formatMoney(discountAmount)}đ`
+      : `Chiết khấu: 0đ`
+  }
+</div>
+
                 <div style="
                   font-size: 10px;
                   margin-top: 3px;
@@ -831,6 +1196,7 @@ export default function POSPage() {
                   Tổng cộng:
                   ${formatMoney(total)}đ
                 </div>
+
               </div>
 
               <div class="thanks">
@@ -914,9 +1280,7 @@ export default function POSPage() {
         await getNextOrderCode();
 
       const paymentMethodText =
-        paymentMethod === "bank"
-          ? "Chuyển khoản"
-          : "Tiền mặt";
+        getPaymentMethodText(paymentMethod);
 
       await addDoc(
         collection(db, "orders"),
@@ -924,13 +1288,33 @@ export default function POSPage() {
           orderCode: orderCode,
           order_code: orderCode,
 
+              createdBy: currentUserInfo?.name || accountName || "Không rõ",
+              createdByEmail: currentUserInfo?.email || "",
+              createdByUid: currentUserInfo?.uid || "",
+
+          customer: selectedCustomer,
+          customerId: selectedCustomer?.id || "",
+          customerName: selectedCustomer?.name || "",
+          customerPhone: selectedCustomer?.phone || "",
+          customerCode: selectedCustomer?.code || "",
+          customerAddress: selectedCustomer?.address || "",
+          customerEmail: selectedCustomer?.email || "",
+          customerTaxCode: selectedCustomer?.taxCode || "",
+
           items: cart,
           subtotal: subtotal,
           vatAmount: vatAmount,
+          discountType: discountType,
+          discountValue: discountValue,
+          discountCode: discountCode,
+          discountAmount: discountAmount,
           total: total,
 
           paymentMethod: paymentMethod,
           paymentMethodText: paymentMethodText,
+          splitPayment: splitPayment,
+          customerPay: customerPayAmount,
+          changeAmount: changeAmount,
 
           createdAt: new Date(),
         }
@@ -965,6 +1349,311 @@ export default function POSPage() {
       );
 
       resetOrRemoveCurrentOrder();
+    };
+
+  const openDiscountModal = () => {
+    setTempDiscountType(discountType);
+    setTempDiscountValue(discountValue);
+    setTempDiscountCode(discountCode);
+    setShowDiscountModal(true);
+  };
+
+  const applyDiscount = () => {
+    const value =
+      Number(tempDiscountValue || 0);
+
+    if (value < 0) {
+      alert("Chiết khấu không được nhỏ hơn 0");
+      return;
+    }
+
+    if (
+      tempDiscountType === "percent" &&
+      value > 100
+    ) {
+      alert("Chiết khấu phần trăm không được lớn hơn 100%");
+      return;
+    }
+
+    updateCurrentOrder({
+      discountType: tempDiscountType,
+      discountValue: String(value),
+      discountCode: tempDiscountCode,
+    });
+
+    setShowDiscountModal(false);
+  };
+
+  useEffect(() => {
+    const handleShortcut =
+      (e: KeyboardEvent) => {
+        const target =
+          e.target as HTMLElement;
+
+        const tagName =
+          target.tagName.toLowerCase();
+
+        const isTyping =
+          tagName === "input" ||
+          tagName === "textarea" ||
+          tagName === "select" ||
+          target.isContentEditable;
+
+        if (e.key === "Escape") {
+          setShowShortcutModal(false);
+          setShowCustomerForm(false);
+          setShowCustomerDropdown(false);
+          setShowDiscountModal(false);
+          setShowSplitPaymentModal(false);
+
+          updateCurrentOrder({
+            showProductDropdown: false,
+          });
+
+          return;
+        }
+
+        if (
+          e.key.startsWith("F") ||
+          e.altKey
+        ) {
+          e.preventDefault();
+        } else if (isTyping) {
+          return;
+        }
+
+        if (e.key === "F1") {
+          if (showSplitPaymentModal) {
+            applySplitPayment();
+          } else {
+            checkout();
+          }
+          return;
+        }
+
+        if (e.key === "F2") {
+          customerPayRef.current?.focus();
+          customerPayRef.current?.select();
+          return;
+        }
+
+        if (e.key === "F3") {
+          productSearchRef.current?.focus();
+
+          updateCurrentOrder({
+            showProductDropdown: true,
+          });
+
+          return;
+        }
+
+        if (e.key === "F4") {
+          customerSearchRef.current?.focus();
+          setShowCustomerDropdown(true);
+          return;
+        }
+
+        if (e.key === "F6") {
+          openDiscountModal();
+          return;
+        }
+
+        if (e.key === "F7") {
+          paymentMethodRef.current?.focus();
+          return;
+        }
+
+        if (e.key === "F10") {
+          setShowBarcodeInput((prev) => !prev);
+          return;
+        }
+
+        if (e.key === "F11") {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+          } else {
+            document.exitFullscreen();
+          }
+
+          return;
+        }
+
+        if (e.altKey && e.key === "1") {
+          printBill("temporary");
+          return;
+        }
+
+        if (e.altKey && e.key === "2") {
+          goToNextOrder();
+          return;
+        }
+
+        if (e.altKey && e.key === "3") {
+          resetOrRemoveCurrentOrder();
+          return;
+        }
+
+        if (e.altKey && e.key === "4") {
+          const confirmClear =
+            window.confirm(
+              "Bạn có chắc muốn xóa toàn bộ sản phẩm trong đơn này không?"
+            );
+
+          if (confirmClear) {
+            setCart([]);
+          }
+
+          return;
+        }
+
+        if (
+          e.altKey &&
+          e.key.toLowerCase() === "x"
+        ) {
+          updateCurrentOrder({
+            paymentMethod:
+              paymentMethod === "cash"
+                ? "bank"
+                : "cash",
+          });
+
+          return;
+        }
+      };
+
+    window.addEventListener(
+      "keydown",
+      handleShortcut
+    );
+
+    return () => {
+      window.removeEventListener(
+        "keydown",
+        handleShortcut
+      );
+    };
+  }, [
+    orders,
+    activeOrder,
+    paymentMethod,
+    cart,
+    total,
+    customerPay,
+    showProductDropdown,
+    discountType,
+    discountValue,
+    discountCode,
+    tempDiscountType,
+    tempDiscountValue,
+    tempDiscountCode,
+    showSplitPaymentModal,
+    tempSplitPayment,
+  ]);
+
+  const focusProductSearch = () => {
+  productSearchRef.current?.focus();
+
+  updateCurrentOrder({
+    showProductDropdown: true,
+  });
+};
+  const filteredCustomers =
+    customerSearch.trim() === ""
+      ? customers.slice(0, 20)
+      : customers.filter((customer: any) => {
+          const keyword =
+            customerSearch.toLowerCase().trim();
+
+          const name =
+            String(customer.name || "")
+              .toLowerCase();
+
+          const phone =
+            String(customer.phone || "")
+              .toLowerCase();
+
+          const code =
+            String(customer.code || "")
+              .toLowerCase();
+
+          return (
+            name.includes(keyword) ||
+            phone.includes(keyword) ||
+            code.includes(keyword)
+          );
+        });
+
+  const selectCustomer =
+    (customer: any) => {
+      updateCurrentOrder({
+        customer: customer,
+      });
+
+      setCustomerSearch(
+        `${customer.name || ""}${
+          customer.phone
+            ? " - " + customer.phone
+            : ""
+        }`
+      );
+
+      setShowCustomerDropdown(false);
+    };
+
+  const addNewCustomer =
+    async () => {
+      if (!newCustomer.name.trim()) {
+        alert("Vui lòng nhập tên khách hàng");
+        return;
+      }
+
+      if (!newCustomer.phone.trim()) {
+        alert("Vui lòng nhập số điện thoại");
+        return;
+      }
+
+      const customerData = {
+        name: newCustomer.name.trim(),
+        phone: newCustomer.phone.trim(),
+        code:
+          newCustomer.code.trim() ||
+          `KH${Date.now()}`,
+        address: newCustomer.address.trim(),
+        email: newCustomer.email.trim(),
+        taxCode: newCustomer.taxCode.trim(),
+        createdAt: new Date(),
+      };
+
+      const docRef =
+        await addDoc(
+          collection(db, "customers"),
+          customerData
+        );
+
+      const savedCustomer = {
+        id: docRef.id,
+        ...customerData,
+      };
+
+      updateCurrentOrder({
+        customer: savedCustomer,
+      });
+
+      setCustomerSearch(
+        `${savedCustomer.name} - ${savedCustomer.phone}`
+      );
+
+      setNewCustomer({
+        name: "",
+        phone: "",
+        code: "",
+        address: "",
+        email: "",
+        taxCode: "",
+      });
+
+      setShowCustomerForm(false);
+      setShowCustomerDropdown(false);
     };
 
   const filteredProducts =
@@ -1006,9 +1695,22 @@ export default function POSPage() {
 
         <div className="flex items-center gap-2 flex-1">
 
-          <div className="relative w-[320px]">
+          <div
+            className="relative w-[380px]"
+            onMouseEnter={() =>
+              updateCurrentOrder({
+                showProductDropdown: true,
+              })
+            }
+            onMouseLeave={() =>
+              updateCurrentOrder({
+                showProductDropdown: false,
+              })
+            }
+          >
 
             <input
+              ref={productSearchRef}
               type="text"
               placeholder="Thêm sản phẩm vào đơn (F3)"
               className="w-full bg-white text-black px-3 py-2 rounded-lg outline-none text-sm"
@@ -1027,7 +1729,7 @@ export default function POSPage() {
             />
 
             {showProductDropdown && (
-              <div className="absolute top-full left-0 right-0 bg-white border rounded-xl shadow-lg z-50 max-h-96 overflow-auto mt-1">
+              <div className="absolute top-full left-0 w-[620px] bg-white border rounded-xl shadow-lg z-50 max-h-96 overflow-auto mt-1">
 
                 {filteredProducts.length === 0 ? (
                   <div className="p-4 text-gray-500">
@@ -1046,32 +1748,44 @@ export default function POSPage() {
                           showProductDropdown: false,
                         });
                       }}
-                      className="w-full text-left p-3 hover:bg-blue-50 border-b"
+                      className="w-full p-3 hover:bg-blue-50 border-b"
                     >
-                      <div className="font-semibold text-black">
-                        {product.name}
-                      </div>
+                      <div className="flex justify-between gap-4">
 
-                      <div className="text-xs text-gray-500 mt-1 flex gap-3 flex-wrap">
-                        <span>
-                          Mã: {getProductCode(product) || "-"}
-                        </span>
+                        {/* BÊN TRÁI */}
+                        <div className="text-left flex-1 min-w-0">
 
-                        <span>
-                          VAT: {Number(product.tax || 0)}%
-                        </span>
+                          <div className="font-semibold text-black truncate">
+                            {product.name}
+                          </div>
 
-                        <span>
-                          Vị trí: {getProductLocation(product) || "-"}
-                        </span>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Mã: {getProductCode(product) || "-"}
+                          </div>
 
-                        <span>
-                          Giá: {formatMoney(product.price)}đ
-                        </span>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Vị trí: {getProductLocation(product) || "-"}
+                          </div>
 
-                        <span>
-                          Tồn: {Number(product.stock || 0)}
-                        </span>
+                        </div>
+
+                        {/* BÊN PHẢI */}
+                        <div className="text-right w-[130px] shrink-0">
+
+                          <div className="font-semibold text-blue-700">
+                            {formatMoney(product.price)}đ
+                          </div>
+
+                          <div className="text-xs text-gray-500 mt-1">
+                            VAT: {Number(product.tax || 0)}%
+                          </div>
+
+                          <div className="text-xs text-gray-500 mt-1">
+                            Có thể bán: {Number(product.stock || 0)}
+                          </div>
+
+                        </div>
+
                       </div>
                     </button>
                   ))
@@ -1134,20 +1848,37 @@ export default function POSPage() {
           <div className="flex items-center gap-1 ml-2">
 
             {orders.map((order) => (
-              <button
+              <div
                 key={order.id}
-                type="button"
-                onClick={() =>
-                  setActiveOrder(order.id)
-                }
                 className={
                   activeOrder === order.id
-                    ? "bg-blue-900 px-4 py-2 rounded-lg font-semibold text-sm"
-                    : "bg-blue-600 hover:bg-blue-800 px-4 py-2 rounded-lg font-semibold text-sm"
+                    ? "bg-blue-900 rounded-lg flex items-center overflow-hidden"
+                    : "bg-blue-600 hover:bg-blue-800 rounded-lg flex items-center overflow-hidden"
                 }
               >
-                Đơn {order.id}
-              </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActiveOrder(order.id)
+                  }
+                  className="px-4 py-2 font-semibold text-sm"
+                >
+                  Đơn {order.id}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+
+                    removeOrder(order.id);
+                  }}
+                  title={`Xóa Đơn ${order.id}`}
+                  className="px-2 py-2 text-white/80 hover:text-white hover:bg-red-600 font-bold"
+                >
+                  ×
+                </button>
+              </div>
             ))}
 
             <button
@@ -1173,7 +1904,20 @@ export default function POSPage() {
             </div>
           </div>
 
-          {/* NÚT HOME */}
+          <button
+            type="button"
+            onClick={() =>
+              setShowShortcutModal(true)
+            }
+            title="Phím tắt"
+            className="h-10 px-3 rounded-lg border border-white/80 hover:bg-blue-800 flex items-center gap-1 text-sm font-semibold"
+          >
+            <span className="w-5 h-5 rounded-full border border-white flex items-center justify-center text-xs">
+              ?
+            </span>
+            Phím tắt
+          </button>
+
           <button
             type="button"
             onClick={() =>
@@ -1192,7 +1936,6 @@ export default function POSPage() {
             </svg>
           </button>
 
-          {/* NÚT ĐĂNG XUẤT */}
           <button
             type="button"
             onClick={handleLogout}
@@ -1217,209 +1960,332 @@ export default function POSPage() {
       <div className="flex h-[calc(100vh-48px)]">
 
         {/* BÊN TRÁI */}
-        <section className="flex-1 bg-white overflow-auto">
+        <section className="flex-1 bg-white overflow-auto relative">
 
-          <table className="w-full border-collapse text-sm">
+  {cart.length === 0 ? (
+    <div className="h-full flex items-center justify-center">
 
-            <thead className="bg-gray-100 sticky top-0 z-10">
-              <tr className="border-b">
-                <th className="p-3 text-left w-12">
-                  STT
-                </th>
+      <div className="text-center">
 
-                <th className="p-3 text-left w-16">
-                  Ảnh
-                </th>
+        <div className="mx-auto mb-5 w-28 h-28 text-gray-200">
 
-                <th className="p-3 text-left w-32">
-                  Mã SKU
-                </th>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 120 120"
+            fill="currentColor"
+            className="w-full h-full"
+          >
+            <path d="M60 8c-11.6 0-21 9.4-21 21 0 8.4 5 15.7 12.2 19L18 61.5v31.2L60 112l42-19.3V61.5L68.8 48C76 44.7 81 37.4 81 29 81 17.4 71.6 8 60 8zm0 12c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9zm-35 51.2 29 13.3v14.6L25 85.8V71.2zm70 0v14.6L66 99.1V84.5l29-13.3zM60 74.2 33.7 62.1 60 51.4l26.3 10.7L60 74.2z" />
+          </svg>
 
-                <th className="p-3 text-left">
-                  Tên sản phẩm
-                </th>
+        </div>
 
-                <th className="p-3 text-left w-24">
-                  Đơn vị
-                </th>
+        <div className="text-xl text-gray-800 mb-5">
+          Đơn hàng của bạn chưa có sản phẩm nào
+        </div>
 
-                <th className="p-3 text-center w-32">
-                  Số lượng
-                </th>
+        <button
+          type="button"
+          onClick={focusProductSearch}
+          className="px-12 py-3 border rounded-xl text-lg hover:bg-blue-50 hover:border-blue-600 hover:text-blue-700"
+        >
+          Thêm sản phẩm ngay
+        </button>
 
-                <th className="p-3 text-right w-32">
-                  Đơn giá
-                </th>
+      </div>
 
-                <th className="p-3 text-right w-36">
-                  Thành tiền
-                </th>
+    </div>
+  ) : (
+    <table className="w-full border-collapse text-sm">
 
-                <th className="p-3 text-center w-14"></th>
-              </tr>
-            </thead>
+      <thead className="bg-gray-100 sticky top-0 z-10">
+        <tr className="border-b">
+          <th className="p-3 text-left w-12">
+            STT
+          </th>
 
-            <tbody>
-              {cart.map((item: any, index: number) => {
-                const itemTotal =
-                  Number(item.price || 0) *
-                  Number(item.quantity || 0);
+          <th className="p-3 text-left w-16">
+            Ảnh
+          </th>
 
-                const itemVat =
-                  useProductVat
-                    ? itemTotal *
-                        (
-                          Number(item.tax || 0) /
-                          100
-                        )
-                    : 0;
+          <th className="p-3 text-left w-32">
+            Mã SKU
+          </th>
 
-                const itemFinalTotal =
-                  itemTotal + itemVat;
+          <th className="p-3 text-left">
+            Tên sản phẩm
+          </th>
 
-                return (
-                  <tr
-                    key={item.id || index}
-                    className="border-b hover:bg-blue-50"
+          <th className="p-3 text-left w-24">
+            Đơn vị
+          </th>
+
+          <th className="p-3 text-center w-32">
+            Số lượng
+          </th>
+
+          <th className="p-3 text-right w-32">
+            Đơn giá
+          </th>
+
+          <th className="p-3 text-right w-36">
+            Thành tiền
+          </th>
+
+          <th className="p-3 text-center w-14"></th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {cart.map((item: any, index: number) => {
+          const itemTotal =
+            Number(item.price || 0) *
+            Number(item.quantity || 0);
+
+          const itemVat =
+            useProductVat
+              ? itemTotal *
+                  (
+                    Number(item.tax || 0) /
+                    100
+                  )
+              : 0;
+
+          const itemFinalTotal =
+            itemTotal + itemVat;
+
+          return (
+            <tr
+              key={item.id || index}
+              className="border-b hover:bg-blue-50"
+            >
+              <td className="p-3">
+                {index + 1}
+              </td>
+
+              <td className="p-3">
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-10 h-10 object-cover rounded"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">
+                    Ảnh
+                  </div>
+                )}
+              </td>
+
+              <td className="p-3">
+                {item.product_code || ""}
+              </td>
+
+              <td className="p-3">
+                <div className="font-medium">
+                  {item.name}
+                </div>
+
+                <div className="text-xs text-gray-500">
+                  {item.product_location
+                    ? `Vị trí: ${item.product_location}`
+                    : "Mặc định"}
+                </div>
+
+                <div className="text-xs text-orange-600">
+                  VAT: {useProductVat ? Number(item.tax || 0) : 0}%
+                </div>
+              </td>
+
+              <td className="p-3">
+                {getUnitText(item.unit)}
+              </td>
+
+              <td className="p-3">
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      decreaseQty(item.id)
+                    }
+                    className="bg-gray-200 px-2 py-1 rounded"
                   >
-                    <td className="p-3">
-                      {index + 1}
-                    </td>
+                    -
+                  </button>
 
-                    <td className="p-3">
-                      {item.image ? (
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-10 h-10 object-cover rounded"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">
-                          Ảnh
-                        </div>
-                      )}
-                    </td>
+                  <input
+                    type="number"
+                    min="1"
+                    className="w-16 border rounded-lg p-1 text-center"
+                    value={item.quantity}
+                    onChange={(e) =>
+                      changeQty(
+                        item.id,
+                        Number(e.target.value)
+                      )
+                    }
+                  />
 
-                    <td className="p-3">
-                      {item.product_code || ""}
-                    </td>
-
-                    <td className="p-3">
-                      <div className="font-medium">
-                        {item.name}
-                      </div>
-
-                      <div className="text-xs text-gray-500">
-                        {item.product_location
-                          ? `Vị trí: ${item.product_location}`
-                          : "Mặc định"}
-                      </div>
-
-                      <div className="text-xs text-orange-600">
-                        VAT: {useProductVat ? Number(item.tax || 0) : 0}%
-                      </div>
-                    </td>
-
-                    <td className="p-3">
-                      {getUnitText(item.unit)}
-                    </td>
-
-                    <td className="p-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            decreaseQty(item.id)
-                          }
-                          className="bg-gray-200 px-2 py-1 rounded"
-                        >
-                          -
-                        </button>
-
-                        <input
-                          type="number"
-                          min="1"
-                          className="w-16 border rounded-lg p-1 text-center"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            changeQty(
-                              item.id,
-                              Number(e.target.value)
-                            )
-                          }
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            increaseQty(item.id)
-                          }
-                          className="bg-gray-200 px-2 py-1 rounded"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </td>
-
-                    <td className="p-3 text-right">
-                      <input
-                        type="number"
-                        min="0"
-                        value={item.price || 0}
-                        onChange={(e) =>
-                          changePrice(
-                            item.id,
-                            Number(e.target.value)
-                          )
-                        }
-                        className="w-28 border rounded-lg p-2 text-right text-black"
-                      />
-                    </td>
-
-                    <td className="p-3 text-right font-semibold">
-                      {formatMoney(itemFinalTotal)}
-                    </td>
-
-                    <td className="p-3 text-center">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          removeItem(item.id)
-                        }
-                        className="text-red-600 font-bold"
-                      >
-                        ✕
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-
-              {cart.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={9}
-                    className="p-16 text-center text-gray-400"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      increaseQty(item.id)
+                    }
+                    className="bg-gray-200 px-2 py-1 rounded"
                   >
-                    Chưa có sản phẩm trong đơn. Hãy tìm sản phẩm ở ô phía trên.
-                  </td>
-                </tr>
-              )}
-            </tbody>
+                    +
+                  </button>
+                </div>
+              </td>
 
-          </table>
+              <td className="p-3 text-right">
+                <input
+                  type="number"
+                  min="0"
+                  value={item.price || 0}
+                  onChange={(e) =>
+                    changePrice(
+                      item.id,
+                      Number(e.target.value)
+                    )
+                  }
+                  className="w-28 border rounded-lg p-2 text-right text-black"
+                />
+              </td>
 
-        </section>
+              <td className="p-3 text-right font-semibold">
+                {formatMoney(itemFinalTotal)}
+              </td>
+
+              <td className="p-3 text-center">
+                <button
+                  type="button"
+                  onClick={() =>
+                    removeItem(item.id)
+                  }
+                  className="text-red-600 font-bold"
+                >
+                  ✕
+                </button>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+
+    </table>
+  )}
+
+</section>
 
         {/* BÊN PHẢI */}
         <aside className="w-[360px] bg-white border-l flex flex-col">
 
           <div className="p-3 border-b">
-            <input
-              type="text"
-              placeholder="Tìm khách hàng vào đơn (F4)"
-              className="w-full border rounded-lg p-2 text-sm"
-            />
+
+            <div
+              className="relative flex gap-2"
+              onMouseLeave={() =>
+                setShowCustomerDropdown(false)
+              }
+            >
+
+              <div className="relative flex-1">
+
+                <input
+                  ref={customerSearchRef}
+                  type="text"
+                  placeholder="Tìm khách hàng vào đơn (F4)"
+                  className="w-full border rounded-lg p-2 text-sm"
+                  value={customerSearch}
+                  onChange={(e) => {
+                    setCustomerSearch(e.target.value);
+                    setShowCustomerDropdown(true);
+                  }}
+                  onFocus={() =>
+                    setShowCustomerDropdown(true)
+                  }
+                />
+
+                {showCustomerDropdown && (
+                  <div className="absolute top-full left-0 right-0 bg-white border rounded-xl shadow-lg z-50 max-h-72 overflow-auto mt-1">
+
+                    {filteredCustomers.length === 0 ? (
+                      <div className="p-3 text-sm text-gray-500">
+                        Không tìm thấy khách hàng
+                      </div>
+                    ) : (
+                      filteredCustomers.map((customer: any) => (
+                        <button
+                          key={customer.id}
+                          type="button"
+                          onMouseDown={() =>
+                            selectCustomer(customer)
+                          }
+                          className="w-full text-left p-3 hover:bg-blue-50 border-b"
+                        >
+                          <div className="font-semibold text-black">
+                            {customer.name || "Chưa có tên"}
+                          </div>
+
+                          <div className="text-xs text-gray-500 mt-1">
+                            SĐT: {customer.phone || "-"}
+                          </div>
+
+                          <div className="text-xs text-gray-500">
+                            Mã KH: {customer.code || "-"}
+                          </div>
+                        </button>
+                      ))
+                    )}
+
+                  </div>
+                )}
+
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowCustomerForm(true)
+                }
+                title="Thêm khách hàng mới"
+                className="w-10 h-10 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-2xl leading-none flex items-center justify-center"
+              >
+                +
+              </button>
+
+            </div>
+
+            {selectedCustomer && (
+              <div className="mt-2 bg-blue-50 border border-blue-100 rounded-lg p-2 text-xs">
+                <div className="font-semibold text-blue-700">
+                  {selectedCustomer.name}
+                </div>
+
+                <div>
+                  SĐT: {selectedCustomer.phone || "-"}
+                </div>
+
+                <div>
+                  Mã KH: {selectedCustomer.code || "-"}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateCurrentOrder({
+                      customer: null,
+                    });
+
+                    setCustomerSearch("");
+                  }}
+                  className="text-red-600 mt-1 font-semibold"
+                >
+                  Bỏ chọn khách hàng
+                </button>
+              </div>
+            )}
 
             <label className="flex items-center gap-2 mt-3 text-sm">
               <input type="checkbox" />
@@ -1449,15 +2315,19 @@ export default function POSPage() {
               </span>
             </div>
 
-            <div className="flex justify-between text-sm">
+            <button
+              type="button"
+              onClick={openDiscountModal}
+              className="w-full flex justify-between text-sm py-2 px-1 rounded hover:bg-blue-50"
+            >
               <span>
                 Chiết khấu (F6)
               </span>
 
               <span>
-                0
+                {formatMoney(discountAmount)}
               </span>
-            </div>
+            </button>
 
             <div className="border-t pt-4">
               <div className="flex justify-between items-center">
@@ -1477,13 +2347,20 @@ export default function POSPage() {
               </label>
 
               <select
+                ref={paymentMethodRef}
                 className="w-full border p-3 rounded-xl"
                 value={paymentMethod}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const value = e.target.value;
+
                   updateCurrentOrder({
-                    paymentMethod: e.target.value,
-                  })
-                }
+                    paymentMethod: value,
+                  });
+
+                  if (value === "mixed") {
+                    openSplitPaymentModal();
+                  }
+                }}
               >
                 <option value="cash">
                   Tiền mặt
@@ -1492,7 +2369,21 @@ export default function POSPage() {
                 <option value="bank">
                   Chuyển khoản
                 </option>
+
+                <option value="mixed">
+                  CK + TM
+                </option>
               </select>
+
+              {paymentMethod === "mixed" && (
+                <button
+                  type="button"
+                  onClick={openSplitPaymentModal}
+                  className="mt-2 w-full text-left text-sm text-blue-700 font-semibold hover:underline"
+                >
+                  Nhập chi tiết tiền mặt / chuyển khoản
+                </button>
+              )}
             </div>
 
             <div>
@@ -1526,14 +2417,21 @@ export default function POSPage() {
               </label>
 
               <input
+                ref={customerPayRef}
                 type="number"
                 className="w-full border p-3 rounded-xl text-right text-xl font-bold"
-                value={customerPay}
+                value={paymentMethod === "mixed" ? String(customerPayAmount) : customerPay}
                 onChange={(e) =>
                   updateCurrentOrder({
                     customerPay: e.target.value,
                   })
                 }
+                onFocus={() => {
+                  if (paymentMethod === "mixed") {
+                    openSplitPaymentModal();
+                  }
+                }}
+                readOnly={paymentMethod === "mixed"}
                 placeholder={formatMoney(total)}
               />
             </div>
@@ -1564,10 +2462,7 @@ export default function POSPage() {
 
               <span className="font-bold text-xl">
                 {formatMoney(
-                  Math.max(
-                    Number(customerPay || 0) - total,
-                    0
-                  )
+                  changeAmount
                 )}
               </span>
             </div>
@@ -1597,6 +2492,572 @@ export default function POSPage() {
         </aside>
 
       </div>
+
+      {showDiscountModal && (
+  <div className="fixed inset-0 bg-black/40 z-[1000] flex items-start justify-center pt-10">
+
+    <div className="bg-white w-[460px] rounded-xl shadow-xl text-black overflow-hidden">
+
+      <div className="flex items-center justify-between px-5 py-4 border-b">
+        <h2 className="text-xl font-bold">
+          Chiết khấu đơn hàng
+        </h2>
+
+        <button
+          type="button"
+          onClick={() =>
+            setShowDiscountModal(false)
+          }
+          className="w-8 h-8 rounded-full flex items-center justify-center text-2xl text-gray-500 hover:bg-gray-100 hover:text-red-600"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="px-5 py-5 space-y-5">
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Chiết khấu thường
+          </label>
+
+          <div className="grid grid-cols-[130px_1fr] gap-3 items-center">
+
+            <div className="flex rounded-lg border border-blue-600 overflow-hidden h-11">
+              <button
+                type="button"
+                onClick={() =>
+                  setTempDiscountType("percent")
+                }
+                className={
+                  tempDiscountType === "percent"
+                    ? "w-1/2 bg-blue-700 text-white font-semibold"
+                    : "w-1/2 bg-white text-blue-700 font-semibold hover:bg-blue-50"
+                }
+              >
+                %
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setTempDiscountType("value")
+                }
+                className={
+                  tempDiscountType === "value"
+                    ? "w-1/2 bg-blue-700 text-white font-semibold"
+                    : "w-1/2 bg-white text-blue-700 font-semibold hover:bg-blue-50"
+                }
+              >
+                Giá trị
+              </button>
+            </div>
+
+            <div className="relative">
+              <input
+                type="number"
+                min="0"
+                className="w-full h-11 border rounded-lg outline-none text-right px-3 pr-10 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                value={tempDiscountValue}
+                onChange={(e) =>
+                  setTempDiscountValue(e.target.value)
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    applyDiscount();
+                  }
+                }}
+                autoFocus
+              />
+
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+                {tempDiscountType === "percent" ? "%" : "đ"}
+              </span>
+            </div>
+
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Mã giảm giá
+          </label>
+
+          <input
+            type="text"
+            className="w-full h-11 border rounded-lg outline-none px-3 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+            value={tempDiscountCode}
+            onChange={(e) =>
+              setTempDiscountCode(e.target.value)
+            }
+            placeholder="Nhập mã giảm giá nếu có"
+          />
+        </div>
+
+      </div>
+
+      <div className="flex justify-end gap-3 px-5 py-4 bg-gray-50 border-t">
+        <button
+          type="button"
+          onClick={() =>
+            setShowDiscountModal(false)
+          }
+          className="px-7 py-2.5 rounded-lg bg-white border font-semibold hover:bg-gray-100"
+        >
+          Thoát
+        </button>
+
+        <button
+          type="button"
+          onClick={applyDiscount}
+          className="px-7 py-2.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold"
+        >
+          Áp dụng
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+)}
+
+      {showSplitPaymentModal && (
+        <div className="fixed inset-0 bg-black/40 z-[1000] flex items-center justify-center">
+          <div className="bg-white w-[560px] rounded-xl shadow-xl text-black overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b">
+              <h2 className="text-xl font-bold">Thanh toán CK + TM</h2>
+
+              <button
+                type="button"
+                onClick={() => setShowSplitPaymentModal(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-2xl text-gray-500 hover:bg-gray-100 hover:text-red-600"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-5 space-y-5">
+              <div className="flex justify-between items-center border-b pb-4">
+                <span className="font-bold text-lg">Khách phải trả</span>
+                <span className="text-2xl font-bold text-blue-700">{formatMoney(total)}</span>
+              </div>
+
+              <div className="grid grid-cols-[130px_1fr] items-center gap-4">
+                <label className="font-semibold">Tiền mặt</label>
+
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full border-b border-gray-300 p-2 text-right text-xl font-bold outline-none focus:border-blue-700"
+                  value={tempSplitPayment.cash}
+                  onChange={(e) => {
+                    const cashValue =
+                      Number(e.target.value || 0);
+
+                    const bankValue =
+                      Math.max(total - cashValue, 0);
+
+                    setTempSplitPayment({
+                      cash: e.target.value,
+                      bank: String(bankValue),
+                    });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") applySplitPayment();
+                  }}
+                  autoFocus
+                />
+              </div>
+
+              <div className="grid grid-cols-[130px_1fr] items-center gap-4">
+                <label className="font-semibold">Chuyển khoản</label>
+
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full border-b border-gray-300 p-2 text-right text-xl font-bold outline-none focus:border-blue-700 bg-gray-50"
+                  value={tempSplitPayment.bank}
+                  onChange={(e) =>
+                    setTempSplitPayment((prev) => ({
+                      ...prev,
+                      bank: e.target.value,
+                    }))
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") applySplitPayment();
+                  }}
+                />
+              </div>
+
+              <div className="border-t pt-4 space-y-2">
+                <div className="flex justify-between">
+                  <span className="font-semibold">Tiền khách đưa</span>
+                  <span className="font-bold">
+                    {formatMoney(Number(tempSplitPayment.cash || 0) + Number(tempSplitPayment.bank || 0))}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="font-semibold">Tiền thừa trả khách</span>
+                  <span className="font-bold text-xl">
+                    {formatMoney(Math.max(Number(tempSplitPayment.cash || 0) + Number(tempSplitPayment.bank || 0) - total, 0))}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 px-5 py-4 bg-gray-50 border-t">
+              <button
+                type="button"
+                onClick={() => setShowSplitPaymentModal(false)}
+                className="px-7 py-2.5 rounded-lg bg-white border font-semibold hover:bg-gray-100"
+              >
+                Thoát
+              </button>
+
+              <button
+                type="button"
+                onClick={applySplitPayment}
+                className="px-7 py-2.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold"
+              >
+                Lưu (F1)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCustomerForm && (
+        <div className="fixed inset-0 bg-black/40 z-[999] flex items-center justify-center">
+
+          <div className="bg-white w-[520px] rounded-2xl shadow-xl p-6">
+
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="text-xl font-bold text-blue-700">
+                Thêm khách hàng mới
+              </h2>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowCustomerForm(false)
+                }
+                className="text-2xl font-bold text-gray-500 hover:text-red-600"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+
+              <div>
+                <label className="block mb-1 text-sm font-semibold">
+                  Tên khách hàng *
+                </label>
+
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-2"
+                  value={newCustomer.name}
+                  onChange={(e) =>
+                    setNewCustomer({
+                      ...newCustomer,
+                      name: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 text-sm font-semibold">
+                  Số điện thoại *
+                </label>
+
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-2"
+                  value={newCustomer.phone}
+                  onChange={(e) =>
+                    setNewCustomer({
+                      ...newCustomer,
+                      phone: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 text-sm font-semibold">
+                  Mã khách hàng
+                </label>
+
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-2"
+                  placeholder="VD: KH0001"
+                  value={newCustomer.code}
+                  onChange={(e) =>
+                    setNewCustomer({
+                      ...newCustomer,
+                      code: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 text-sm font-semibold">
+                  Email
+                </label>
+
+                <input
+                  type="email"
+                  className="w-full border rounded-lg p-2"
+                  value={newCustomer.email}
+                  onChange={(e) =>
+                    setNewCustomer({
+                      ...newCustomer,
+                      email: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label className="block mb-1 text-sm font-semibold">
+                  Địa chỉ
+                </label>
+
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-2"
+                  value={newCustomer.address}
+                  onChange={(e) =>
+                    setNewCustomer({
+                      ...newCustomer,
+                      address: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label className="block mb-1 text-sm font-semibold">
+                  Mã số thuế
+                </label>
+
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-2"
+                  value={newCustomer.taxCode}
+                  onChange={(e) =>
+                    setNewCustomer({
+                      ...newCustomer,
+                      taxCode: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowCustomerForm(false)
+                }
+                className="px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
+              >
+                Hủy
+              </button>
+
+              <button
+                type="button"
+                onClick={addNewCustomer}
+                className="px-5 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold"
+              >
+                Lưu khách hàng
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {showShortcutModal && (
+        <div className="fixed inset-0 bg-black/40 z-[1000] flex items-start justify-center pt-10">
+
+          <div className="bg-white rounded-2xl shadow-2xl w-[760px] max-h-[90vh] overflow-hidden text-black">
+
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-blue-700 text-white">
+              <h2 className="text-xl font-bold">
+                Phím tắt màn hình bán hàng
+              </h2>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowShortcutModal(false)
+                }
+                className="w-8 h-8 rounded-full hover:bg-blue-800 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6 overflow-auto max-h-[calc(90vh-64px)]">
+
+              <div className="grid grid-cols-2 gap-6">
+
+                <div className="space-y-3">
+                  <h3 className="font-bold text-blue-700 border-b pb-2">
+                    Thao tác bán hàng
+                  </h3>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      F1
+                    </kbd>
+                    <span>Thanh toán đơn hàng</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      F2
+                    </kbd>
+                    <span>Nhập tiền khách đưa</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      F3
+                    </kbd>
+                    <span>Tìm / thêm sản phẩm vào đơn</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      F4
+                    </kbd>
+                    <span>Tìm khách hàng vào đơn</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      F6
+                    </kbd>
+                    <span>Chiết khấu đơn hàng</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      F7
+                    </kbd>
+                    <span>Chọn phương thức thanh toán</span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="font-bold text-blue-700 border-b pb-2">
+                    Thao tác nhanh
+                  </h3>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      F10
+                    </kbd>
+                    <span>Ẩn / hiện ô quét barcode</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      F11
+                    </kbd>
+                    <span>Bật / tắt toàn màn hình</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      Alt + 1
+                    </kbd>
+                    <span>In tạm tính</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      Alt + 2
+                    </kbd>
+                    <span>Chuyển sang đơn kế tiếp</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      Alt + 3
+                    </kbd>
+                    <span>Xóa / đóng đơn hiện tại</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      Alt + 4
+                    </kbd>
+                    <span>Xóa toàn bộ sản phẩm trong đơn</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      Alt + X
+                    </kbd>
+                    <span>Đổi nhanh Tiền mặt / Chuyển khoản</span>
+                  </div>
+                </div>
+
+                <div className="space-y-3 col-span-2">
+                  <h3 className="font-bold text-blue-700 border-b pb-2">
+                    Phím điều hướng
+                  </h3>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      Esc
+                    </kbd>
+                    <span>Đóng popup / danh sách đang mở</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      Enter
+                    </kbd>
+                    <span>Xác nhận trong popup đang nhập</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      ↑ / ↓
+                    </kbd>
+                    <span>Khi nhập số lượng, di chuyển lên sản phẩm bên trên</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <kbd className="px-4 py-1 border rounded bg-gray-100 font-bold">
+                      Esc
+                    </kbd>
+                    <span>Ngắt thao tác thủ công trên ô số lượng sản phẩm</span>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
 
     </main>
   );
