@@ -66,6 +66,7 @@ export default function InventoryReportPage() {
 
   const getProductLocation = (product: any) => {
     return (
+      product.product_location ||
       product.location ||
       product.position ||
       product.place ||
@@ -169,8 +170,10 @@ export default function InventoryReportPage() {
     });
 
     lowStockList.sort((a, b) => {
-      return getProductStock(a) -
-        getProductStock(b);
+      return (
+        getProductStock(a) -
+        getProductStock(b)
+      );
     });
 
     setProducts(productData);
@@ -326,7 +329,6 @@ export default function InventoryReportPage() {
   return (
     <main className="min-h-screen bg-gray-100 p-5 text-black">
       <div className="max-w-[1500px] mx-auto space-y-5">
-
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-blue-700">
@@ -347,7 +349,6 @@ export default function InventoryReportPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-
           <div className="bg-white rounded-2xl shadow p-5">
             <p className="text-gray-500 mb-2">
               Tổng sản phẩm
@@ -433,7 +434,6 @@ export default function InventoryReportPage() {
               )}
             </div>
           </div>
-
         </div>
 
         <div className="bg-white rounded-2xl shadow p-5">
@@ -653,7 +653,6 @@ export default function InventoryReportPage() {
             </div>
           )}
         </div>
-
       </div>
 
       {popupType && (

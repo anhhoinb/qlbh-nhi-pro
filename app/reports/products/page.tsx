@@ -59,16 +59,28 @@ const FILTER_OPTIONS = [
 ];
 
 export default function ProductsReportPage() {
-  const [orders, setOrders] = useState<OrderData[]>([]);
-  const [filterType, setFilterType] = useState("7days");
-  const [customFrom, setCustomFrom] = useState("");
-  const [customTo, setCustomTo] = useState("");
+  const [orders, setOrders] =
+    useState<OrderData[]>([]);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [filterType, setFilterType] =
+    useState("7days");
+
+  const [customFrom, setCustomFrom] =
+    useState("");
+
+  const [customTo, setCustomTo] =
+    useState("");
+
+  const [currentPage, setCurrentPage] =
+    useState(1);
+
   const itemsPerPage = 20;
 
   const formatMoney = (value: any) => {
-    return Number(value || 0).toLocaleString("vi-VN") + "đ";
+    return (
+      Number(value || 0).toLocaleString("vi-VN") +
+      "đ"
+    );
   };
 
   const getDate = (value: any) => {
@@ -105,7 +117,10 @@ export default function ProductsReportPage() {
     });
   };
 
-  const isSameDay = (date1: Date, date2: Date) => {
+  const isSameDay = (
+    date1: Date,
+    date2: Date
+  ) => {
     return (
       date1.getDate() === date2.getDate() &&
       date1.getMonth() === date2.getMonth() &&
@@ -143,9 +158,14 @@ export default function ProductsReportPage() {
 
       if (filterType === "yesterday") {
         const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setDate(
+          yesterday.getDate() - 1
+        );
 
-        return isSameDay(orderDate, yesterday);
+        return isSameDay(
+          orderDate,
+          yesterday
+        );
       }
 
       if (filterType === "7days") {
@@ -165,43 +185,76 @@ export default function ProductsReportPage() {
       }
 
       if (filterType === "q1") {
-        return isInQuarter(orderDate, 1, now.getFullYear());
+        return isInQuarter(
+          orderDate,
+          1,
+          now.getFullYear()
+        );
       }
 
       if (filterType === "q2") {
-        return isInQuarter(orderDate, 2, now.getFullYear());
+        return isInQuarter(
+          orderDate,
+          2,
+          now.getFullYear()
+        );
       }
 
       if (filterType === "q3") {
-        return isInQuarter(orderDate, 3, now.getFullYear());
+        return isInQuarter(
+          orderDate,
+          3,
+          now.getFullYear()
+        );
       }
 
       if (filterType === "q4") {
-        return isInQuarter(orderDate, 4, now.getFullYear());
+        return isInQuarter(
+          orderDate,
+          4,
+          now.getFullYear()
+        );
       }
 
       if (filterType === "year") {
-        return orderDate.getFullYear() === now.getFullYear();
+        return (
+          orderDate.getFullYear() ===
+          now.getFullYear()
+        );
       }
 
       if (filterType === "lastYear") {
-        return orderDate.getFullYear() === now.getFullYear() - 1;
+        return (
+          orderDate.getFullYear() ===
+          now.getFullYear() - 1
+        );
       }
 
       if (filterType === "custom") {
-        if (!customFrom || !customTo) return true;
+        if (!customFrom || !customTo) {
+          return true;
+        }
 
         const from = new Date(customFrom);
         const to = new Date(customTo);
+
         from.setHours(0, 0, 0, 0);
         to.setHours(23, 59, 59, 999);
 
-        return orderDate >= from && orderDate <= to;
+        return (
+          orderDate >= from &&
+          orderDate <= to
+        );
       }
 
       return true;
     });
-  }, [orders, filterType, customFrom, customTo]);
+  }, [
+    orders,
+    filterType,
+    customFrom,
+    customTo,
+  ]);
 
   const rows = useMemo(() => {
     const data: ProductReportRow[] = [];
@@ -209,45 +262,60 @@ export default function ProductsReportPage() {
     filteredOrders.forEach((order) => {
       const orderDate = getDate(order.createdAt);
 
-      (order.items || []).forEach((item, index) => {
-        const quantity = Number(item.quantity || item.qty || 0);
-        const price = Number(item.price || item.salePrice || 0);
-        const discount = Number(
-          item.discount ||
-            item.productDiscount ||
-            0
-        );
-        const tax = Number(item.vat || item.tax || 0);
+      (order.items || []).forEach(
+        (item, index) => {
+          const quantity = Number(
+            item.quantity || item.qty || 0
+          );
 
-        const productMoney = quantity * price;
-        const total = Number(
-          item.total ||
-            item.amount ||
-            productMoney - discount + tax
-        );
+          const price = Number(
+            item.price || item.salePrice || 0
+          );
 
-        data.push({
-          id: `${order.id}-${index}`,
-          date: orderDate,
-          dateText: formatDate(order.createdAt),
-          productName:
-            item.name ||
-            item.productName ||
-            item.product_name ||
-            "---",
-          productCode:
-            item.sku ||
-            item.code ||
-            item.productCode ||
-            "---",
-          quantity,
-          price,
-          productMoney,
-          discount,
-          tax,
-          total,
-        });
-      });
+          const discount = Number(
+            item.discount ||
+              item.productDiscount ||
+              0
+          );
+
+          const tax = Number(
+            item.vat || item.tax || 0
+          );
+
+          const productMoney =
+            quantity * price;
+
+          const total = Number(
+            item.total ||
+              item.amount ||
+              productMoney - discount + tax
+          );
+
+          data.push({
+            id: `${order.id}-${index}`,
+            date: orderDate,
+            dateText: formatDate(
+              order.createdAt
+            ),
+            productName:
+              item.name ||
+              item.productName ||
+              item.product_name ||
+              "---",
+            productCode:
+              item.sku ||
+              item.code ||
+              item.productCode ||
+              "---",
+            quantity,
+            price,
+            productMoney,
+            discount,
+            tax,
+            total,
+          });
+        }
+      );
     });
 
     return data.sort((a, b) => {
@@ -258,11 +326,16 @@ export default function ProductsReportPage() {
     });
   }, [filteredOrders]);
 
-  const totalPages = Math.ceil(rows.length / itemsPerPage);
+  const totalPages = Math.ceil(
+    rows.length / itemsPerPage
+  );
 
   const paginatedRows = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
+    const startIndex =
+      (currentPage - 1) * itemsPerPage;
+
+    const endIndex =
+      startIndex + itemsPerPage;
 
     return rows.slice(startIndex, endIndex);
   }, [rows, currentPage]);
@@ -272,15 +345,24 @@ export default function ProductsReportPage() {
     const maxButtons = 5;
 
     if (totalPages <= maxButtons) {
-      for (let i = 1; i <= totalPages; i++) {
+      for (
+        let i = 1;
+        i <= totalPages;
+        i++
+      ) {
         pages.push(i);
       }
 
       return pages;
     }
 
-    let start = Math.max(currentPage - 2, 1);
-    let end = start + maxButtons - 1;
+    let start = Math.max(
+      currentPage - 2,
+      1
+    );
+
+    let end =
+      start + maxButtons - 1;
 
     if (end > totalPages) {
       end = totalPages;
@@ -298,7 +380,8 @@ export default function ProductsReportPage() {
     return rows.reduce(
       (result, item) => {
         result.quantity += item.quantity;
-        result.productMoney += item.productMoney;
+        result.productMoney +=
+          item.productMoney;
         result.discount += item.discount;
         result.tax += item.tax;
         result.total += item.total;
@@ -338,30 +421,49 @@ export default function ProductsReportPage() {
       item.total,
     ]);
 
-    const csvContent = [header, ...csvRows]
+    const csvContent = [
+      header,
+      ...csvRows,
+    ]
       .map((row) =>
         row
-          .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+          .map(
+            (cell) =>
+              `"${String(cell).replace(
+                /"/g,
+                '""'
+              )}"`
+          )
           .join(",")
       )
       .join("\n");
 
-    const blob = new Blob(["\uFEFF" + csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
+    const blob = new Blob(
+      ["\uFEFF" + csvContent],
+      {
+        type: "text/csv;charset=utf-8;",
+      }
+    );
 
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const url =
+      URL.createObjectURL(blob);
+
+    const link =
+      document.createElement("a");
 
     link.href = url;
-    link.download = "bao-cao-thong-ke-san-pham.csv";
+    link.download =
+      "bao-cao-thong-ke-san-pham.csv";
     link.click();
 
     URL.revokeObjectURL(url);
   };
 
   const loadOrders = async () => {
-    const querySnapshot = await getDocs(collection(db, "orders"));
+    const querySnapshot =
+      await getDocs(
+        collection(db, "orders")
+      );
 
     const data: OrderData[] = [];
 
@@ -381,10 +483,17 @@ export default function ProductsReportPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterType, customFrom, customTo]);
+  }, [
+    filterType,
+    customFrom,
+    customTo,
+  ]);
 
   useEffect(() => {
-    if (totalPages > 0 && currentPage > totalPages) {
+    if (
+      totalPages > 0 &&
+      currentPage > totalPages
+    ) {
       setCurrentPage(totalPages);
     }
   }, [currentPage, totalPages]);
@@ -406,11 +515,16 @@ export default function ProductsReportPage() {
           <div className="flex flex-wrap items-center gap-3">
             <select
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
+              onChange={(e) =>
+                setFilterType(e.target.value)
+              }
               className="border bg-white rounded-xl px-4 py-3 outline-none w-56"
             >
               {FILTER_OPTIONS.map((item) => (
-                <option key={item.value} value={item.value}>
+                <option
+                  key={item.value}
+                  value={item.value}
+                >
                   {item.label}
                 </option>
               ))}
@@ -421,14 +535,22 @@ export default function ProductsReportPage() {
                 <input
                   type="date"
                   value={customFrom}
-                  onChange={(e) => setCustomFrom(e.target.value)}
+                  onChange={(e) =>
+                    setCustomFrom(
+                      e.target.value
+                    )
+                  }
                   className="border bg-white rounded-xl px-4 py-3 outline-none"
                 />
 
                 <input
                   type="date"
                   value={customTo}
-                  onChange={(e) => setCustomTo(e.target.value)}
+                  onChange={(e) =>
+                    setCustomTo(
+                      e.target.value
+                    )
+                  }
                   className="border bg-white rounded-xl px-4 py-3 outline-none"
                 />
               </>
@@ -454,35 +576,54 @@ export default function ProductsReportPage() {
 
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">Dòng sản phẩm</p>
+            <p className="text-gray-500">
+              Dòng sản phẩm
+            </p>
+
             <p className="text-2xl font-bold text-blue-700 mt-2">
               {rows.length}
             </p>
           </div>
 
           <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">SL hàng bán</p>
+            <p className="text-gray-500">
+              SL hàng bán
+            </p>
+
             <p className="text-2xl font-bold text-purple-600 mt-2">
               {summary.quantity}
             </p>
           </div>
 
           <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">Tiền hàng</p>
+            <p className="text-gray-500">
+              Tiền hàng
+            </p>
+
             <p className="text-2xl font-bold text-green-600 mt-2">
-              {formatMoney(summary.productMoney)}
+              {formatMoney(
+                summary.productMoney
+              )}
             </p>
           </div>
 
           <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">Chiết khấu</p>
+            <p className="text-gray-500">
+              Chiết khấu
+            </p>
+
             <p className="text-2xl font-bold text-red-600 mt-2">
-              {formatMoney(summary.discount)}
+              {formatMoney(
+                summary.discount
+              )}
             </p>
           </div>
 
           <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">Thành tiền</p>
+            <p className="text-gray-500">
+              Thành tiền
+            </p>
+
             <p className="text-2xl font-bold text-blue-700 mt-2">
               {formatMoney(summary.total)}
             </p>
@@ -497,7 +638,9 @@ export default function ProductsReportPage() {
               </h2>
 
               <p className="text-gray-500 text-sm mt-1">
-                Hiển thị {paginatedRows.length} / {rows.length} dòng sản phẩm
+                Hiển thị{" "}
+                {paginatedRows.length} /{" "}
+                {rows.length} dòng sản phẩm
               </p>
             </div>
 
@@ -510,14 +653,33 @@ export default function ProductsReportPage() {
             <table className="w-full min-w-[1200px]">
               <thead className="bg-gray-50">
                 <tr className="text-left">
-                  <th className="p-4">Ngày</th>
-                  <th className="p-4">Tên sản phẩm</th>
-                  <th className="p-4">Mã sản phẩm</th>
-                  <th className="p-4 text-center">SL hàng bán</th>
-                  <th className="p-4 text-right">Tiền hàng</th>
-                  <th className="p-4 text-right">Chiết khấu SP</th>
-                  <th className="p-4 text-right">Thuế</th>
-                  <th className="p-4 text-right">Thành tiền</th>
+                  <th className="p-4 w-[170px]">
+                    Ngày
+                  </th>
+
+                  <th className="p-4 text-left min-w-[360px]">
+                    Tên sản phẩm
+                  </th>
+
+                  <th className="p-4 text-center w-[140px]">
+                    SL hàng bán
+                  </th>
+
+                  <th className="p-4 text-right w-[170px]">
+                    Tiền hàng
+                  </th>
+
+                  <th className="p-4 text-right w-[170px]">
+                    Chiết khấu SP
+                  </th>
+
+                  <th className="p-4 text-right w-[130px]">
+                    Thuế
+                  </th>
+
+                  <th className="p-4 text-right w-[170px]">
+                    Thành tiền
+                  </th>
                 </tr>
               </thead>
 
@@ -531,12 +693,16 @@ export default function ProductsReportPage() {
                       {item.dateText}
                     </td>
 
-                    <td className="p-4 font-semibold">
-                      {item.productName}
-                    </td>
-
                     <td className="p-4">
-                      {item.productCode}
+                      <div className="font-semibold text-gray-900">
+                        {item.productName}
+                      </div>
+
+                      <div className="mt-1 text-xs text-gray-500">
+                        Mã:{" "}
+                        {item.productCode ||
+                          "---"}
+                      </div>
                     </td>
 
                     <td className="p-4 text-center font-semibold">
@@ -544,11 +710,15 @@ export default function ProductsReportPage() {
                     </td>
 
                     <td className="p-4 text-right font-semibold">
-                      {formatMoney(item.productMoney)}
+                      {formatMoney(
+                        item.productMoney
+                      )}
                     </td>
 
                     <td className="p-4 text-right text-red-600 font-semibold">
-                      {formatMoney(item.discount)}
+                      {formatMoney(
+                        item.discount
+                      )}
                     </td>
 
                     <td className="p-4 text-right text-orange-600 font-semibold">
@@ -564,7 +734,7 @@ export default function ProductsReportPage() {
                 {paginatedRows.length === 0 && (
                   <tr>
                     <td
-                      colSpan={8}
+                      colSpan={7}
                       className="p-8 text-center text-gray-500"
                     >
                       Không có sản phẩm bán ra phù hợp
@@ -578,7 +748,8 @@ export default function ProductsReportPage() {
           {rows.length > 0 && (
             <div className="p-4 border-t flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <p className="text-sm text-gray-500">
-                Trang {currentPage} / {totalPages || 1}
+                Trang {currentPage} /{" "}
+                {totalPages || 1}
               </p>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -586,7 +757,9 @@ export default function ProductsReportPage() {
                   type="button"
                   disabled={currentPage === 1}
                   onClick={() =>
-                    setCurrentPage((page) => Math.max(page - 1, 1))
+                    setCurrentPage((page) =>
+                      Math.max(page - 1, 1)
+                    )
                   }
                   className="px-4 py-2 rounded-lg border bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                 >
@@ -597,13 +770,17 @@ export default function ProductsReportPage() {
                   <>
                     <button
                       type="button"
-                      onClick={() => setCurrentPage(1)}
+                      onClick={() =>
+                        setCurrentPage(1)
+                      }
                       className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-50"
                     >
                       1
                     </button>
 
-                    <span className="px-2 text-gray-400">...</span>
+                    <span className="px-2 text-gray-400">
+                      ...
+                    </span>
                   </>
                 )}
 
@@ -611,7 +788,9 @@ export default function ProductsReportPage() {
                   <button
                     key={page}
                     type="button"
-                    onClick={() => setCurrentPage(page)}
+                    onClick={() =>
+                      setCurrentPage(page)
+                    }
                     className={`px-4 py-2 rounded-lg border font-semibold ${
                       currentPage === page
                         ? "bg-blue-600 text-white border-blue-600"
@@ -622,13 +801,21 @@ export default function ProductsReportPage() {
                   </button>
                 ))}
 
-                {visiblePages[visiblePages.length - 1] < totalPages && (
+                {visiblePages[
+                  visiblePages.length - 1
+                ] < totalPages && (
                   <>
-                    <span className="px-2 text-gray-400">...</span>
+                    <span className="px-2 text-gray-400">
+                      ...
+                    </span>
 
                     <button
                       type="button"
-                      onClick={() => setCurrentPage(totalPages)}
+                      onClick={() =>
+                        setCurrentPage(
+                          totalPages
+                        )
+                      }
                       className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-50"
                     >
                       {totalPages}
@@ -638,10 +825,15 @@ export default function ProductsReportPage() {
 
                 <button
                   type="button"
-                  disabled={currentPage === totalPages}
+                  disabled={
+                    currentPage === totalPages
+                  }
                   onClick={() =>
                     setCurrentPage((page) =>
-                      Math.min(page + 1, totalPages)
+                      Math.min(
+                        page + 1,
+                        totalPages
+                      )
                     )
                   }
                   className="px-4 py-2 rounded-lg border bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"

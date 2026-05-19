@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
+  onAuthStateChanged,
   signInWithEmailAndPassword,
 } from "firebase/auth";
 
-import {
-  auth,
-} from "@/lib/firebase";
+import { useRouter } from "next/navigation";
+
+import { auth } from "@/lib/firebase";
 
 export default function LoginPage() {
+  const router = useRouter();
 
   const [email, setEmail] =
     useState("");
@@ -21,89 +23,148 @@ export default function LoginPage() {
   const [loading, setLoading] =
     useState(false);
 
+  const [checking, setChecking] =
+    useState(true);
+
+  useEffect(() => {
+    const unsubscribe =
+      onAuthStateChanged(auth, (currentUser) => {
+        if (currentUser) {
+          router.replace("/dashboard");
+        } else {
+          setChecking(false);
+        }
+      });
+
+    return () => unsubscribe();
+  }, [router]);
+
   const handleLogin = async () => {
+    const cleanEmail = email.trim();
 
-    if (!email || !password) {
+    if (!cleanEmail) {
+      alert("Vui lòng nhập email");
+      return;
+    }
 
-      alert("Nhập đầy đủ thông tin");
-
+    if (!password) {
+      alert("Vui lòng nhập mật khẩu");
       return;
     }
 
     try {
-
       setLoading(true);
 
       await signInWithEmailAndPassword(
         auth,
-        email,
+        cleanEmail,
         password
       );
 
-      alert("Đăng nhập thành công");
+      router.replace("/dashboard");
+    } catch (error: any) {
+      console.error(error);
 
-      // chuyển trang chắc chắn
-      window.location.href =
-        "/products";
+      if (
+        error?.code === "auth/user-not-found" ||
+        error?.code === "auth/wrong-password" ||
+        error?.code === "auth/invalid-credential"
+      ) {
+        alert("Email hoặc mật khẩu không đúng");
+        return;
+      }
 
-    } catch (error) {
+      if (error?.code === "auth/too-many-requests") {
+        alert("Bạn nhập sai quá nhiều lần, vui lòng thử lại sau");
+        return;
+      }
 
-      console.log(error);
-
-      alert("Sai tài khoản hoặc mật khẩu");
-
+      alert("Không đăng nhập được, vui lòng kiểm tra lại");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
+  if (checking) {
+    return (
+      <main className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <p className="text-gray-600">
+          Đang kiểm tra đăng nhập...
+        </p>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100">
+    <main className="min-h-screen bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 flex items-center justify-center p-5">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
+        <div className="bg-blue-700 text-white p-7">
+          <h1 className="text-3xl font-bold">
+            Đăng nhập quản trị
+          </h1>
 
-      <div className="bg-white p-10 rounded-3xl shadow w-full max-w-md">
-
-        <h1 className="text-4xl font-bold text-blue-700 mb-8 text-center">
-          Đăng nhập
-        </h1>
-
-        <div className="space-y-5">
-
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full border p-4 rounded-2xl text-black"
-            value={email}
-            onChange={(e) =>
-              setEmail(e.target.value)
-            }
-          />
-
-          <input
-            type="password"
-            placeholder="Mật khẩu"
-            className="w-full border p-4 rounded-2xl text-black"
-            value={password}
-            onChange={(e) =>
-              setPassword(e.target.value)
-            }
-          />
-
-          <button
-            onClick={handleLogin}
-            disabled={loading}
-            className="w-full bg-blue-700 hover:bg-blue-800 text-white p-4 rounded-2xl text-lg font-semibold"
-          >
-
-            {loading
-              ? "Đang đăng nhập..."
-              : "Đăng nhập"}
-
-          </button>
-
+          <p className="text-blue-100 mt-2">
+            Vui lòng đăng nhập để vào hệ thống quản lý bán hàng
+          </p>
         </div>
 
-      </div>
+        <div className="p-7 space-y-5 text-black">
+          <div>
+            <label className="block text-sm font-semibold text-gray-600 mb-2">
+              Email
+            </label>
 
+            <input
+              type="email"
+              value={email}
+              onChange={(e) =>
+                setEmail(e.target.value)
+              }
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleLogin();
+                }
+              }}
+              placeholder="Nhập email đăng nhập"
+              className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-600 mb-2">
+              Mật khẩu
+            </label>
+
+            <input
+              type="password"
+              value={password}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleLogin();
+                }
+              }}
+              placeholder="Nhập mật khẩu"
+              className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600"
+            />
+          </div>
+
+          <button
+            type="button"
+            disabled={loading}
+            onClick={handleLogin}
+            className="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-2xl font-bold text-lg disabled:opacity-60"
+          >
+            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+          </button>
+
+          <p className="text-sm text-gray-500 text-center">
+            Chỉ tài khoản được cấp quyền mới có thể truy cập hệ thống.
+          </p>
+        </div>
+      </div>
     </main>
   );
 }

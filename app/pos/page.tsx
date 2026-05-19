@@ -45,6 +45,18 @@ type OrderTab = {
 export default function POSPage() {
   const router = useRouter();
 
+  const formatInputMoney = (value: any) => {
+  const number = String(value || "").replace(/\D/g, "");
+
+  if (!number) return "";
+
+  return Number(number).toLocaleString("vi-VN");
+};
+
+const parseInputMoney = (value: string) => {
+  return Number(value.replace(/\D/g, "") || 0);
+};
+
   const productSearchRef =
     useRef<HTMLInputElement | null>(null);
 
@@ -870,25 +882,39 @@ export default function POSPage() {
   };
 
   const applySplitPayment = () => {
-    const cash = Number(tempSplitPayment.cash || 0);
-    const bank = Number(tempSplitPayment.bank || 0);
+  const cash =
+    Number(tempSplitPayment.cash || 0);
 
-    if (cash < 0 || bank < 0) {
-      alert("Số tiền thanh toán không được nhỏ hơn 0");
-      return;
-    }
+  const bank =
+    Number(tempSplitPayment.bank || 0);
 
-    updateCurrentOrder({
-      paymentMethod: "mixed",
-      customerPay: String(cash + bank),
-      splitPayment: {
-        cash: String(cash),
-        bank: String(bank),
-      },
-    });
+  if (cash < 0 || bank < 0) {
+    alert(
+      "Số tiền thanh toán không được nhỏ hơn 0"
+    );
 
-    setShowSplitPaymentModal(false);
-  };
+    return;
+  }
+
+  if (cash + bank <= 0) {
+    alert(
+      "Vui lòng nhập tiền mặt hoặc chuyển khoản"
+    );
+
+    return;
+  }
+
+  updateCurrentOrder({
+    paymentMethod: "mixed",
+    customerPay: String(cash + bank),
+    splitPayment: {
+      cash: String(cash),
+      bank: String(bank),
+    },
+  });
+
+  setShowSplitPaymentModal(false);
+};
 
   const printBill =
     (
@@ -1277,48 +1303,187 @@ export default function POSPage() {
       }
 
       const orderCode =
-        await getNextOrderCode();
+  await getNextOrderCode();
 
-      const paymentMethodText =
-        getPaymentMethodText(paymentMethod);
+const paymentMethodText =
+  getPaymentMethodText(paymentMethod);
 
-      await addDoc(
-        collection(db, "orders"),
-        {
-          orderCode: orderCode,
-          order_code: orderCode,
+let orderCashAmount = 0;
+let orderTransferAmount = 0;
+let orderCodAmount = 0;
 
-              createdBy: currentUserInfo?.name || accountName || "Không rõ",
-              createdByEmail: currentUserInfo?.email || "",
-              createdByUid: currentUserInfo?.uid || "",
+const orderTotal =
+  Number(total || 0);
 
-          customer: selectedCustomer,
-          customerId: selectedCustomer?.id || "",
-          customerName: selectedCustomer?.name || "",
-          customerPhone: selectedCustomer?.phone || "",
-          customerCode: selectedCustomer?.code || "",
-          customerAddress: selectedCustomer?.address || "",
-          customerEmail: selectedCustomer?.email || "",
-          customerTaxCode: selectedCustomer?.taxCode || "",
+const splitCashAmount =
+  Number(splitPayment.cash || 0);
 
-          items: cart,
-          subtotal: subtotal,
-          vatAmount: vatAmount,
-          discountType: discountType,
-          discountValue: discountValue,
-          discountCode: discountCode,
-          discountAmount: discountAmount,
-          total: total,
+const splitBankAmount =
+  Number(splitPayment.bank || 0);
 
-          paymentMethod: paymentMethod,
-          paymentMethodText: paymentMethodText,
-          splitPayment: splitPayment,
-          customerPay: customerPayAmount,
-          changeAmount: changeAmount,
+if (paymentMethod === "cash") {
+  orderCashAmount = orderTotal;
+}
 
-          createdAt: new Date(),
-        }
+if (
+  paymentMethod === "bank" ||
+  paymentMethod === "transfer"
+) {
+  orderTransferAmount = orderTotal;
+}
+
+if (paymentMethod === "cod") {
+  orderCodAmount = orderTotal;
+}
+
+if (paymentMethod === "mixed") {
+  orderCashAmount = splitCashAmount;
+  orderTransferAmount = splitBankAmount;
+
+  const mixedTotal =
+    orderCashAmount + orderTransferAmount;
+
+  if (mixedTotal <= 0) {
+    alert(
+      "Vui lòng nhập số tiền mặt hoặc chuyển khoản"
+    );
+
+    return;
+  }
+
+  if (mixedTotal < orderTotal) {
+    const confirmDebt =
+      window.confirm(
+        `Khách còn thiếu ${formatMoney(orderTotal - mixedTotal)}đ. Bạn có muốn tiếp tục lưu đơn không?`
       );
+
+    if (!confirmDebt) {
+      return;
+    }
+  }
+}
+
+const orderPaidAmount =
+  orderCashAmount +
+  orderTransferAmount +
+  orderCodAmount;
+
+const orderRemainingAmount =
+  Math.max(
+    orderTotal - orderPaidAmount,
+    0
+  );
+
+const orderChangeAmount =
+  Math.max(
+    orderPaidAmount - orderTotal,
+    0
+  );
+
+await addDoc(
+  collection(db, "orders"),
+  {
+    orderCode: orderCode,
+    order_code: orderCode,
+
+    createdBy:
+      currentUserInfo?.name ||
+      accountName ||
+      "Không rõ",
+    createdByEmail:
+      currentUserInfo?.email || "",
+    createdByUid:
+      currentUserInfo?.uid || "",
+
+    customer: selectedCustomer,
+    customerId: selectedCustomer?.id || "",
+    customerName:
+      selectedCustomer?.name || "",
+    customerPhone:
+      selectedCustomer?.phone || "",
+    customerCode:
+      selectedCustomer?.code || "",
+    customerAddress:
+      selectedCustomer?.address || "",
+    customerEmail:
+      selectedCustomer?.email || "",
+    customerTaxCode:
+      selectedCustomer?.taxCode || "",
+
+    items: cart,
+    list: cart,
+
+    subtotal: subtotal,
+    vatAmount: vatAmount,
+    discountType: discountType,
+    discountValue: discountValue,
+    discountCode: discountCode,
+    discountAmount: discountAmount,
+
+    total: orderTotal,
+    finalTotal: orderTotal,
+    final_total: orderTotal,
+
+    paymentMethod: paymentMethod,
+    payment_method: paymentMethod,
+    paymentMethodText: paymentMethodText,
+
+    splitPayment: {
+      cash: orderCashAmount,
+      bank: orderTransferAmount,
+    },
+
+    cashAmount: orderCashAmount,
+    cash_amount: orderCashAmount,
+    moneyCash: orderCashAmount,
+
+    transferAmount: orderTransferAmount,
+    transfer_amount: orderTransferAmount,
+    bankAmount: orderTransferAmount,
+    bank_amount: orderTransferAmount,
+    moneyBank: orderTransferAmount,
+
+    codAmount: orderCodAmount,
+    cod_amount: orderCodAmount,
+
+    paidAmount: orderPaidAmount,
+    paid_amount: orderPaidAmount,
+
+    customerPay: orderPaidAmount,
+    customer_pay: orderPaidAmount,
+
+    changeAmount: orderChangeAmount,
+    change_amount: orderChangeAmount,
+
+    remainingAmount: orderRemainingAmount,
+    remaining_amount: orderRemainingAmount,
+    debtAmount: orderRemainingAmount,
+
+    payments: [
+      {
+        method: "cash",
+        methodText: "Tiền mặt",
+        amount: orderCashAmount,
+      },
+      {
+        method: "transfer",
+        methodText: "Chuyển khoản",
+        amount: orderTransferAmount,
+      },
+      {
+        method: "cod",
+        methodText: "COD",
+        amount: orderCodAmount,
+      },
+    ].filter(
+      (payment) =>
+        Number(payment.amount || 0) > 0
+    ),
+
+    status: "completed",
+    createdAt: new Date(),
+  }
+);
 
       for (const item of cart) {
         const currentStock =
@@ -2139,19 +2304,19 @@ export default function POSPage() {
               </td>
 
               <td className="p-3 text-right">
-                <input
-                  type="number"
-                  min="0"
-                  value={item.price || 0}
-                  onChange={(e) =>
-                    changePrice(
-                      item.id,
-                      Number(e.target.value)
-                    )
-                  }
-                  className="w-28 border rounded-lg p-2 text-right text-black"
-                />
-              </td>
+  <input
+    type="text"
+    inputMode="numeric"
+    value={formatInputMoney(item.price)}
+    onChange={(e) =>
+      changePrice(
+        item.id,
+        parseInputMoney(e.target.value)
+      )
+    }
+    className="w-28 rounded border border-gray-300 px-2 py-2 text-right font-semibold outline-none focus:border-blue-500"
+  />
+</td>
 
               <td className="p-3 text-right font-semibold">
                 {formatMoney(itemFinalTotal)}
@@ -2417,23 +2582,30 @@ export default function POSPage() {
               </label>
 
               <input
-                ref={customerPayRef}
-                type="number"
-                className="w-full border p-3 rounded-xl text-right text-xl font-bold"
-                value={paymentMethod === "mixed" ? String(customerPayAmount) : customerPay}
-                onChange={(e) =>
-                  updateCurrentOrder({
-                    customerPay: e.target.value,
-                  })
-                }
-                onFocus={() => {
-                  if (paymentMethod === "mixed") {
-                    openSplitPaymentModal();
-                  }
-                }}
-                readOnly={paymentMethod === "mixed"}
-                placeholder={formatMoney(total)}
-              />
+  ref={customerPayRef}
+  type="text"
+  inputMode="numeric"
+  className="w-full border p-3 rounded-xl text-right text-xl font-bold"
+  value={
+    paymentMethod === "mixed"
+      ? formatInputMoney(customerPayAmount)
+      : formatInputMoney(customerPay)
+  }
+  onChange={(e) =>
+    updateCurrentOrder({
+      customerPay: String(
+        parseInputMoney(e.target.value)
+      ),
+    })
+  }
+  onFocus={() => {
+    if (paymentMethod === "mixed") {
+      openSplitPaymentModal();
+    }
+  }}
+  readOnly={paymentMethod === "mixed"}
+  placeholder={formatMoney(total)}
+/>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
@@ -2443,11 +2615,24 @@ export default function POSPage() {
                     key={money}
                     type="button"
                     className="bg-gray-100 hover:bg-gray-200 rounded-xl py-2 text-sm"
-                    onClick={() =>
-                      updateCurrentOrder({
-                        customerPay: String(money),
-                      })
-                    }
+                    onClick={() => {
+  if (paymentMethod === "mixed") {
+    setTempSplitPayment({
+      cash: String(money),
+      bank: String(
+        Math.max(total - money, 0)
+      ),
+    });
+
+    setShowSplitPaymentModal(true);
+
+    return;
+  }
+
+  updateCurrentOrder({
+    customerPay: String(money),
+  });
+}}
                   >
                     {formatMoney(money)}
                   </button>

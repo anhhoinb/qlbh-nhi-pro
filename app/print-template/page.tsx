@@ -39,6 +39,19 @@ export default function PrintTemplatePage() {
   const [loading, setLoading] =
     useState(true);
 
+    useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const autoPrint = params.get("autoPrint");
+
+  if (autoPrint === "1" && !loading) {
+    const timer = setTimeout(() => {
+      window.print();
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }
+}, [loading]);
+
   useEffect(() => {
 
     const loadTemplate =

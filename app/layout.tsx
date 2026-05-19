@@ -1,38 +1,29 @@
-"use client";
+import type { Metadata } from "next";
 
 import "./globals.css";
 
-import { usePathname } from "next/navigation";
+import AuthGuard from "@/components/AuthGuard";
+import AppShell from "@/components/AppShell";
 
-import Sidebar from "@/components/Sidebar";
+export const metadata: Metadata = {
+  title: "QLBH Nhi Pro",
+  description: "Quản lý bán hàng Nhi Pro",
+};
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
-  const pathname = usePathname();
-
-  const hideSidebar =
-    pathname === "/pos";
-
+}>) {
   return (
-    <html lang="vi">
-
-      <body>
-
-        <div className="flex">
-
-          {!hideSidebar && <Sidebar />}
-
-          <main className="flex-1">
+    <html lang="vi" suppressHydrationWarning>
+      <body suppressHydrationWarning>
+        <AuthGuard>
+          <AppShell>
             {children}
-          </main>
-
-        </div>
-
+          </AppShell>
+        </AuthGuard>
       </body>
-
     </html>
   );
 }

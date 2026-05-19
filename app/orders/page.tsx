@@ -7,6 +7,8 @@ import {
   getDocs,
   addDoc,
   serverTimestamp,
+  doc,
+  updateDoc,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -20,6 +22,9 @@ export default function OrdersPage() {
 
   const [selectedOrder, setSelectedOrder] =
     useState<any>(null);
+
+  const [selectedOrderIds, setSelectedOrderIds] =
+    useState<string[]>([]);
 
   const [importing, setImporting] =
     useState(false);
@@ -598,17 +603,10 @@ export default function OrdersPage() {
             payment_method_text:
               paymentMethodText,
 
-            splitPayment:
-              paymentMethod === "mixed" ||
-              paymentMethodText === "CK + TM"
-                ? {
-                    cash: cashAmount,
-                    bank: bankAmount,
-                  }
-                : {
-                    cash: cashAmount,
-                    bank: bankAmount,
-                  },
+            splitPayment: {
+              cash: cashAmount,
+              bank: bankAmount,
+            },
 
             cashAmount: cashAmount,
             bankAmount: bankAmount,
@@ -746,10 +744,10 @@ export default function OrdersPage() {
 
     const data: any[] = [];
 
-    querySnapshot.forEach((doc) => {
+    querySnapshot.forEach((docItem) => {
       data.push({
-        id: doc.id,
-        ...doc.data(),
+        id: docItem.id,
+        ...docItem.data(),
       });
     });
 
@@ -789,6 +787,110 @@ export default function OrdersPage() {
       startIndex + ordersPerPage
     );
 
+  const selectedOrders = orders.filter((order) =>
+    selectedOrderIds.includes(order.id)
+  );
+
+  const isAllCurrentPageSelected =
+    currentOrders.length > 0 &&
+    currentOrders.every((order) =>
+      selectedOrderIds.includes(order.id)
+    );
+
+  const toggleSelectOrder = (orderId: string) => {
+    setSelectedOrderIds((prev) =>
+      prev.includes(orderId)
+        ? prev.filter((id) => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
+
+  const toggleSelectAllCurrentPage = () => {
+    if (isAllCurrentPageSelected) {
+      setSelectedOrderIds((prev) =>
+        prev.filter(
+          (id) =>
+            !currentOrders.some((order) => order.id === id)
+        )
+      );
+      return;
+    }
+
+    setSelectedOrderIds((prev) => {
+      const next = [...prev];
+
+      currentOrders.forEach((order) => {
+        if (!next.includes(order.id)) {
+          next.push(order.id);
+        }
+      });
+
+      return next;
+    });
+  };
+
+  const printSelectedOrders = () => {
+  if (selectedOrders.length === 0) {
+    alert("Vui lòng tích chọn đơn hàng cần in");
+    return;
+  }
+
+  selectedOrders.forEach((order) => {
+    const orderCode = getOrderCode(order);
+
+    const printWindow = window.open(
+      `/print-order?type=invoice&orderCode=${encodeURIComponent(
+        orderCode
+      )}&autoPrint=1`,
+      "_blank"
+    );
+
+    if (!printWindow) {
+      alert("Trình duyệt đang chặn cửa sổ in. Vui lòng cho phép popup.");
+    }
+  });
+};
+
+  const cancelSelectedOrders = async () => {
+    if (selectedOrders.length === 0) {
+      alert("Vui lòng tích chọn đơn hàng cần hủy");
+      return;
+    }
+
+    const ok = confirm(
+      `Bạn có chắc muốn hủy ${selectedOrders.length} đơn hàng đã chọn không?`
+    );
+
+    if (!ok) return;
+
+    for (const order of selectedOrders) {
+      await updateDoc(doc(db, "orders", order.id), {
+        status: "cancelled",
+        statusText: "Đã hủy",
+        cancelledAt: serverTimestamp(),
+      });
+    }
+
+    alert("Đã hủy đơn hàng đã chọn");
+    setSelectedOrderIds([]);
+    await loadOrders();
+  };
+
+  const createShippingForSelectedOrders = () => {
+    if (selectedOrders.length === 0) {
+      alert("Vui lòng tích chọn đơn hàng cần tạo phiếu vận chuyển");
+      return;
+    }
+
+    const orderCodes = selectedOrders
+      .map((order) => getOrderCode(order))
+      .join(", ");
+
+    alert(
+      `Đã chọn ${selectedOrders.length} đơn để tạo phiếu vận chuyển: ${orderCodes}`
+    );
+  };
+
   return (
     <main className="min-h-screen bg-gray-100 p-6">
       <div className="flex items-center justify-between mb-8">
@@ -821,11 +923,66 @@ export default function OrdersPage() {
         </div>
       </div>
 
+      {selectedOrderIds.length > 0 && (
+        <div className="mb-4 bg-white rounded-2xl shadow px-4 py-3 flex items-center justify-between">
+          <div className="text-sm font-semibold text-gray-700">
+            Đã chọn{" "}
+            <span className="text-blue-700">
+              {selectedOrderIds.length}
+            </span>{" "}
+            đơn hàng
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+  type="button"
+  onClick={printSelectedOrders}
+  className="px-4 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold"
+>
+  In đơn hàng
+</button>
+
+            <button
+              type="button"
+              onClick={createShippingForSelectedOrders}
+              className="px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold"
+            >
+              Tạo phiếu vận chuyển
+            </button>
+
+            <button
+              type="button"
+              onClick={cancelSelectedOrders}
+              className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold"
+            >
+              Hủy đơn hàng
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedOrderIds([])}
+              className="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-sm font-semibold"
+            >
+              Bỏ chọn
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-3xl shadow overflow-hidden">
         <table className="w-full">
           <thead className="bg-blue-700 text-white">
             <tr>
-              <th className="p-4 text-left">
+              <th className="p-4 text-center w-14">
+                <input
+                  type="checkbox"
+                  checked={isAllCurrentPageSelected}
+                  onChange={toggleSelectAllCurrentPage}
+                  className="w-4 h-4 cursor-pointer"
+                />
+              </th>
+
+              <th className="p-4 pl-6 text-left">
                 Mã đơn
               </th>
 
@@ -853,7 +1010,17 @@ export default function OrdersPage() {
                 key={item.id}
                 className="border-b hover:bg-gray-50"
               >
-                <td className="p-4 text-black font-semibold">
+                <td className="p-4 text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedOrderIds.includes(item.id)}
+                    onChange={() => toggleSelectOrder(item.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                </td>
+
+                <td className="p-4 pl-6 text-black font-semibold">
                   <button
                     type="button"
                     onClick={() =>
@@ -892,7 +1059,7 @@ export default function OrdersPage() {
             {currentOrders.length === 0 && (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="p-8 text-center text-gray-500"
                 >
                   Chưa có đơn hàng nào
@@ -976,7 +1143,6 @@ export default function OrdersPage() {
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-6xl rounded-2xl shadow-2xl overflow-hidden">
-            {/* HEADER */}
             <div className="bg-blue-700 text-white px-6 py-4 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">
@@ -1000,11 +1166,8 @@ export default function OrdersPage() {
               </button>
             </div>
 
-            {/* BODY */}
             <div className="p-6 max-h-[78vh] overflow-auto bg-gray-50">
-              {/* INFO */}
               <div className="grid grid-cols-2 gap-5 mb-5">
-                {/* LEFT INFO */}
                 <div className="bg-white rounded-2xl border p-5">
                   <h3 className="font-bold text-lg mb-4 text-gray-800">
                     Thông tin khách hàng
@@ -1040,7 +1203,6 @@ export default function OrdersPage() {
                   </div>
                 </div>
 
-                {/* RIGHT INFO */}
                 <div className="bg-white rounded-2xl border p-5">
                   <h3 className="font-bold text-lg mb-4 text-gray-800">
                     Thông tin đơn hàng
@@ -1112,7 +1274,6 @@ export default function OrdersPage() {
                 </div>
               </div>
 
-              {/* PRODUCTS TABLE */}
               <div className="bg-white rounded-2xl border overflow-hidden mb-5">
                 <div className="px-5 py-4 border-b flex items-center justify-between">
                   <h3 className="font-bold text-lg text-gray-800">
@@ -1218,7 +1379,6 @@ export default function OrdersPage() {
                 </table>
               </div>
 
-              {/* TOTAL AREA */}
               <div className="flex justify-end">
                 <div className="bg-white rounded-2xl border w-full max-w-lg p-5">
                   <h3 className="font-bold text-lg mb-4 text-gray-800">
@@ -1310,7 +1470,6 @@ export default function OrdersPage() {
                 </div>
               </div>
 
-              {/* FOOTER */}
               <div className="flex justify-end mt-5">
                 <button
                   type="button"

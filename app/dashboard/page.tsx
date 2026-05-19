@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 import {
   collection,
@@ -83,6 +84,9 @@ export default function DashboardPage() {
     useState("all");
 
   const [rangeFilter, setRangeFilter] =
+    useState<RangeOption>("7days");
+
+  const [topProductRangeFilter, setTopProductRangeFilter] =
     useState<RangeOption>("7days");
 
   const formatMoney = (value: any) => {
@@ -168,6 +172,10 @@ export default function DashboardPage() {
       return new Date(order.createdAt.seconds * 1000);
     }
 
+    if (order.createdAt.toDate) {
+      return order.createdAt.toDate();
+    }
+
     const date = new Date(order.createdAt);
 
     if (Number.isNaN(date.getTime())) {
@@ -196,7 +204,57 @@ export default function DashboardPage() {
     );
   };
 
-  const getDateRange = () => {
+  const rangeOptions: {
+    value: RangeOption;
+    label: string;
+  }[] = [
+    {
+      value: "today",
+      label: "Hôm nay",
+    },
+    {
+      value: "yesterday",
+      label: "Hôm qua",
+    },
+    {
+      value: "7days",
+      label: "7 ngày qua",
+    },
+    {
+      value: "thisMonth",
+      label: "Tháng này",
+    },
+    {
+      value: "lastMonth",
+      label: "Tháng trước",
+    },
+    {
+      value: "q1",
+      label: "Quý 1",
+    },
+    {
+      value: "q2",
+      label: "Quý 2",
+    },
+    {
+      value: "q3",
+      label: "Quý 3",
+    },
+    {
+      value: "q4",
+      label: "Quý 4",
+    },
+    {
+      value: "thisYear",
+      label: "Năm nay",
+    },
+    {
+      value: "lastYear",
+      label: "Năm trước",
+    },
+  ];
+
+  const getDateRangeByValue = (value: RangeOption) => {
     const now = new Date();
 
     const start = new Date(now);
@@ -205,27 +263,27 @@ export default function DashboardPage() {
     start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
 
-    if (rangeFilter === "today") {
+    if (value === "today") {
       return {
         start,
         end,
       };
     }
 
-    if (rangeFilter === "yesterday") {
+    if (value === "yesterday") {
       start.setDate(now.getDate() - 1);
       end.setDate(now.getDate() - 1);
     }
 
-    if (rangeFilter === "7days") {
+    if (value === "7days") {
       start.setDate(now.getDate() - 6);
     }
 
-    if (rangeFilter === "thisMonth") {
+    if (value === "thisMonth") {
       start.setDate(1);
     }
 
-    if (rangeFilter === "lastMonth") {
+    if (value === "lastMonth") {
       start.setFullYear(
         now.getFullYear(),
         now.getMonth() - 1,
@@ -239,32 +297,32 @@ export default function DashboardPage() {
       );
     }
 
-    if (rangeFilter === "q1") {
+    if (value === "q1") {
       start.setFullYear(now.getFullYear(), 0, 1);
       end.setFullYear(now.getFullYear(), 2, 31);
     }
 
-    if (rangeFilter === "q2") {
+    if (value === "q2") {
       start.setFullYear(now.getFullYear(), 3, 1);
       end.setFullYear(now.getFullYear(), 5, 30);
     }
 
-    if (rangeFilter === "q3") {
+    if (value === "q3") {
       start.setFullYear(now.getFullYear(), 6, 1);
       end.setFullYear(now.getFullYear(), 8, 30);
     }
 
-    if (rangeFilter === "q4") {
+    if (value === "q4") {
       start.setFullYear(now.getFullYear(), 9, 1);
       end.setFullYear(now.getFullYear(), 11, 31);
     }
 
-    if (rangeFilter === "thisYear") {
+    if (value === "thisYear") {
       start.setFullYear(now.getFullYear(), 0, 1);
       end.setFullYear(now.getFullYear(), 11, 31);
     }
 
-    if (rangeFilter === "lastYear") {
+    if (value === "lastYear") {
       start.setFullYear(now.getFullYear() - 1, 0, 1);
       end.setFullYear(now.getFullYear() - 1, 11, 31);
     }
@@ -276,6 +334,10 @@ export default function DashboardPage() {
       start,
       end,
     };
+  };
+
+  const getDateRange = () => {
+    return getDateRangeByValue(rangeFilter);
   };
 
   const getRangeDays = () => {
@@ -315,56 +377,6 @@ export default function DashboardPage() {
     });
   };
 
-  const rangeOptions: {
-    value: RangeOption;
-    label: string;
-  }[] = [
-    {
-      value: "today",
-      label: "Hôm nay",
-    },
-    {
-      value: "yesterday",
-      label: "Hôm qua",
-    },
-    {
-      value: "7days",
-      label: "7 ngày",
-    },
-    {
-      value: "thisMonth",
-      label: "Tháng này",
-    },
-    {
-      value: "lastMonth",
-      label: "Tháng trước",
-    },
-    {
-      value: "q1",
-      label: "Quý 1",
-    },
-    {
-      value: "q2",
-      label: "Quý 2",
-    },
-    {
-      value: "q3",
-      label: "Quý 3",
-    },
-    {
-      value: "q4",
-      label: "Quý 4",
-    },
-    {
-      value: "thisYear",
-      label: "Năm nay",
-    },
-    {
-      value: "lastYear",
-      label: "Năm trước",
-    },
-  ];
-
   const RangeSelect = () => {
     return (
       <select
@@ -372,7 +384,28 @@ export default function DashboardPage() {
         onChange={(e) =>
           setRangeFilter(e.target.value as RangeOption)
         }
-        className="border rounded px-4 py-2 text-sm bg-white"
+        className="border rounded-lg px-3 py-2 text-sm bg-white outline-none min-w-[130px]"
+      >
+        {rangeOptions.map((item) => (
+          <option
+            key={item.value}
+            value={item.value}
+          >
+            {item.label}
+          </option>
+        ))}
+      </select>
+    );
+  };
+
+  const TopProductRangeSelect = () => {
+    return (
+      <select
+        value={topProductRangeFilter}
+        onChange={(e) =>
+          setTopProductRangeFilter(e.target.value as RangeOption)
+        }
+        className="border rounded-lg px-3 py-2 text-sm bg-white outline-none min-w-[130px]"
       >
         {rangeOptions.map((item) => (
           <option
@@ -501,6 +534,25 @@ export default function DashboardPage() {
     });
   }, [orders, rangeFilter]);
 
+  const filteredOrdersForTopProducts = useMemo(() => {
+    const { start, end } =
+      getDateRangeByValue(topProductRangeFilter);
+
+    return orders.filter((order) => {
+      const orderDate = getOrderDate(order);
+
+      if (!orderDate) {
+        return false;
+      }
+
+      return isDateInRange(
+        orderDate,
+        start,
+        end
+      );
+    });
+  }, [orders, topProductRangeFilter]);
+
   const chartData = useMemo(() => {
     const { start, end } = getDateRange();
     const stepType = getChartStepType();
@@ -589,19 +641,19 @@ export default function DashboardPage() {
   const chartYAxis = useMemo(() => {
     const max = maxChartRevenue;
 
-    if (max <= 0) {
+    if (max <= 500000) {
       return [
-        0,
-        0,
-        0,
-        0,
-        0,
+        500000,
+        400000,
+        300000,
+        200000,
+        100000,
         0,
       ];
     }
 
     const step =
-      Math.ceil(max / 5 / 1000) * 1000 || 1000;
+      Math.ceil(max / 5 / 500000) * 500000;
 
     const top = step * 5;
 
@@ -681,7 +733,7 @@ export default function DashboardPage() {
       }
     >();
 
-    filteredOrdersByRange.forEach((order) => {
+    filteredOrdersForTopProducts.forEach((order) => {
       getOrderItems(order).forEach((item: any) => {
         const name = getProductName(item);
         const sku = getProductSku(item);
@@ -703,7 +755,7 @@ export default function DashboardPage() {
     return Array.from(map.values())
       .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 5);
-  }, [filteredOrdersByRange]);
+  }, [filteredOrdersForTopProducts]);
 
   const inventoryStats = useMemo(() => {
     const lowStock = products.filter((product) => {
@@ -738,33 +790,25 @@ export default function DashboardPage() {
   }, [products]);
 
   const StatCard = ({
-    icon,
     label,
     value,
     color,
   }: {
-    icon: string;
     label: string;
     value: string | number;
     color: string;
   }) => {
     return (
-      <div className="flex items-center gap-4 px-6 py-5 border-r last:border-r-0">
-        <div
-          className={`w-11 h-11 rounded-full flex items-center justify-center text-white text-xl ${color}`}
+      <div className="bg-white rounded-2xl shadow-sm p-4">
+        <p className="text-sm text-gray-500">
+          {label}
+        </p>
+
+        <p
+          className={`text-2xl font-bold mt-2 ${color}`}
         >
-          {icon}
-        </div>
-
-        <div>
-          <div className="font-semibold text-gray-800">
-            {label}
-          </div>
-
-          <div className="text-blue-700 font-bold mt-1">
-            {value}
-          </div>
-        </div>
+          {value}
+        </p>
       </div>
     );
   };
@@ -779,97 +823,90 @@ export default function DashboardPage() {
     value: number;
   }) => {
     return (
-      <div className="flex flex-col items-center justify-center py-5 border-r last:border-r-0">
-        <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xl mb-2">
+      <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-3">
+        <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-base shrink-0">
           {icon}
         </div>
 
-        <div className="text-sm text-gray-700">
-          {label}
-        </div>
+        <div>
+          <p className="text-sm text-gray-500">
+            {label}
+          </p>
 
-        <div className="font-bold text-lg">
-          {value}
+          <p className="font-bold text-lg text-gray-900">
+            {value}
+          </p>
         </div>
       </div>
     );
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-4 space-y-5">
-      {/* KẾT QUẢ KINH DOANH */}
-      <section className="bg-white shadow-sm">
-        <div className="flex items-center justify-between px-5 py-3 border-b">
-          <h2 className="font-bold text-lg text-gray-800 uppercase">
-            Kết quả kinh doanh trong ngày
-          </h2>
+    <main className="min-h-screen bg-gray-100 px-5 py-4 text-black">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Dashboard
+          </h1>
 
-          <select
-            value={branchFilter}
-            onChange={(e) =>
-              setBranchFilter(e.target.value)
-            }
-            className="border rounded px-4 py-2 text-sm bg-white min-w-[190px]"
-          >
-            <option value="all">
-              Tất cả chi nhánh
-            </option>
-            <option value="default">
-              Chi nhánh mặc định
-            </option>
-          </select>
+          <p className="text-sm text-gray-500 mt-1">
+            Tổng quan hoạt động bán hàng hôm nay
+          </p>
         </div>
 
-        <div className="grid grid-cols-4">
-          <StatCard
-            icon="💰"
-            label="Doanh thu"
-            value={formatMoney(todayStats.revenue)}
-            color="bg-blue-500"
-          />
+        <button
+          type="button"
+          className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm"
+        >
+          + Tạo đơn hàng
+        </button>
+      </div>
 
-          <StatCard
-            icon="🧾"
-            label="Đơn hàng mới"
-            value={todayStats.newOrders}
-            color="bg-green-500"
-          />
+      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+        <StatCard
+          label="Doanh thu hôm nay"
+          value={`${formatMoney(todayStats.revenue)}đ`}
+          color="text-blue-700"
+        />
 
-          <StatCard
-            icon="↩"
-            label="Đơn trả hàng"
-            value={todayStats.returned}
-            color="bg-yellow-500"
-          />
+        <StatCard
+          label="Đơn hàng hôm nay"
+          value={todayStats.newOrders}
+          color="text-green-600"
+        />
 
-          <StatCard
-            icon="✖"
-            label="Đơn hủy"
-            value={todayStats.canceled}
-            color="bg-red-500"
-          />
-        </div>
+        <StatCard
+          label="Khách hàng"
+          value={totalCustomers}
+          color="text-orange-600"
+        />
+
+        <StatCard
+          label="Sản phẩm"
+          value={products.length}
+          color="text-purple-600"
+        />
       </section>
 
-      {/* BIỂU ĐỒ */}
-      <section className="bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b">
-          <div className="flex">
-            <button
-              type="button"
-              className="px-5 py-4 font-bold text-blue-700 border-b-2 border-blue-700"
-            >
-              DOANH THU BÁN HÀNG
-            </button>
+      <section className="bg-white rounded-2xl shadow-sm mb-4 overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 px-4 py-3 border-b">
+          <div>
+            <h2 className="font-bold text-lg text-gray-900">
+              Doanh thu bán hàng
+            </h2>
+
+            <p className="text-sm text-gray-500 mt-1">
+              Theo dõi doanh thu theo thời gian
+            </p>
           </div>
 
-          <div className="flex items-center gap-3 pr-4">
+          <div className="flex flex-wrap items-center gap-2">
             <select
               value={branchFilter}
               onChange={(e) =>
                 setBranchFilter(e.target.value)
               }
-              className="border rounded px-4 py-2 text-sm bg-white min-w-[190px]"
+              className="border rounded-lg px-3 py-2 text-sm bg-white outline-none min-w-[140px]"
             >
               <option value="all">
                 Tất cả chi nhánh
@@ -883,195 +920,330 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="px-8 pt-8 pb-4">
-          <div className="h-[300px] flex items-end border-b border-gray-300 relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-full flex flex-col justify-between text-xs text-gray-500 pointer-events-none">
-              {chartYAxis.map((value, index) => (
-                <div
-                  key={`${value}-${index}`}
-                  className="border-t"
-                >
-                  {formatMoney(value)}
-                </div>
-              ))}
-            </div>
-
-            <div className="relative z-10 flex items-end gap-4 w-full h-full pl-20 pr-8 overflow-x-auto">
-              {chartData.map((item) => {
-                const height =
-                  item.revenue > 0
-                    ? Math.max(
-                        8,
-                        (item.revenue /
-                          maxChartRevenue) *
-                          260
-                      )
-                    : 0;
-
-                return (
+        <div className="grid grid-cols-1 xl:grid-cols-[1.9fr_1fr] gap-4 p-4">
+          <div className="min-w-0">
+            <div className="h-[245px] relative border-b border-gray-200 overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-full flex flex-col justify-between text-xs text-gray-500 pointer-events-none">
+                {chartYAxis.map((value, index) => (
                   <div
-                    key={item.label}
-                    className="flex flex-col items-center justify-end min-w-[55px] flex-1 h-full"
+                    key={`${value}-${index}`}
+                    className="border-t border-gray-100"
                   >
-                    <div
-                      className="w-full max-w-[70px] bg-blue-400 rounded-t"
-                      style={{
-                        height: `${height}px`,
-                      }}
-                      title={`${item.label}: ${formatMoney(
-                        item.revenue
-                      )}đ`}
-                    />
-
-                    <div className="text-xs mt-3 text-gray-700 whitespace-nowrap">
-                      {item.label}
-                    </div>
+                    <span className="inline-block w-20 bg-white pr-2">
+                      {formatMoney(value)}
+                    </span>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="text-center mt-4 text-sm text-gray-700">
-            Tổng doanh thu:{" "}
-            <span className="font-semibold">
-              {formatMoney(totalChartRevenue)}
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* ĐƠN HÀNG CHỜ XỬ LÝ */}
-      <section className="bg-white shadow-sm">
-        <div className="flex items-center justify-between px-5 py-3 border-b">
-          <h2 className="font-bold text-lg text-gray-800 uppercase">
-            Đơn hàng chờ xử lý
-          </h2>
-
-          <RangeSelect />
-        </div>
-
-        <div className="grid grid-cols-6">
-          <PendingItem
-            icon="📋"
-            label="Chờ duyệt"
-            value={pendingStats.pendingApprove}
-          />
-
-          <PendingItem
-            icon="💳"
-            label="Chờ thanh toán"
-            value={pendingStats.pendingPayment}
-          />
-
-          <PendingItem
-            icon="📦"
-            label="Chờ đóng gói"
-            value={pendingStats.packing}
-          />
-
-          <PendingItem
-            icon="🚚"
-            label="Chờ lấy hàng"
-            value={pendingStats.waitingPickup}
-          />
-
-          <PendingItem
-            icon="🚛"
-            label="Đang giao hàng"
-            value={pendingStats.shipping}
-          />
-
-          <PendingItem
-            icon="↩"
-            label="Hủy giao - chờ nhận"
-            value={pendingStats.deliveryCanceled}
-          />
-        </div>
-      </section>
-
-      {/* BOTTOM */}
-      <section className="grid grid-cols-2 gap-5">
-        {/* TOP SẢN PHẨM */}
-        <div className="bg-white shadow-sm">
-          <div className="flex items-center justify-between px-5 py-3 border-b">
-            <h2 className="font-bold text-lg text-gray-800 uppercase">
-              Top sản phẩm
-            </h2>
-
-            <div className="flex gap-2">
-              <RangeSelect />
-
-              <button
-                type="button"
-                className="border rounded px-4 py-2"
-              >
-                ...
-              </button>
-            </div>
-          </div>
-
-          <div className="p-5 space-y-4">
-            {topProducts.length > 0 ? (
-              topProducts.map((product, index) => (
-                <div
-                  key={`${product.sku}-${product.name}`}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${
-                        index === 0
-                          ? "bg-blue-500"
-                          : index === 1
-                          ? "bg-green-400"
-                          : index === 2
-                          ? "bg-yellow-400"
-                          : index === 3
-                          ? "bg-red-300"
-                          : "bg-sky-300"
-                      }`}
-                    >
-                      {String(index + 1).padStart(2, "0")}
-                    </div>
-
-                    <div>
-                      <div className="font-semibold">
-                        {product.name}
-                      </div>
-
-                      <div className="text-xs text-gray-500">
-                        {product.sku || "---"}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="font-bold">
-                    {product.quantity}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-gray-500 text-sm">
-                Chưa có dữ liệu sản phẩm bán chạy
+                ))}
               </div>
-            )}
+
+              <div className="relative z-10 h-full pl-20 pr-3 overflow-hidden">
+                <div
+                  className="grid h-full items-end gap-2"
+                  style={{
+                    gridTemplateColumns: `repeat(${chartData.length}, minmax(0, 1fr))`,
+                  }}
+                >
+                  {chartData.map((item) => {
+                    const height =
+                      item.revenue > 0
+                        ? Math.max(
+                            6,
+                            (item.revenue /
+                              chartYAxis[0]) *
+                              205
+                          )
+                        : 0;
+
+                    return (
+                      <div
+                        key={item.label}
+                        className="group flex flex-col items-center justify-end min-w-0 h-full relative"
+                      >
+                        <div
+                          className="absolute hidden group-hover:block bg-white border shadow-lg rounded-lg px-3 py-2 text-sm z-30 whitespace-nowrap"
+                          style={{
+                            bottom: `${height + 28}px`,
+                          }}
+                        >
+                          <div className="font-semibold mb-1">
+                            {item.label}
+                          </div>
+
+                          <div>
+                            <span className="text-blue-600">
+                              ●
+                            </span>{" "}
+                            Doanh thu:{" "}
+                            <b>
+                              {formatMoney(item.revenue)}đ
+                            </b>
+                          </div>
+                        </div>
+
+                        <div
+                          className="w-full max-w-[28px] bg-blue-400 rounded-t hover:bg-blue-500 transition"
+                          style={{
+                            height: `${height}px`,
+                          }}
+                        />
+
+                        <div className="text-xs mt-2 text-gray-700 whitespace-nowrap">
+                          {item.label}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-5 mt-3 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 bg-blue-400 inline-block rounded" />
+                <span>Doanh thu</span>
+              </div>
+            </div>
+
+            <div className="text-center mt-2 text-sm text-gray-700">
+              Tổng doanh thu:{" "}
+              <span className="font-bold text-blue-700">
+                {formatMoney(totalChartRevenue)}đ
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-gray-50 rounded-2xl p-3 min-w-0 h-full">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <h2 className="font-bold text-lg text-gray-900">
+                  Top sản phẩm
+                </h2>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  5 sản phẩm bán chạy
+                </p>
+              </div>
+
+              <TopProductRangeSelect />
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              {topProducts.length > 0 ? (
+                <div className="divide-y divide-gray-100">
+                  {topProducts.map((product, index) => {
+                    const maxQuantity =
+                      topProducts[0]?.quantity || 1;
+
+                    const percent =
+                      Math.max(
+                        8,
+                        Math.round(
+                          (product.quantity / maxQuantity) *
+                            100
+                        )
+                      );
+
+                    return (
+                      <div
+                        key={`${product.sku}-${product.name}-${index}`}
+                        className="px-3 py-2.5 hover:bg-gray-50 transition"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                              index === 0
+                                ? "bg-blue-700 text-white"
+                                : index === 1
+                                ? "bg-blue-100 text-blue-700"
+                                : index === 2
+                                ? "bg-orange-100 text-orange-700"
+                                : "bg-gray-100 text-gray-600"
+                            }`}
+                          >
+                            {index + 1}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="font-semibold text-base text-gray-900 truncate">
+                                {product.name}
+                              </div>
+
+                              <div className="text-base font-bold text-blue-700 shrink-0">
+                                {product.quantity}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3 mt-0.5">
+                              <div className="text-xs text-gray-500 truncate">
+                                Mã: {product.sku || "---"}
+                              </div>
+
+                              <div className="text-xs text-gray-400 shrink-0">
+                                đã bán
+                              </div>
+                            </div>
+
+                            <div className="mt-1.5 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-blue-600 rounded-full"
+                                style={{
+                                  width: `${percent}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {Array.from({
+                    length: Math.max(
+                      0,
+                      5 - topProducts.length
+                    ),
+                  }).map((_, index) => (
+                    <div
+                      key={`empty-top-product-${index}`}
+                      className="px-3 py-2.5 opacity-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-sm font-bold shrink-0">
+                          {topProducts.length + index + 1}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="text-base text-gray-400">
+                              Chưa có dữ liệu
+                            </div>
+
+                            <div className="text-base font-bold text-gray-300">
+                              0
+                            </div>
+                          </div>
+
+                          <div className="mt-1.5 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-gray-200 rounded-full w-[8%]" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {Array.from({
+                    length: 5,
+                  }).map((_, index) => (
+                    <div
+                      key={`empty-top-product-${index}`}
+                      className="px-3 py-2.5 opacity-60"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-sm font-bold shrink-0">
+                          {index + 1}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="text-base text-gray-400">
+                              Chưa có dữ liệu
+                            </div>
+
+                            <div className="text-base font-bold text-gray-300">
+                              0
+                            </div>
+                          </div>
+
+                          <div className="mt-1.5 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-gray-200 rounded-full w-[8%]" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 px-4 py-3 border-b">
+            <div>
+              <h2 className="font-bold text-lg text-gray-900">
+                Đơn hàng chờ xử lý
+              </h2>
+
+              <p className="text-sm text-gray-500 mt-1">
+                Trạng thái đơn hàng trong khoảng thời gian đã chọn
+              </p>
+            </div>
+
+            <RangeSelect />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
+            <PendingItem
+              icon="📋"
+              label="Chờ duyệt"
+              value={pendingStats.pendingApprove}
+            />
+
+            <PendingItem
+              icon="💳"
+              label="Chờ thanh toán"
+              value={pendingStats.pendingPayment}
+            />
+
+            <PendingItem
+              icon="📦"
+              label="Chờ đóng gói"
+              value={pendingStats.packing}
+            />
+
+            <PendingItem
+              icon="🚚"
+              label="Chờ lấy hàng"
+              value={pendingStats.waitingPickup}
+            />
+
+            <PendingItem
+              icon="🚛"
+              label="Đang giao hàng"
+              value={pendingStats.shipping}
+            />
+
+            <PendingItem
+              icon="↩"
+              label="Hủy giao - chờ nhận"
+              value={pendingStats.deliveryCanceled}
+            />
           </div>
         </div>
 
-        {/* THÔNG TIN KHO */}
-        <div className="bg-white shadow-sm">
-          <div className="flex items-center justify-between px-5 py-3 border-b">
-            <h2 className="font-bold text-lg text-gray-800 uppercase">
-              Thông tin kho
-            </h2>
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b">
+            <div>
+              <h2 className="font-bold text-lg text-gray-900">
+                Thông tin kho
+              </h2>
+
+              <p className="text-sm text-gray-500 mt-1">
+                Tổng quan tồn kho hiện tại
+              </p>
+            </div>
 
             <select
               value={branchFilter}
               onChange={(e) =>
                 setBranchFilter(e.target.value)
               }
-              className="border rounded px-4 py-2 text-sm bg-white min-w-[190px]"
+              className="border rounded-lg px-3 py-2 text-sm bg-white outline-none min-w-[140px]"
             >
               <option value="all">
                 Tất cả chi nhánh
@@ -1082,54 +1254,63 @@ export default function DashboardPage() {
             </select>
           </div>
 
-          <div className="p-5 space-y-4">
-            <div className="bg-blue-50 rounded p-4 flex items-center justify-between">
+          <div className="p-4 space-y-3">
+            <Link
+              href="/reports/inventory?filter=low-stock"
+              className="bg-gray-50 hover:bg-blue-50 rounded-xl p-4 flex items-center justify-between transition cursor-pointer group"
+            >
               <div>
-                <div className="text-gray-500">
+                <div className="text-sm text-gray-500">
                   Sản phẩm dưới định mức
                 </div>
 
-                <div className="font-bold text-lg">
+                <div className="font-bold text-xl text-red-600 mt-1">
                   {inventoryStats.lowStock}
                 </div>
               </div>
 
-              <span className="text-xl text-gray-500">
+              <span className="text-2xl text-gray-400 group-hover:text-blue-700">
                 ›
               </span>
-            </div>
+            </Link>
 
-            <div className="bg-blue-50 rounded p-4 flex items-center justify-between">
+            <Link
+              href="/reports/inventory"
+              className="bg-gray-50 hover:bg-blue-50 rounded-xl p-4 flex items-center justify-between transition cursor-pointer group"
+            >
               <div>
-                <div className="text-gray-500">
-                  Số tồn kho chi nhánh
+                <div className="text-sm text-gray-500">
+                  Tổng số lượng tồn kho
                 </div>
 
-                <div className="font-bold text-lg">
+                <div className="font-bold text-xl text-blue-700 mt-1">
                   {formatMoney(inventoryStats.totalStock)}
                 </div>
               </div>
 
-              <span className="text-xl text-gray-500">
+              <span className="text-2xl text-gray-400 group-hover:text-blue-700">
                 ›
               </span>
-            </div>
+            </Link>
 
-            <div className="bg-blue-50 rounded p-4 flex items-center justify-between">
+            <Link
+              href="/reports/inventory"
+              className="bg-gray-50 hover:bg-blue-50 rounded-xl p-4 flex items-center justify-between transition cursor-pointer group"
+            >
               <div>
-                <div className="text-gray-500">
-                  Giá trị tồn kho chi nhánh
+                <div className="text-sm text-gray-500">
+                  Giá trị tồn kho
                 </div>
 
-                <div className="font-bold text-lg">
-                  {formatMoney(inventoryStats.inventoryValue)}
+                <div className="font-bold text-xl text-green-600 mt-1">
+                  {formatMoney(inventoryStats.inventoryValue)}đ
                 </div>
               </div>
 
-              <span className="text-xl text-gray-500">
+              <span className="text-2xl text-gray-400 group-hover:text-blue-700">
                 ›
               </span>
-            </div>
+            </Link>
           </div>
         </div>
       </section>

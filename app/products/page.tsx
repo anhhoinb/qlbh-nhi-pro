@@ -22,8 +22,8 @@ export default function ProductsPage() {
   const [name, setName] =
     useState("");
 
-    const [costPrice, setCostPrice] =
-  useState("");
+  const [costPrice, setCostPrice] =
+    useState("");
 
   const [productCode, setProductCode] =
     useState("");
@@ -204,7 +204,7 @@ export default function ProductsPage() {
             Number(importPrice || 0),
 
           capital_price:
-            Number(capitalPrice || 0),
+            Number(costPrice || 0),
 
           stock:
             Number(stock || 0),
@@ -236,6 +236,8 @@ export default function ProductsPage() {
       setImportPrice("");
 
       setCapitalPrice("");
+
+      setCostPrice("");
 
       setStock("");
 
@@ -475,167 +477,167 @@ export default function ProductsPage() {
 
         <div className="bg-white p-6 rounded-3xl shadow mb-8">
 
-<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
-  <div className="md:col-span-2">
-    <label className="block mb-2 text-sm font-semibold text-black">
-      Tên sản phẩm <span className="text-red-500">*</span>
-    </label>
+            <div className="md:col-span-2">
+              <label className="block mb-2 text-sm font-semibold text-black">
+                Tên sản phẩm <span className="text-red-500">*</span>
+              </label>
 
-    <input
-      type="text"
-      placeholder="Nhập tên sản phẩm"
-      className="w-full border p-4 rounded-2xl text-black"
-      value={name}
-      onChange={(e) =>
-        setName(e.target.value)
-      }
-    />
-  </div>
+              <input
+                type="text"
+                placeholder="Nhập tên sản phẩm"
+                className="w-full border p-4 rounded-2xl text-black"
+                value={name}
+                onChange={(e) =>
+                  setName(e.target.value)
+                }
+              />
+            </div>
 
-  <div className="md:col-span-1">
-    <label className="block mb-2 text-sm font-semibold text-black">
-      Mã sản phẩm
-    </label>
+            <div className="md:col-span-1">
+              <label className="block mb-2 text-sm font-semibold text-black">
+                Mã sản phẩm
+              </label>
 
-    <input
-      type="text"
-      placeholder="Nhập mã sản phẩm"
-      className="w-full border p-4 rounded-2xl text-black"
-      value={productCode}
-      onChange={(e) =>
-        setProductCode(e.target.value)
-      }
-    />
-  </div>
+              <input
+                type="text"
+                placeholder="Nhập mã sản phẩm"
+                className="w-full border p-4 rounded-2xl text-black"
+                value={productCode}
+                onChange={(e) =>
+                  setProductCode(e.target.value)
+                }
+              />
+            </div>
 
-  <div className="md:col-span-1">
-    <label className="block mb-2 text-sm font-semibold text-black">
-      Vị trí sản phẩm
-    </label>
+            <div className="md:col-span-1">
+              <label className="block mb-2 text-sm font-semibold text-black">
+                Vị trí sản phẩm
+              </label>
 
-    <input
-      type="text"
-      placeholder="VD: Kệ A1, Ngăn B2"
-      className="w-full border p-4 rounded-2xl text-black"
-      value={productLocation}
-      onChange={(e) =>
-        setProductLocation(e.target.value)
-      }
-    />
-  </div>
+              <input
+                type="text"
+                placeholder="VD: Kệ A1, Ngăn B2"
+                className="w-full border p-4 rounded-2xl text-black"
+                value={productLocation}
+                onChange={(e) =>
+                  setProductLocation(e.target.value)
+                }
+              />
+            </div>
 
-  <div className="md:col-span-1">
-    <label className="block mb-2 text-sm font-semibold text-black">
-      Giá bán <span className="text-red-500">*</span>
-    </label>
+            <div className="md:col-span-1">
+              <label className="block mb-2 text-sm font-semibold text-black">
+                Giá bán <span className="text-red-500">*</span>
+              </label>
 
-    <input
-      type="number"
-      placeholder="Nhập giá bán"
-      className="w-full border p-4 rounded-2xl text-black"
-      value={price}
-      onChange={(e) =>
-        setPrice(e.target.value)
-      }
-    />
-  </div>
+              <input
+                type="number"
+                placeholder="Nhập giá bán"
+                className="w-full border p-4 rounded-2xl text-black"
+                value={price}
+                onChange={(e) =>
+                  setPrice(e.target.value)
+                }
+              />
+            </div>
 
-  <div className="md:col-span-1">
-    <label className="block mb-2 text-sm font-semibold text-black">
-      Giá nhập
-    </label>
+            <div className="md:col-span-1">
+              <label className="block mb-2 text-sm font-semibold text-black">
+                Giá nhập
+              </label>
 
-    <input
-      type="number"
-      placeholder="Nhập giá nhập"
-      className="w-full border p-4 rounded-2xl text-black"
-      value={importPrice}
-      onChange={(e) =>
-        setImportPrice(e.target.value)
-      }
-    />
-  </div>
+              <input
+                type="number"
+                placeholder="Nhập giá nhập"
+                className="w-full border p-4 rounded-2xl text-black"
+                value={importPrice}
+                onChange={(e) =>
+                  setImportPrice(e.target.value)
+                }
+              />
+            </div>
 
-  <div className="md:col-span-1">
-    <label className="block mb-2 text-sm font-semibold text-black">
-      Giá vốn
-    </label>
+            <div className="md:col-span-1">
+              <label className="block mb-2 text-sm font-semibold text-black">
+                Giá vốn
+              </label>
 
-    <input
-      type="number"
-      placeholder="Nhập giá vốn"
-      className="w-full border p-4 rounded-2xl text-black"
-      value={costPrice}
-      onChange={(e) =>
-        setCostPrice(e.target.value)
-      }
-    />
-  </div>
+              <input
+                type="number"
+                placeholder="Nhập giá vốn"
+                className="w-full border p-4 rounded-2xl text-black"
+                value={costPrice}
+                onChange={(e) =>
+                  setCostPrice(e.target.value)
+                }
+              />
+            </div>
 
-  <div className="md:col-span-1">
-    <label className="block mb-2 text-sm font-semibold text-black">
-      Tồn kho <span className="text-red-500">*</span>
-    </label>
+            <div className="md:col-span-1">
+              <label className="block mb-2 text-sm font-semibold text-black">
+                Tồn kho <span className="text-red-500">*</span>
+              </label>
 
-    <input
-      type="number"
-      placeholder="Nhập tồn kho"
-      className="w-full border p-4 rounded-2xl text-black"
-      value={stock}
-      onChange={(e) =>
-        setStock(e.target.value)
-      }
-    />
-  </div>
+              <input
+                type="number"
+                placeholder="Nhập tồn kho"
+                className="w-full border p-4 rounded-2xl text-black"
+                value={stock}
+                onChange={(e) =>
+                  setStock(e.target.value)
+                }
+              />
+            </div>
 
-  <div className="md:col-span-1">
-    <label className="block mb-2 text-sm font-semibold text-black">
-      Đơn vị
-    </label>
+            <div className="md:col-span-1">
+              <label className="block mb-2 text-sm font-semibold text-black">
+                Đơn vị
+              </label>
 
-    <input
-      type="text"
-      placeholder="VD: cái, bộ, mét..."
-      className="w-full border p-4 rounded-2xl text-black"
-      value={unit}
-      onChange={(e) =>
-        setUnit(e.target.value)
-      }
-    />
-  </div>
+              <input
+                type="text"
+                placeholder="VD: cái, bộ, mét..."
+                className="w-full border p-4 rounded-2xl text-black"
+                value={unit}
+                onChange={(e) =>
+                  setUnit(e.target.value)
+                }
+              />
+            </div>
 
-  <div className="md:col-span-1">
-    <label className="block mb-2 text-sm font-semibold text-black">
-      VAT
-    </label>
+            <div className="md:col-span-1">
+              <label className="block mb-2 text-sm font-semibold text-black">
+                VAT
+              </label>
 
-    <select
-      className="w-full border p-4 rounded-2xl text-black"
-      value={tax}
-      onChange={(e) =>
-        setTax(e.target.value)
-      }
-    >
-      <option value="">
-        Chọn VAT
-      </option>
+              <select
+                className="w-full border p-4 rounded-2xl text-black"
+                value={tax}
+                onChange={(e) =>
+                  setTax(e.target.value)
+                }
+              >
+                <option value="">
+                  Chọn VAT
+                </option>
 
-      <option value="0">
-        VAT 0%
-      </option>
+                <option value="0">
+                  VAT 0%
+                </option>
 
-      <option value="8">
-        VAT 8%
-      </option>
+                <option value="8">
+                  VAT 8%
+                </option>
 
-      <option value="10">
-        VAT 10%
-      </option>
-    </select>
-  </div>
+                <option value="10">
+                  VAT 10%
+                </option>
+              </select>
+            </div>
 
-</div>
+          </div>
 
           <button
             onClick={addProduct}
@@ -820,222 +822,303 @@ export default function ProductsPage() {
 
       {editingProduct && (
 
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6">
 
-          <div className="bg-white p-8 rounded-3xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-5xl max-h-[92vh] overflow-hidden rounded-3xl bg-white shadow-2xl">
 
-            <h2 className="text-3xl font-bold mb-6 text-black">
-              Sửa sản phẩm
-            </h2>
-
-            <div className="space-y-4">
+            <div className="flex items-start justify-between border-b border-gray-100 px-7 py-5">
 
               <div>
 
-                <label className="block mb-2 font-semibold text-black">
-                  Tên sản phẩm
-                </label>
+                <h2 className="text-3xl font-bold text-black">
+                  Sửa sản phẩm
+                </h2>
 
-                <input
-                  type="text"
-                  placeholder="Tên sản phẩm"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={editName}
-                  onChange={(e) =>
-                    setEditName(
-                      e.target.value
-                    )
-                  }
-                />
+                <p className="mt-1 text-sm text-gray-500">
+                  Cập nhật thông tin sản phẩm, giá bán, giá vốn và tồn kho
+                </p>
 
               </div>
 
-              <div>
+              <button
+                type="button"
+                onClick={() =>
+                  setEditingProduct(
+                    null
+                  )
+                }
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-2xl leading-none text-gray-500 hover:bg-gray-200 hover:text-black"
+              >
+                ×
+              </button>
 
-                <label className="block mb-2 font-semibold text-black">
-                  Mã sản phẩm
-                </label>
+            </div>
 
-                <input
-                  type="text"
-                  placeholder="VD: SP0001, LED12V..."
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={editProductCode}
-                  onChange={(e) =>
-                    setEditProductCode(
-                      e.target.value
-                    )
-                  }
-                />
+            <div className="max-h-[calc(92vh-150px)] overflow-y-auto px-7 py-6">
 
-              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-              <div>
+                <div className="rounded-3xl border border-gray-100 bg-gray-50 p-5">
 
-                <label className="block mb-2 font-semibold text-black">
-                  Vị trí sản phẩm
-                </label>
+                  <div className="mb-5 flex items-center justify-between">
 
-                <input
-                  type="text"
-                  placeholder="VD: Kệ A1, Ngăn B2..."
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={editProductLocation}
-                  onChange={(e) =>
-                    setEditProductLocation(
-                      e.target.value
-                    )
-                  }
-                />
+                    <h3 className="text-lg font-bold text-blue-700">
+                      Thông tin sản phẩm
+                    </h3>
 
-              </div>
+                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                      Cơ bản
+                    </span>
 
-              <div>
+                  </div>
 
-                <label className="block mb-2 font-semibold text-black">
-                  Giá bán
-                </label>
+                  <div className="space-y-4">
 
-                <input
-                  type="number"
-                  placeholder="Giá bán"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={editPrice}
-                  onChange={(e) =>
-                    setEditPrice(
-                      e.target.value
-                    )
-                  }
-                />
+                    <div>
 
-              </div>
+                      <label className="block mb-2 text-sm font-semibold text-black">
+                        Tên sản phẩm
+                      </label>
 
-              <div>
+                      <input
+                        type="text"
+                        placeholder="Tên sản phẩm"
+                        className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        value={editName}
+                        onChange={(e) =>
+                          setEditName(
+                            e.target.value
+                          )
+                        }
+                      />
 
-                <label className="block mb-2 font-semibold text-black">
-                  Giá nhập
-                </label>
+                    </div>
 
-                <input
-                  type="number"
-                  placeholder="Giá nhập"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={editImportPrice}
-                  onChange={(e) =>
-                    setEditImportPrice(
-                      e.target.value
-                    )
-                  }
-                />
+                    <div>
 
-              </div>
+                      <label className="block mb-2 text-sm font-semibold text-black">
+                        Mã sản phẩm
+                      </label>
 
-              <div>
+                      <input
+                        type="text"
+                        placeholder="VD: SP0001, LED12V..."
+                        className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        value={editProductCode}
+                        onChange={(e) =>
+                          setEditProductCode(
+                            e.target.value
+                          )
+                        }
+                      />
 
-                <label className="block mb-2 font-semibold text-black">
-                  Giá vốn
-                </label>
+                    </div>
 
-                <input
-                  type="number"
-                  placeholder="Giá vốn"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={editCapitalPrice}
-                  onChange={(e) =>
-                    setEditCapitalPrice(
-                      e.target.value
-                    )
-                  }
-                />
+                    <div>
 
-              </div>
+                      <label className="block mb-2 text-sm font-semibold text-black">
+                        Vị trí sản phẩm
+                      </label>
 
-              <div>
+                      <input
+                        type="text"
+                        placeholder="VD: Kệ A1, Ngăn B2..."
+                        className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        value={editProductLocation}
+                        onChange={(e) =>
+                          setEditProductLocation(
+                            e.target.value
+                          )
+                        }
+                      />
 
-                <label className="block mb-2 font-semibold text-black">
-                  Tồn kho
-                </label>
+                    </div>
 
-                <input
-                  type="number"
-                  placeholder="Tồn kho"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={editStock}
-                  onChange={(e) =>
-                    setEditStock(
-                      e.target.value
-                    )
-                  }
-                />
+                    <div>
 
-              </div>
+                      <label className="block mb-2 text-sm font-semibold text-black">
+                        Đơn vị
+                      </label>
 
-              <div>
+                      <input
+                        type="text"
+                        placeholder="VD: cái, bộ, mét, cuộn..."
+                        className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        value={editUnit}
+                        onChange={(e) =>
+                          setEditUnit(
+                            e.target.value
+                          )
+                        }
+                      />
 
-                <label className="block mb-2 font-semibold text-black">
-                  Đơn vị
-                </label>
+                    </div>
 
-                <input
-                  type="text"
-                  placeholder="VD: cái, bộ, mét, cuộn..."
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={editUnit}
-                  onChange={(e) =>
-                    setEditUnit(
-                      e.target.value
-                    )
-                  }
-                />
+                  </div>
 
-              </div>
+                </div>
 
-              <div>
+                <div className="rounded-3xl border border-gray-100 bg-gray-50 p-5">
 
-                <label className="block mb-2 font-semibold text-black">
-                  VAT
-                </label>
+                  <div className="mb-5 flex items-center justify-between">
 
-                <select
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={editTax}
-                  onChange={(e) =>
-                    setEditTax(
-                      e.target.value
-                    )
-                  }
-                >
+                    <h3 className="text-lg font-bold text-blue-700">
+                      Giá bán & tồn kho
+                    </h3>
 
-                  <option value="">
-                    Chọn VAT
-                  </option>
+                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                      Bán hàng
+                    </span>
 
-                  <option value="0">
-                    VAT 0%
-                  </option>
+                  </div>
 
-                  <option value="8">
-                    VAT 8%
-                  </option>
+                  <div className="space-y-4">
 
-                  <option value="10">
-                    VAT 10%
-                  </option>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                </select>
+                      <div>
+
+                        <label className="block mb-2 text-sm font-semibold text-black">
+                          Giá bán
+                        </label>
+
+                        <input
+                          type="number"
+                          placeholder="Giá bán"
+                          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                          value={editPrice}
+                          onChange={(e) =>
+                            setEditPrice(
+                              e.target.value
+                            )
+                          }
+                        />
+
+                      </div>
+
+                      <div>
+
+                        <label className="block mb-2 text-sm font-semibold text-black">
+                          Giá nhập
+                        </label>
+
+                        <input
+                          type="number"
+                          placeholder="Giá nhập"
+                          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                          value={editImportPrice}
+                          onChange={(e) =>
+                            setEditImportPrice(
+                              e.target.value
+                            )
+                          }
+                        />
+
+                      </div>
+
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                      <div>
+
+                        <label className="block mb-2 text-sm font-semibold text-black">
+                          Giá vốn
+                        </label>
+
+                        <input
+                          type="number"
+                          placeholder="Giá vốn"
+                          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                          value={editCapitalPrice}
+                          onChange={(e) =>
+                            setEditCapitalPrice(
+                              e.target.value
+                            )
+                          }
+                        />
+
+                      </div>
+
+                      <div>
+
+                        <label className="block mb-2 text-sm font-semibold text-black">
+                          Tồn kho
+                        </label>
+
+                        <input
+                          type="number"
+                          placeholder="Tồn kho"
+                          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                          value={editStock}
+                          onChange={(e) =>
+                            setEditStock(
+                              e.target.value
+                            )
+                          }
+                        />
+
+                      </div>
+
+                    </div>
+
+                    <div>
+
+                      <label className="block mb-2 text-sm font-semibold text-black">
+                        VAT
+                      </label>
+
+                      <select
+                        className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        value={editTax}
+                        onChange={(e) =>
+                          setEditTax(
+                            e.target.value
+                          )
+                        }
+                      >
+
+                        <option value="">
+                          Chọn VAT
+                        </option>
+
+                        <option value="0">
+                          VAT 0%
+                        </option>
+
+                        <option value="8">
+                          VAT 8%
+                        </option>
+
+                        <option value="10">
+                          VAT 10%
+                        </option>
+
+                      </select>
+
+                    </div>
+
+                    <div className="rounded-2xl bg-white p-4 border border-gray-100">
+
+                      <p className="text-sm text-gray-500">
+                        Gợi ý
+                      </p>
+
+                      <p className="mt-1 text-sm text-gray-700">
+                        Giá vốn dùng để tính lợi nhuận. Tồn kho sẽ hiển thị trong quản lý kho và POS.
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                </div>
 
               </div>
 
             </div>
 
-            <div className="flex gap-3 mt-6">
-
-              <button
-                onClick={saveEditProduct}
-                className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-2xl"
-              >
-                Lưu
-              </button>
+            <div className="flex items-center justify-end gap-3 border-t border-gray-100 bg-white px-7 py-5">
 
               <button
                 onClick={() =>
@@ -1043,9 +1126,16 @@ export default function ProductsPage() {
                     null
                   )
                 }
-                className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-2xl"
+                className="rounded-2xl bg-gray-200 px-7 py-3 font-semibold text-gray-700 hover:bg-gray-300"
               >
                 Hủy
+              </button>
+
+              <button
+                onClick={saveEditProduct}
+                className="rounded-2xl bg-blue-700 px-8 py-3 font-semibold text-white hover:bg-blue-800"
+              >
+                Lưu thay đổi
               </button>
 
             </div>
