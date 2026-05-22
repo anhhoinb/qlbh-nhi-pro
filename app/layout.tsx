@@ -6,7 +6,7 @@ import AuthGuard from "@/components/AuthGuard";
 import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
-  title: "QLBH Nhi Pro",
+  title: "NhiPro",
   description: "Quản lý bán hàng Nhi Pro",
 };
 

@@ -2,13 +2,20 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import {
+  onAuthStateChanged,
+} from "firebase/auth";
 
 import {
   collection,
+  doc,
+  getDoc,
   getDocs,
 } from "firebase/firestore";
 
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 
 type OrderItem = {
   name?: string;
@@ -71,6 +78,11 @@ type RangeOption =
   | "lastYear";
 
 export default function DashboardPage() {
+  const router = useRouter();
+
+  const [checkingPermission, setCheckingPermission] =
+    useState(true);
+
   const [orders, setOrders] =
     useState<OrderData[]>([]);
 
@@ -463,8 +475,64 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    loadDashboard();
-  }, []);
+    const unsubscribe =
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          router.replace("/login");
+          return;
+        }
+
+        try {
+          const userRef =
+            doc(db, "users", user.uid);
+
+          const userSnap =
+            await getDoc(userRef);
+
+          if (!userSnap.exists()) {
+            router.replace("/login");
+            return;
+          }
+
+          const userData: any =
+            userSnap.data();
+
+          const role =
+            String(userData.role || "")
+              .trim()
+              .toLowerCase();
+
+          const permissions =
+            userData.permissions || {};
+
+          const active =
+            userData.active !== false;
+
+          if (!active) {
+            alert("Tài khoản đã bị khóa");
+            router.replace("/login");
+            return;
+          }
+
+          const isAdmin =
+            role === "admin" ||
+            permissions.admin === true;
+
+          if (!isAdmin) {
+            router.replace("/pos");
+            return;
+          }
+
+          setCheckingPermission(false);
+          await loadDashboard();
+        } catch (error) {
+          console.error(error);
+          router.replace("/login");
+        }
+      });
+
+    return () => unsubscribe();
+  }, [router]);
 
   const todayStats = useMemo(() => {
     const today = new Date();
@@ -840,6 +908,22 @@ export default function DashboardPage() {
       </div>
     );
   };
+
+  if (checkingPermission) {
+    return (
+      <main className="min-h-screen bg-gray-100 flex items-center justify-center text-black">
+        <div className="bg-white rounded-2xl shadow p-6 text-center">
+          <p className="font-semibold text-gray-800">
+            Đang kiểm tra quyền truy cập...
+          </p>
+
+          <p className="text-sm text-gray-500 mt-2">
+            Vui lòng chờ trong giây lát
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-100 px-5 py-4 text-black">

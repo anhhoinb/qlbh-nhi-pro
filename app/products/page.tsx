@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   addDoc,
@@ -11,672 +11,711 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
-import {
-  db,
-} from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 
 export default function ProductsPage() {
-
   // ADD PRODUCT
+  const [name, setName] = useState("");
+  const [productCode, setProductCode] = useState("");
+  const [productLocation, setProductLocation] = useState("");
+  const [price, setPrice] = useState("");
+  const [importPrice, setImportPrice] = useState("");
+  const [capitalPrice, setCapitalPrice] = useState("");
+  const [costPrice, setCostPrice] = useState("");
+  const [stock, setStock] = useState("");
+  const [unit, setUnit] = useState("");
+  const [tax, setTax] = useState("");
 
-  const [name, setName] =
-    useState("");
+  // SHOW / HIDE ADD FORM
+  const [showAddForm, setShowAddForm] = useState(false);
 
-  const [costPrice, setCostPrice] =
-    useState("");
-
-  const [productCode, setProductCode] =
-    useState("");
-
-  const [productLocation, setProductLocation] =
-    useState("");
-
-  const [price, setPrice] =
-    useState("");
-
-  const [importPrice, setImportPrice] =
-    useState("");
-
-  const [capitalPrice, setCapitalPrice] =
-    useState("");
-
-  const [stock, setStock] =
-    useState("");
-
-  const [unit, setUnit] =
-    useState("");
-
-  const [tax, setTax] =
-    useState("");
-
-  // SEARCH
-
-  const [search, setSearch] =
-    useState("");
+  // SEARCH + PAGINATION
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   // DATA
+  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<any[]>([]);
 
-  const [loading, setLoading] =
-    useState(true);
-
-  const [products, setProducts] =
-    useState<any[]>([]);
+  // IMPORT FILE
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // EDIT MODAL
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editName, setEditName] = useState("");
+  const [editProductCode, setEditProductCode] = useState("");
+  const [editProductLocation, setEditProductLocation] = useState("");
+  const [editPrice, setEditPrice] = useState("");
+  const [editImportPrice, setEditImportPrice] = useState("");
+  const [editCapitalPrice, setEditCapitalPrice] = useState("");
+  const [editStock, setEditStock] = useState("");
+  const [editUnit, setEditUnit] = useState("");
+  const [editTax, setEditTax] = useState("");
 
-  const [editingProduct, setEditingProduct] =
-    useState<any>(null);
-
-  const [editName, setEditName] =
-    useState("");
-
-  const [editProductCode, setEditProductCode] =
-    useState("");
-
-  const [editProductLocation, setEditProductLocation] =
-    useState("");
-
-  const [editPrice, setEditPrice] =
-    useState("");
-
-  const [editImportPrice, setEditImportPrice] =
-    useState("");
-
-  const [editCapitalPrice, setEditCapitalPrice] =
-    useState("");
-
-  const [editStock, setEditStock] =
-    useState("");
-
-  const [editUnit, setEditUnit] =
-    useState("");
-
-  const [editTax, setEditTax] =
-    useState("");
+  // FORMAT MONEY
+  const formatMoney = (value: any) => {
+    return Number(value || 0).toLocaleString("vi-VN") + "đ";
+  };
 
   // LOAD PRODUCTS
+  const loadProducts = async () => {
+    try {
+      const querySnapshot = await getDocs(
+        collection(db, "products")
+      );
 
-  const loadProducts =
-    async () => {
+      const data: any[] = [];
 
-      try {
+      querySnapshot.forEach((docItem) => {
+        data.push({
+          id: docItem.id,
+          ...docItem.data(),
+        });
+      });
 
-        const querySnapshot =
-          await getDocs(
-            collection(
-              db,
-              "products"
-            )
-          );
+      data.sort((a, b) =>
+        String(a.name || "").localeCompare(
+          String(b.name || ""),
+          "vi"
+        )
+      );
 
-        const data: any[] = [];
+      setProducts(data);
+    } catch (error) {
+      console.log(error);
 
-        querySnapshot.forEach(
-          (docItem) => {
+      alert("Không tải được sản phẩm");
+    }
 
-            data.push({
-              id: docItem.id,
-              ...docItem.data(),
-            });
-
-          }
-        );
-
-        setProducts(data);
-
-      } catch (error) {
-
-        console.log(error);
-
-        alert(
-          "Không tải được sản phẩm"
-        );
-
-      }
-
-      setLoading(false);
-    };
+    setLoading(false);
+  };
 
   useEffect(() => {
-
     loadProducts();
-
   }, []);
 
   // ADD PRODUCT
-
   const addProduct = async () => {
-
     try {
-
       if (!name || !price) {
-
-        alert(
-          "Nhập đầy đủ thông tin"
-        );
-
+        alert("Nhập đầy đủ thông tin bắt buộc");
         return;
       }
 
-      const normalizedName =
-        name
-          .trim()
-          .toLowerCase();
+      const normalizedName = name.trim().toLowerCase();
 
-      const duplicate =
-        products.find(
-          (item: any) =>
-            item.name
-              ?.trim()
-              ?.toLowerCase() ===
-            normalizedName
-        );
+      const duplicate = products.find(
+        (item: any) =>
+          item.name?.trim()?.toLowerCase() === normalizedName
+      );
 
       if (duplicate) {
-
-        alert(
-          "Sản phẩm đã tồn tại"
-        );
-
+        alert("Sản phẩm đã tồn tại");
         return;
       }
 
-      await addDoc(
-        collection(
-          db,
-          "products"
+      await addDoc(collection(db, "products"), {
+        name: name.trim(),
+        product_code: productCode.trim(),
+        product_location: productLocation.trim(),
+
+        price: Number(price || 0),
+        import_price: Number(importPrice || 0),
+        capital_price: Number(
+          costPrice || capitalPrice || 0
         ),
-        {
 
-          name:
-            name.trim(),
+        stock: Number(stock || 0),
+        unit: unit.trim() || "cái",
+        tax: Number(tax || 0),
 
-          product_code:
-            productCode.trim(),
+        createdAt: new Date(),
+      });
 
-          product_location:
-            productLocation.trim(),
-
-          price:
-            Number(price || 0),
-
-          import_price:
-            Number(importPrice || 0),
-
-          capital_price:
-            Number(costPrice || 0),
-
-          stock:
-            Number(stock || 0),
-
-          unit:
-            unit.trim() || "cái",
-
-          tax:
-            Number(tax || 0),
-
-          createdAt:
-            new Date(),
-
-        }
-      );
-
-      alert(
-        "Thêm sản phẩm thành công"
-      );
+      alert("Thêm sản phẩm thành công");
 
       setName("");
-
       setProductCode("");
-
       setProductLocation("");
-
       setPrice("");
-
       setImportPrice("");
-
       setCapitalPrice("");
-
       setCostPrice("");
-
       setStock("");
-
       setUnit("");
-
       setTax("");
 
+      setShowAddForm(false);
+      setCurrentPage(1);
+
       loadProducts();
-
     } catch (error) {
-
       console.log(error);
 
-      alert(
-        "Không thể thêm sản phẩm"
-      );
-
+      alert("Không thể thêm sản phẩm");
     }
-
   };
 
   // OPEN EDIT MODAL
+  const openEditModal = (item: any) => {
+    setEditingProduct(item);
 
-  const openEditModal =
-    (item: any) => {
+    setEditName(item.name || "");
+    setEditProductCode(item.product_code || "");
+    setEditProductLocation(item.product_location || "");
+    setEditPrice(String(item.price || 0));
+    setEditImportPrice(String(item.import_price || 0));
+    setEditCapitalPrice(String(item.capital_price || 0));
+    setEditStock(String(item.stock || 0));
 
-      setEditingProduct(item);
+    setEditUnit(
+      typeof item.unit === "string"
+        ? item.unit
+        : item.unit?.name || "cái"
+    );
 
-      setEditName(
-        item.name || ""
-      );
-
-      setEditProductCode(
-        item.product_code || ""
-      );
-
-      setEditProductLocation(
-        item.product_location || ""
-      );
-
-      setEditPrice(
-        String(item.price || 0)
-      );
-
-      setEditImportPrice(
-        String(
-          item.import_price || 0
-        )
-      );
-
-      setEditCapitalPrice(
-        String(
-          item.capital_price || 0
-        )
-      );
-
-      setEditStock(
-        String(item.stock || 0)
-      );
-
-      setEditUnit(
-        typeof item.unit === "string"
-          ? item.unit
-          : item.unit?.name || "cái"
-      );
-
-      setEditTax(
-        String(item.tax || 0)
-      );
-
-    };
+    setEditTax(String(item.tax || 0));
+  };
 
   // SAVE EDIT
+  const saveEditProduct = async () => {
+    if (!editingProduct) return;
 
-  const saveEditProduct =
-    async () => {
+    try {
+      await updateDoc(
+        doc(db, "products", editingProduct.id),
+        {
+          name: editName.trim(),
+          product_code: editProductCode.trim(),
+          product_location: editProductLocation.trim(),
 
-      if (!editingProduct)
-        return;
+          price: Number(editPrice || 0),
+          import_price: Number(editImportPrice || 0),
+          capital_price: Number(editCapitalPrice || 0),
 
-      try {
+          stock: Number(editStock || 0),
+          unit: editUnit.trim() || "cái",
+          tax: Number(editTax || 0),
+        }
+      );
 
-        await updateDoc(
-          doc(
-            db,
-            "products",
-            editingProduct.id
-          ),
-          {
+      alert("Cập nhật thành công");
 
-            name:
-              editName.trim(),
+      setEditingProduct(null);
 
-            product_code:
-              editProductCode.trim(),
+      loadProducts();
+    } catch (error) {
+      console.log(error);
 
-            product_location:
-              editProductLocation.trim(),
-
-            price:
-              Number(editPrice || 0),
-
-            import_price:
-              Number(
-                editImportPrice || 0
-              ),
-
-            capital_price:
-              Number(
-                editCapitalPrice || 0
-              ),
-
-            stock:
-              Number(editStock || 0),
-
-            unit:
-              editUnit.trim() || "cái",
-
-            tax:
-              Number(editTax || 0),
-
-          }
-        );
-
-        alert(
-          "Cập nhật thành công"
-        );
-
-        setEditingProduct(null);
-
-        loadProducts();
-
-      } catch (error) {
-
-        console.log(error);
-
-        alert(
-          "Cập nhật thất bại"
-        );
-
-      }
-
-    };
+      alert("Cập nhật thất bại");
+    }
+  };
 
   // DELETE PRODUCT
+  const deleteProduct = async (id: string) => {
+    const confirmDelete = confirm(
+      "Bạn có chắc muốn xóa sản phẩm này?"
+    );
 
-  const deleteProduct =
-    async (
-      id: string
-    ) => {
+    if (!confirmDelete) return;
 
-      const confirmDelete =
-        confirm(
-          "Bạn có chắc muốn xóa?"
-        );
+    try {
+      await deleteDoc(doc(db, "products", id));
 
-      if (!confirmDelete)
+      loadProducts();
+    } catch (error) {
+      console.log(error);
+
+      alert("Xóa sản phẩm thất bại");
+    }
+  };
+
+  // EXPORT CSV
+  const exportProductsToCSV = () => {
+    if (products.length === 0) {
+      alert("Chưa có sản phẩm để xuất file");
+      return;
+    }
+
+    const headers = [
+      "name",
+      "product_code",
+      "product_location",
+      "price",
+      "import_price",
+      "capital_price",
+      "stock",
+      "unit",
+      "tax",
+    ];
+
+    const rows = products.map((item: any) => [
+      item.name || "",
+      item.product_code || "",
+      item.product_location || "",
+      Number(item.price || 0),
+      Number(item.import_price || 0),
+      Number(item.capital_price || 0),
+      Number(item.stock || 0),
+      typeof item.unit === "string"
+        ? item.unit || "cái"
+        : item.unit?.name || "cái",
+      Number(item.tax || 0),
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row
+          .map((cell) => {
+            const value = String(cell).replace(/"/g, '""');
+            return `"${value}"`;
+          })
+          .join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `danh-sach-san-pham-${Date.now()}.csv`;
+    link.click();
+
+    URL.revokeObjectURL(url);
+  };
+
+  // PARSE CSV LINE
+  const parseCSVLine = (line: string) => {
+    const result: string[] = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      const nextChar = line[i + 1];
+
+      if (char === '"' && inQuotes && nextChar === '"') {
+        current += '"';
+        i++;
+      } else if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === "," && !inQuotes) {
+        result.push(current);
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+
+    result.push(current);
+
+    return result.map((item) => item.trim());
+  };
+
+  // IMPORT CSV
+  const importProductsFromCSV = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const confirmImport = confirm(
+      "Bạn có chắc muốn nhập file sản phẩm này không?"
+    );
+
+    if (!confirmImport) {
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      const text = await file.text();
+
+      const lines = text
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      if (lines.length < 2) {
+        alert("File không có dữ liệu sản phẩm");
+        event.target.value = "";
         return;
-
-      try {
-
-        await deleteDoc(
-          doc(
-            db,
-            "products",
-            id
-          )
-        );
-
-        loadProducts();
-
-      } catch (error) {
-
-        console.log(error);
-
-        alert(
-          "Xóa sản phẩm thất bại"
-        );
-
       }
 
-    };
+      const headers = parseCSVLine(lines[0]).map((header) =>
+        header.trim()
+      );
+
+      const requiredHeader = "name";
+
+      if (!headers.includes(requiredHeader)) {
+        alert(
+          "File CSV cần có cột name. Ví dụ: name,product_code,product_location,price,import_price,capital_price,stock,unit,tax"
+        );
+        event.target.value = "";
+        return;
+      }
+
+      let successCount = 0;
+      let skipCount = 0;
+
+      const existingNames = new Set(
+        products.map((item: any) =>
+          String(item.name || "").trim().toLowerCase()
+        )
+      );
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+
+        const row: any = {};
+
+        headers.forEach((header, index) => {
+          row[header] = values[index] || "";
+        });
+
+        const productName = String(row.name || "").trim();
+
+        if (!productName) {
+          skipCount++;
+          continue;
+        }
+
+        const normalizedName =
+          productName.toLowerCase();
+
+        if (existingNames.has(normalizedName)) {
+          skipCount++;
+          continue;
+        }
+
+        await addDoc(collection(db, "products"), {
+          name: productName,
+          product_code: String(row.product_code || "").trim(),
+          product_location: String(
+            row.product_location || ""
+          ).trim(),
+
+          price: Number(row.price || 0),
+          import_price: Number(row.import_price || 0),
+          capital_price: Number(row.capital_price || 0),
+
+          stock: Number(row.stock || 0),
+          unit: String(row.unit || "cái").trim(),
+          tax: Number(row.tax || 0),
+
+          createdAt: new Date(),
+        });
+
+        existingNames.add(normalizedName);
+        successCount++;
+      }
+
+      alert(
+        `Nhập file xong. Thành công: ${successCount}. Bỏ qua: ${skipCount}.`
+      );
+
+      event.target.value = "";
+      setCurrentPage(1);
+
+      loadProducts();
+    } catch (error) {
+      console.log(error);
+
+      alert("Nhập file thất bại. Vui lòng kiểm tra lại file CSV.");
+
+      event.target.value = "";
+    }
+  };
 
   // SEARCH
+  const filteredProducts = products.filter((item: any) => {
+    const keyword = search.toLowerCase();
 
-  const filteredProducts =
-    products.filter(
-      (item: any) => {
-
-        const keyword =
-          search.toLowerCase();
-
-        const itemName =
-          item.name
-            ?.toLowerCase() || "";
-
-        const itemCode =
-          item.product_code
-            ?.toLowerCase() || "";
-
-        const itemLocation =
-          item.product_location
-            ?.toLowerCase() || "";
-
-        return (
-          itemName.includes(keyword) ||
-          itemCode.includes(keyword) ||
-          itemLocation.includes(keyword)
-        );
-
-      }
-    );
-
-  // LOADING
-
-  if (loading) {
+    const itemName = item.name?.toLowerCase() || "";
+    const itemCode = item.product_code?.toLowerCase() || "";
+    const itemLocation =
+      item.product_location?.toLowerCase() || "";
 
     return (
-      <div className="p-10 text-2xl">
-        Đang tải sản phẩm...
-      </div>
+      itemName.includes(keyword) ||
+      itemCode.includes(keyword) ||
+      itemLocation.includes(keyword)
+    );
+  });
+
+  const totalPages = Math.ceil(
+    filteredProducts.length / itemsPerPage
+  );
+
+  const startIndex =
+    (currentPage - 1) * itemsPerPage;
+
+  const paginatedProducts =
+    filteredProducts.slice(
+      startIndex,
+      startIndex + itemsPerPage
     );
 
+  if (loading) {
+    return (
+      <div className="p-10 text-2xl">
+        Đang tải sản phẩm.
+      </div>
+    );
   }
 
   return (
-
     <main className="min-h-screen bg-gray-100 p-6">
+      <div className="w-full max-w-[1800px] mx-auto">
+        {/* HEADER */}
+        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-blue-700">
+              Quản lý sản phẩm
+            </h1>
 
-      <div className="max-w-7xl mx-auto">
-
-        <h1 className="text-4xl font-bold text-blue-700 mb-8">
-          Quản lý sản phẩm
-        </h1>
-
-        {/* ADD FORM */}
-
-        <div className="bg-white p-6 rounded-3xl shadow mb-8">
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-
-            <div className="md:col-span-2">
-              <label className="block mb-2 text-sm font-semibold text-black">
-                Tên sản phẩm <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                type="text"
-                placeholder="Nhập tên sản phẩm"
-                className="w-full border p-4 rounded-2xl text-black"
-                value={name}
-                onChange={(e) =>
-                  setName(e.target.value)
-                }
-              />
-            </div>
-
-            <div className="md:col-span-1">
-              <label className="block mb-2 text-sm font-semibold text-black">
-                Mã sản phẩm
-              </label>
-
-              <input
-                type="text"
-                placeholder="Nhập mã sản phẩm"
-                className="w-full border p-4 rounded-2xl text-black"
-                value={productCode}
-                onChange={(e) =>
-                  setProductCode(e.target.value)
-                }
-              />
-            </div>
-
-            <div className="md:col-span-1">
-              <label className="block mb-2 text-sm font-semibold text-black">
-                Vị trí sản phẩm
-              </label>
-
-              <input
-                type="text"
-                placeholder="VD: Kệ A1, Ngăn B2"
-                className="w-full border p-4 rounded-2xl text-black"
-                value={productLocation}
-                onChange={(e) =>
-                  setProductLocation(e.target.value)
-                }
-              />
-            </div>
-
-            <div className="md:col-span-1">
-              <label className="block mb-2 text-sm font-semibold text-black">
-                Giá bán <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                type="number"
-                placeholder="Nhập giá bán"
-                className="w-full border p-4 rounded-2xl text-black"
-                value={price}
-                onChange={(e) =>
-                  setPrice(e.target.value)
-                }
-              />
-            </div>
-
-            <div className="md:col-span-1">
-              <label className="block mb-2 text-sm font-semibold text-black">
-                Giá nhập
-              </label>
-
-              <input
-                type="number"
-                placeholder="Nhập giá nhập"
-                className="w-full border p-4 rounded-2xl text-black"
-                value={importPrice}
-                onChange={(e) =>
-                  setImportPrice(e.target.value)
-                }
-              />
-            </div>
-
-            <div className="md:col-span-1">
-              <label className="block mb-2 text-sm font-semibold text-black">
-                Giá vốn
-              </label>
-
-              <input
-                type="number"
-                placeholder="Nhập giá vốn"
-                className="w-full border p-4 rounded-2xl text-black"
-                value={costPrice}
-                onChange={(e) =>
-                  setCostPrice(e.target.value)
-                }
-              />
-            </div>
-
-            <div className="md:col-span-1">
-              <label className="block mb-2 text-sm font-semibold text-black">
-                Tồn kho <span className="text-red-500">*</span>
-              </label>
-
-              <input
-                type="number"
-                placeholder="Nhập tồn kho"
-                className="w-full border p-4 rounded-2xl text-black"
-                value={stock}
-                onChange={(e) =>
-                  setStock(e.target.value)
-                }
-              />
-            </div>
-
-            <div className="md:col-span-1">
-              <label className="block mb-2 text-sm font-semibold text-black">
-                Đơn vị
-              </label>
-
-              <input
-                type="text"
-                placeholder="VD: cái, bộ, mét..."
-                className="w-full border p-4 rounded-2xl text-black"
-                value={unit}
-                onChange={(e) =>
-                  setUnit(e.target.value)
-                }
-              />
-            </div>
-
-            <div className="md:col-span-1">
-              <label className="block mb-2 text-sm font-semibold text-black">
-                VAT
-              </label>
-
-              <select
-                className="w-full border p-4 rounded-2xl text-black"
-                value={tax}
-                onChange={(e) =>
-                  setTax(e.target.value)
-                }
-              >
-                <option value="">
-                  Chọn VAT
-                </option>
-
-                <option value="0">
-                  VAT 0%
-                </option>
-
-                <option value="8">
-                  VAT 8%
-                </option>
-
-                <option value="10">
-                  VAT 10%
-                </option>
-              </select>
-            </div>
-
+            <p className="text-gray-500 mt-2">
+              Quản lý danh sách sản phẩm, tồn kho, giá bán và VAT
+            </p>
           </div>
 
-          <button
-            onClick={addProduct}
-            className="mt-5 bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-2xl"
-          >
-            + Thêm sản phẩm
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={importProductsFromCSV}
+            />
 
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-white border border-blue-600 text-blue-700 hover:bg-blue-50 px-5 py-3 rounded-2xl font-semibold"
+            >
+              Nhập file
+            </button>
+
+            <button
+              type="button"
+              onClick={exportProductsToCSV}
+              className="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-2xl font-semibold"
+            >
+              Xuất file
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowAddForm((prev) => !prev)}
+              className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-2xl font-semibold"
+            >
+              {showAddForm ? "Ẩn form" : "+ Thêm sản phẩm"}
+            </button>
+          </div>
         </div>
 
+        {/* ADD FORM */}
+        {showAddForm && (
+          <div className="bg-white p-7 rounded-3xl shadow-sm border border-gray-100 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+              <div className="xl:col-span-2">
+                <label className="block mb-2 text-sm font-semibold text-black">
+                  Tên sản phẩm <span className="text-red-500">*</span>
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="Nhập tên sản phẩm"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-black">
+                  Mã sản phẩm
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="Nhập mã sản phẩm"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={productCode}
+                  onChange={(e) =>
+                    setProductCode(e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-black">
+                  Vị trí sản phẩm
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="VD: Kệ A1, Ngăn B2"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={productLocation}
+                  onChange={(e) =>
+                    setProductLocation(e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-black">
+                  Giá bán <span className="text-red-500">*</span>
+                </label>
+
+                <input
+                  type="number"
+                  placeholder="Nhập giá bán"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-black">
+                  Giá nhập
+                </label>
+
+                <input
+                  type="number"
+                  placeholder="Nhập giá nhập"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={importPrice}
+                  onChange={(e) =>
+                    setImportPrice(e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-black">
+                  Giá vốn
+                </label>
+
+                <input
+                  type="number"
+                  placeholder="Nhập giá vốn"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={costPrice || capitalPrice}
+                  onChange={(e) => {
+                    setCostPrice(e.target.value);
+                    setCapitalPrice(e.target.value);
+                  }}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-black">
+                  Tồn kho
+                </label>
+
+                <input
+                  type="number"
+                  placeholder="Nhập tồn kho"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={stock}
+                  onChange={(e) => setStock(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-black">
+                  Đơn vị
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="VD: cái, bộ, mét..."
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-black">
+                  VAT
+                </label>
+
+                <select
+                  className="w-full border p-4 rounded-2xl text-black bg-white"
+                  value={tax}
+                  onChange={(e) => setTax(e.target.value)}
+                >
+                  <option value="">
+                    Chọn VAT
+                  </option>
+
+                  <option value="0">
+                    VAT 0%
+                  </option>
+
+                  <option value="8">
+                    VAT 8%
+                  </option>
+
+                  <option value="10">
+                    VAT 10%
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setShowAddForm(false)}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-7 py-3 rounded-2xl font-semibold"
+              >
+                Hủy
+              </button>
+
+              <button
+                type="button"
+                onClick={addProduct}
+                className="bg-blue-700 hover:bg-blue-800 text-white px-8 py-3 rounded-2xl font-semibold"
+              >
+                Lưu sản phẩm
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* SEARCH */}
-
-        <div className="bg-white p-6 rounded-3xl shadow mb-6">
-
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 mb-6">
           <input
             type="text"
             placeholder="Tìm theo tên, mã sản phẩm hoặc vị trí..."
             autoComplete="off"
             className="w-full border p-4 rounded-2xl text-black"
             value={search}
-            onChange={(e) =>
-              setSearch(
-                e.target.value
-              )
-            }
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
           />
-
         </div>
 
         {/* TABLE */}
-
-        <div className="bg-white rounded-3xl shadow overflow-x-auto">
-
-          <table className="w-full min-w-[1100px]">
-
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-x-auto">
+          <table className="w-full min-w-[1400px]">
             <thead className="bg-blue-700 text-white">
-
               <tr>
-
                 <th className="p-4 text-left">
                   Tên sản phẩm
                 </th>
@@ -689,19 +728,19 @@ export default function ProductsPage() {
                   Vị trí
                 </th>
 
-                <th className="p-4 text-left">
+                <th className="p-4 text-right">
                   Giá nhập
                 </th>
 
-                <th className="p-4 text-left">
+                <th className="p-4 text-right">
                   Giá bán
                 </th>
 
-                <th className="p-4 text-left">
+                <th className="p-4 text-right">
                   Giá vốn
                 </th>
 
-                <th className="p-4 text-left">
+                <th className="p-4 text-right">
                   Tồn kho
                 </th>
 
@@ -709,445 +748,367 @@ export default function ProductsPage() {
                   Đơn vị
                 </th>
 
-                <th className="p-4 text-left">
+                <th className="p-4 text-center">
                   VAT
                 </th>
 
-                <th className="p-4 text-left">
+                <th className="p-4 text-center">
                   Hành động
                 </th>
-
               </tr>
-
             </thead>
 
             <tbody>
+              {paginatedProducts.map((item: any) => (
+                <tr
+                  key={item.id}
+                  className="border-b hover:bg-gray-50"
+                >
+                  <td className="p-4 text-black font-semibold">
+                    {item.name}
+                  </td>
 
-              {filteredProducts.map(
-                (item: any) => (
+                  <td className="p-4 text-black">
+                    {item.product_code || "---"}
+                  </td>
 
-                  <tr
-                    key={item.id}
-                    className="border-b hover:bg-gray-50"
+                  <td className="p-4 text-black">
+                    {item.product_location || "---"}
+                  </td>
+
+                  <td className="p-4 text-right text-black">
+                    {formatMoney(item.import_price)}
+                  </td>
+
+                  <td className="p-4 text-right text-blue-700 font-semibold">
+                    {formatMoney(item.price)}
+                  </td>
+
+                  <td className="p-4 text-right text-black">
+                    {formatMoney(item.capital_price)}
+                  </td>
+
+                  <td className="p-4 text-right text-black font-semibold">
+                    {Number(item.stock || 0).toLocaleString("vi-VN")}
+                  </td>
+
+                  <td className="p-4 text-black">
+                    {typeof item.unit === "string"
+                      ? item.unit || "cái"
+                      : item.unit?.name || "cái"}
+                  </td>
+
+                  <td className="p-4 text-center text-black">
+                    {Number(item.tax || 0)}%
+                  </td>
+
+                  <td className="p-4">
+                    <div className="flex justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(item)}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-xl text-sm"
+                      >
+                        Sửa
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => deleteProduct(item.id)}
+                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-xl text-sm"
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+
+              {filteredProducts.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={10}
+                    className="p-10 text-center text-gray-500"
                   >
-
-                    <td className="p-4 text-black">
-                      {item.name}
-                    </td>
-
-                    <td className="p-4 text-black">
-                      {item.product_code || "---"}
-                    </td>
-
-                    <td className="p-4 text-black">
-                      {item.product_location || "---"}
-                    </td>
-
-                    <td className="p-4 text-black">
-                      {Number(
-                        item.import_price || 0
-                      ).toLocaleString()}đ
-                    </td>
-
-                    <td className="p-4 text-black">
-                      {Number(
-                        item.price || 0
-                      ).toLocaleString()}đ
-                    </td>
-
-                    <td className="p-4 text-black">
-                      {Number(
-                        item.capital_price || 0
-                      ).toLocaleString()}đ
-                    </td>
-
-                    <td className="p-4 text-black">
-                      {item.stock || 0}
-                    </td>
-
-                    <td className="p-4 text-black">
-                      {typeof item.unit === "string"
-                        ? item.unit
-                        : item.unit?.name || "cái"}
-                    </td>
-
-                    <td className="p-4 text-black">
-                      {Number(item.tax || 0)}%
-                    </td>
-
-                    <td className="p-4">
-
-                      <div className="flex gap-2">
-
-                        <button
-                          onClick={() =>
-                            openEditModal(
-                              item
-                            )
-                          }
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl"
-                        >
-                          Sửa
-                        </button>
-
-                        <button
-                          onClick={() =>
-                            deleteProduct(
-                              item.id
-                            )
-                          }
-                          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl"
-                        >
-                          Xóa
-                        </button>
-
-                      </div>
-
-                    </td>
-
-                  </tr>
-
-                )
+                    Không tìm thấy sản phẩm phù hợp
+                  </td>
+                </tr>
               )}
-
             </tbody>
-
           </table>
-
         </div>
 
-      </div>
+        {/* PAGINATION */}
+        {filteredProducts.length > itemsPerPage && (
+          <div className="bg-white mt-5 p-4 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="text-sm text-gray-600">
+              Hiển thị{" "}
+              <span className="font-semibold text-black">
+                {startIndex + 1}
+              </span>
+              {" "}đến{" "}
+              <span className="font-semibold text-black">
+                {Math.min(
+                  startIndex + itemsPerPage,
+                  filteredProducts.length
+                )}
+              </span>
+              {" "}trong tổng{" "}
+              <span className="font-semibold text-black">
+                {filteredProducts.length}
+              </span>
+              {" "}sản phẩm
+            </div>
 
-      {/* EDIT MODAL */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() =>
+                  setCurrentPage((prev) =>
+                    Math.max(prev - 1, 1)
+                  )
+                }
+                className={`px-4 py-2 rounded-xl font-semibold ${
+                  currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-200 hover:bg-gray-300 text-black"
+                }`}
+              >
+                Trước
+              </button>
 
-      {editingProduct && (
-
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6">
-
-          <div className="w-full max-w-5xl max-h-[92vh] overflow-hidden rounded-3xl bg-white shadow-2xl">
-
-            <div className="flex items-start justify-between border-b border-gray-100 px-7 py-5">
-
-              <div>
-
-                <h2 className="text-3xl font-bold text-black">
-                  Sửa sản phẩm
-                </h2>
-
-                <p className="mt-1 text-sm text-gray-500">
-                  Cập nhật thông tin sản phẩm, giá bán, giá vốn và tồn kho
-                </p>
-
-              </div>
+              {Array.from(
+                { length: totalPages },
+                (_, index) => index + 1
+              ).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-4 py-2 rounded-xl font-semibold ${
+                    currentPage === page
+                      ? "bg-blue-700 text-white"
+                      : "bg-gray-100 hover:bg-gray-200 text-black"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
 
               <button
                 type="button"
+                disabled={currentPage === totalPages}
                 onClick={() =>
-                  setEditingProduct(
-                    null
+                  setCurrentPage((prev) =>
+                    Math.min(prev + 1, totalPages)
                   )
                 }
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-2xl leading-none text-gray-500 hover:bg-gray-200 hover:text-black"
+                className={`px-4 py-2 rounded-xl font-semibold ${
+                  currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-200 hover:bg-gray-300 text-black"
+                }`}
               >
-                ×
+                Sau
               </button>
-
             </div>
+          </div>
+        )}
 
-            <div className="max-h-[calc(92vh-150px)] overflow-y-auto px-7 py-6">
+        {/* EDIT MODAL */}
+        {editingProduct && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-xl w-full max-w-5xl p-7">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-blue-700">
+                    Sửa sản phẩm
+                  </h2>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                <div className="rounded-3xl border border-gray-100 bg-gray-50 p-5">
-
-                  <div className="mb-5 flex items-center justify-between">
-
-                    <h3 className="text-lg font-bold text-blue-700">
-                      Thông tin sản phẩm
-                    </h3>
-
-                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
-                      Cơ bản
-                    </span>
-
-                  </div>
-
-                  <div className="space-y-4">
-
-                    <div>
-
-                      <label className="block mb-2 text-sm font-semibold text-black">
-                        Tên sản phẩm
-                      </label>
-
-                      <input
-                        type="text"
-                        placeholder="Tên sản phẩm"
-                        className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                        value={editName}
-                        onChange={(e) =>
-                          setEditName(
-                            e.target.value
-                          )
-                        }
-                      />
-
-                    </div>
-
-                    <div>
-
-                      <label className="block mb-2 text-sm font-semibold text-black">
-                        Mã sản phẩm
-                      </label>
-
-                      <input
-                        type="text"
-                        placeholder="VD: SP0001, LED12V..."
-                        className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                        value={editProductCode}
-                        onChange={(e) =>
-                          setEditProductCode(
-                            e.target.value
-                          )
-                        }
-                      />
-
-                    </div>
-
-                    <div>
-
-                      <label className="block mb-2 text-sm font-semibold text-black">
-                        Vị trí sản phẩm
-                      </label>
-
-                      <input
-                        type="text"
-                        placeholder="VD: Kệ A1, Ngăn B2..."
-                        className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                        value={editProductLocation}
-                        onChange={(e) =>
-                          setEditProductLocation(
-                            e.target.value
-                          )
-                        }
-                      />
-
-                    </div>
-
-                    <div>
-
-                      <label className="block mb-2 text-sm font-semibold text-black">
-                        Đơn vị
-                      </label>
-
-                      <input
-                        type="text"
-                        placeholder="VD: cái, bộ, mét, cuộn..."
-                        className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                        value={editUnit}
-                        onChange={(e) =>
-                          setEditUnit(
-                            e.target.value
-                          )
-                        }
-                      />
-
-                    </div>
-
-                  </div>
-
+                  <p className="text-gray-500 mt-1">
+                    Cập nhật thông tin sản phẩm
+                  </p>
                 </div>
 
-                <div className="rounded-3xl border border-gray-100 bg-gray-50 p-5">
-
-                  <div className="mb-5 flex items-center justify-between">
-
-                    <h3 className="text-lg font-bold text-blue-700">
-                      Giá bán & tồn kho
-                    </h3>
-
-                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
-                      Bán hàng
-                    </span>
-
-                  </div>
-
-                  <div className="space-y-4">
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                      <div>
-
-                        <label className="block mb-2 text-sm font-semibold text-black">
-                          Giá bán
-                        </label>
-
-                        <input
-                          type="number"
-                          placeholder="Giá bán"
-                          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                          value={editPrice}
-                          onChange={(e) =>
-                            setEditPrice(
-                              e.target.value
-                            )
-                          }
-                        />
-
-                      </div>
-
-                      <div>
-
-                        <label className="block mb-2 text-sm font-semibold text-black">
-                          Giá nhập
-                        </label>
-
-                        <input
-                          type="number"
-                          placeholder="Giá nhập"
-                          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                          value={editImportPrice}
-                          onChange={(e) =>
-                            setEditImportPrice(
-                              e.target.value
-                            )
-                          }
-                        />
-
-                      </div>
-
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                      <div>
-
-                        <label className="block mb-2 text-sm font-semibold text-black">
-                          Giá vốn
-                        </label>
-
-                        <input
-                          type="number"
-                          placeholder="Giá vốn"
-                          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                          value={editCapitalPrice}
-                          onChange={(e) =>
-                            setEditCapitalPrice(
-                              e.target.value
-                            )
-                          }
-                        />
-
-                      </div>
-
-                      <div>
-
-                        <label className="block mb-2 text-sm font-semibold text-black">
-                          Tồn kho
-                        </label>
-
-                        <input
-                          type="number"
-                          placeholder="Tồn kho"
-                          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                          value={editStock}
-                          onChange={(e) =>
-                            setEditStock(
-                              e.target.value
-                            )
-                          }
-                        />
-
-                      </div>
-
-                    </div>
-
-                    <div>
-
-                      <label className="block mb-2 text-sm font-semibold text-black">
-                        VAT
-                      </label>
-
-                      <select
-                        className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                        value={editTax}
-                        onChange={(e) =>
-                          setEditTax(
-                            e.target.value
-                          )
-                        }
-                      >
-
-                        <option value="">
-                          Chọn VAT
-                        </option>
-
-                        <option value="0">
-                          VAT 0%
-                        </option>
-
-                        <option value="8">
-                          VAT 8%
-                        </option>
-
-                        <option value="10">
-                          VAT 10%
-                        </option>
-
-                      </select>
-
-                    </div>
-
-                    <div className="rounded-2xl bg-white p-4 border border-gray-100">
-
-                      <p className="text-sm text-gray-500">
-                        Gợi ý
-                      </p>
-
-                      <p className="mt-1 text-sm text-gray-700">
-                        Giá vốn dùng để tính lợi nhuận. Tồn kho sẽ hiển thị trong quản lý kho và POS.
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
+                <button
+                  type="button"
+                  onClick={() => setEditingProduct(null)}
+                  className="bg-gray-100 hover:bg-gray-200 w-10 h-10 rounded-full text-xl"
+                >
+                  ×
+                </button>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+                <div className="xl:col-span-2">
+                  <label className="block mb-2 text-sm font-semibold text-black">
+                    Tên sản phẩm
+                  </label>
+
+                  <input
+                    type="text"
+                    className="w-full border p-4 rounded-2xl text-black"
+                    value={editName}
+                    onChange={(e) =>
+                      setEditName(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-black">
+                    Mã sản phẩm
+                  </label>
+
+                  <input
+                    type="text"
+                    className="w-full border p-4 rounded-2xl text-black"
+                    value={editProductCode}
+                    onChange={(e) =>
+                      setEditProductCode(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-black">
+                    Vị trí sản phẩm
+                  </label>
+
+                  <input
+                    type="text"
+                    className="w-full border p-4 rounded-2xl text-black"
+                    value={editProductLocation}
+                    onChange={(e) =>
+                      setEditProductLocation(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-black">
+                    Giá bán
+                  </label>
+
+                  <input
+                    type="number"
+                    className="w-full border p-4 rounded-2xl text-black"
+                    value={editPrice}
+                    onChange={(e) =>
+                      setEditPrice(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-black">
+                    Giá nhập
+                  </label>
+
+                  <input
+                    type="number"
+                    className="w-full border p-4 rounded-2xl text-black"
+                    value={editImportPrice}
+                    onChange={(e) =>
+                      setEditImportPrice(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-black">
+                    Giá vốn
+                  </label>
+
+                  <input
+                    type="number"
+                    className="w-full border p-4 rounded-2xl text-black"
+                    value={editCapitalPrice}
+                    onChange={(e) =>
+                      setEditCapitalPrice(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-black">
+                    Tồn kho
+                  </label>
+
+                  <input
+                    type="number"
+                    className="w-full border p-4 rounded-2xl text-black"
+                    value={editStock}
+                    onChange={(e) =>
+                      setEditStock(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-black">
+                    Đơn vị
+                  </label>
+
+                  <input
+                    type="text"
+                    className="w-full border p-4 rounded-2xl text-black"
+                    value={editUnit}
+                    onChange={(e) =>
+                      setEditUnit(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-black">
+                    VAT
+                  </label>
+
+                  <select
+                    className="w-full border p-4 rounded-2xl text-black bg-white"
+                    value={editTax}
+                    onChange={(e) =>
+                      setEditTax(e.target.value)
+                    }
+                  >
+                    <option value="0">
+                      VAT 0%
+                    </option>
+
+                    <option value="8">
+                      VAT 8%
+                    </option>
+
+                    <option value="10">
+                      VAT 10%
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-7">
+                <button
+                  type="button"
+                  onClick={() => setEditingProduct(null)}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-2xl font-semibold"
+                >
+                  Hủy
+                </button>
+
+                <button
+                  type="button"
+                  onClick={saveEditProduct}
+                  className="bg-blue-700 hover:bg-blue-800 text-white px-7 py-3 rounded-2xl font-semibold"
+                >
+                  Lưu thay đổi
+                </button>
+              </div>
             </div>
-
-            <div className="flex items-center justify-end gap-3 border-t border-gray-100 bg-white px-7 py-5">
-
-              <button
-                onClick={() =>
-                  setEditingProduct(
-                    null
-                  )
-                }
-                className="rounded-2xl bg-gray-200 px-7 py-3 font-semibold text-gray-700 hover:bg-gray-300"
-              >
-                Hủy
-              </button>
-
-              <button
-                onClick={saveEditProduct}
-                className="rounded-2xl bg-blue-700 px-8 py-3 font-semibold text-white hover:bg-blue-800"
-              >
-                Lưu thay đổi
-              </button>
-
-            </div>
-
           </div>
-
-        </div>
-
-      )}
-
+        )}
+      </div>
     </main>
-
   );
-
 }

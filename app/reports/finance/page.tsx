@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 
 import {
   collection,
@@ -1032,9 +1032,8 @@ export default function FinanceReportPage() {
                         expandedOrderId === order.id;
 
                       return (
-                        <>
+                        <Fragment key={order.id}>
                           <tr
-                            key={order.id}
                             className={`border-t hover:bg-gray-50 ${
                               isExpanded
                                 ? "bg-blue-50/40"
@@ -1128,10 +1127,7 @@ export default function FinanceReportPage() {
                           </tr>
 
                           {isExpanded && (
-                            <tr
-                              key={`${order.id}-detail`}
-                              className="border-t bg-blue-50/30"
-                            >
+                            <tr className="border-t bg-blue-50/30">
                               <td
                                 colSpan={6}
                                 className="p-0"
@@ -1253,7 +1249,9 @@ export default function FinanceReportPage() {
                                                   <tr
                                                     key={
                                                       item.id ||
-                                                      itemIndex
+                                                      item.sku ||
+                                                      item.code ||
+                                                      `${order.id}-item-${itemIndex}`
                                                     }
                                                     className="border-t"
                                                   >
@@ -1427,7 +1425,7 @@ export default function FinanceReportPage() {
                               </td>
                             </tr>
                           )}
-                        </>
+                        </Fragment>
                       );
                     }
                   )
@@ -1444,7 +1442,7 @@ export default function FinanceReportPage() {
               </strong>
             </p>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 disabled={currentPage === 1}

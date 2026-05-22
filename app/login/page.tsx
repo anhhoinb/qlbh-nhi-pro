@@ -5,11 +5,28 @@ import { useEffect, useState } from "react";
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  signOut,
 } from "firebase/auth";
+
+import {
+  doc,
+  getDoc,
+} from "firebase/firestore";
 
 import { useRouter } from "next/navigation";
 
-import { auth } from "@/lib/firebase";
+import {
+  auth,
+  db,
+} from "@/lib/firebase";
+
+type CurrentUserInfo = {
+  uid: string;
+  email: string;
+  name: string;
+  role: string;
+  permissions: Record<string, boolean>;
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,21 +43,174 @@ export default function LoginPage() {
   const [checking, setChecking] =
     useState(true);
 
-  useEffect(() => {
-    const unsubscribe =
-      onAuthStateChanged(auth, (currentUser) => {
-        if (currentUser) {
-          router.replace("/dashboard");
-        } else {
-          setChecking(false);
-        }
-      });
+  const getRedirectPath = (
+    userInfo: CurrentUserInfo
+  ) => {
+    const role =
+      String(userInfo.role || "")
+        .trim()
+        .toLowerCase();
 
-    return () => unsubscribe();
+    const permissions =
+      userInfo.permissions || {};
+
+    const isAdmin =
+      role === "admin" ||
+      permissions.admin === true;
+
+    if (isAdmin) {
+      return "/dashboard";
+    }
+
+    return "/pos";
+  };
+
+  const saveUserPermission = async (
+    uid: string,
+    authEmail?: string | null
+  ) => {
+    const userRef =
+      doc(db, "users", uid);
+
+    const userSnap =
+      await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      localStorage.removeItem(
+        "currentUserInfo"
+      );
+
+      await signOut(auth);
+
+      alert(
+        "Tài khoản này chưa được cấp quyền trong hệ thống"
+      );
+
+      return null;
+    }
+
+    const userData: any =
+      userSnap.data();
+
+    if (userData.active !== true) {
+      localStorage.removeItem(
+        "currentUserInfo"
+      );
+
+      await signOut(auth);
+
+      alert(
+        "Tài khoản này đang bị khóa"
+      );
+
+      return null;
+    }
+
+    const role =
+      String(userData.role || "staff")
+        .trim()
+        .toLowerCase();
+
+    const permissions =
+      userData.permissions &&
+      typeof userData.permissions === "object"
+        ? userData.permissions
+        : {};
+
+    const currentUserInfo: CurrentUserInfo = {
+      uid: uid,
+
+      email:
+        userData.email ||
+        authEmail ||
+        "",
+
+      name:
+        userData.name ||
+        "",
+
+      role: role,
+
+      permissions: permissions,
+    };
+
+    localStorage.removeItem(
+      "currentUserInfo"
+    );
+
+    localStorage.setItem(
+      "currentUserInfo",
+      JSON.stringify(currentUserInfo)
+    );
+
+    return currentUserInfo;
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const unsubscribe =
+      onAuthStateChanged(
+        auth,
+        async (currentUser) => {
+          if (!isMounted) {
+            return;
+          }
+
+          if (!currentUser) {
+            localStorage.removeItem(
+              "currentUserInfo"
+            );
+
+            setChecking(false);
+            return;
+          }
+
+          try {
+            const userInfo =
+              await saveUserPermission(
+                currentUser.uid,
+                currentUser.email
+              );
+
+            if (!isMounted) {
+              return;
+            }
+
+            if (!userInfo) {
+              setChecking(false);
+              return;
+            }
+
+            const redirectPath =
+              getRedirectPath(userInfo);
+
+            router.replace(redirectPath);
+          } catch (error) {
+            console.error(error);
+
+            localStorage.removeItem(
+              "currentUserInfo"
+            );
+
+            await signOut(auth);
+
+            if (isMounted) {
+              setChecking(false);
+            }
+          }
+        }
+      );
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [router]);
 
   const handleLogin = async () => {
-    const cleanEmail = email.trim();
+    const cleanEmail =
+      email.trim();
 
     if (!cleanEmail) {
       alert("Vui lòng nhập email");
@@ -55,13 +225,31 @@ export default function LoginPage() {
     try {
       setLoading(true);
 
-      await signInWithEmailAndPassword(
-        auth,
-        cleanEmail,
-        password
+      localStorage.removeItem(
+        "currentUserInfo"
       );
 
-      router.replace("/dashboard");
+      const result =
+        await signInWithEmailAndPassword(
+          auth,
+          cleanEmail,
+          password
+        );
+
+      const userInfo =
+        await saveUserPermission(
+          result.user.uid,
+          result.user.email
+        );
+
+      if (!userInfo) {
+        return;
+      }
+
+      const redirectPath =
+        getRedirectPath(userInfo);
+
+      router.replace(redirectPath);
     } catch (error: any) {
       console.error(error);
 
@@ -70,16 +258,24 @@ export default function LoginPage() {
         error?.code === "auth/wrong-password" ||
         error?.code === "auth/invalid-credential"
       ) {
-        alert("Email hoặc mật khẩu không đúng");
+        alert(
+          "Email hoặc mật khẩu không đúng"
+        );
         return;
       }
 
-      if (error?.code === "auth/too-many-requests") {
-        alert("Bạn nhập sai quá nhiều lần, vui lòng thử lại sau");
+      if (
+        error?.code === "auth/too-many-requests"
+      ) {
+        alert(
+          "Bạn nhập sai quá nhiều lần, vui lòng thử lại sau"
+        );
         return;
       }
 
-      alert("Không đăng nhập được, vui lòng kiểm tra lại");
+      alert(
+        "Không đăng nhập được, vui lòng kiểm tra lại"
+      );
     } finally {
       setLoading(false);
     }
@@ -157,11 +353,13 @@ export default function LoginPage() {
             onClick={handleLogin}
             className="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-2xl font-bold text-lg disabled:opacity-60"
           >
-            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+            {loading
+              ? "Đang đăng nhập..."
+              : "Đăng nhập"}
           </button>
 
           <p className="text-sm text-gray-500 text-center">
-            Chỉ tài khoản được cấp quyền mới có thể truy cập hệ thống.
+            Admin sẽ vào trang Dashboard, nhân viên sẽ vào màn hình POS.
           </p>
         </div>
       </div>
