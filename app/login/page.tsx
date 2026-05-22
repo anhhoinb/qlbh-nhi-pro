@@ -43,6 +43,10 @@ export default function LoginPage() {
   const [checking, setChecking] =
     useState(true);
 
+  const goToPage = (path: string) => {
+    window.location.href = path;
+  };
+
   const getRedirectPath = (
     userInfo: CurrentUserInfo
   ) => {
@@ -67,7 +71,8 @@ export default function LoginPage() {
 
   const saveUserPermission = async (
     uid: string,
-    authEmail?: string | null
+    authEmail?: string | null,
+    showAlert: boolean = true
   ) => {
     const userRef =
       doc(db, "users", uid);
@@ -82,9 +87,11 @@ export default function LoginPage() {
 
       await signOut(auth);
 
-      alert(
-        "Tài khoản này chưa được cấp quyền trong hệ thống"
-      );
+      if (showAlert) {
+        alert(
+          "Tài khoản này chưa được cấp quyền trong hệ thống"
+        );
+      }
 
       return null;
     }
@@ -99,9 +106,11 @@ export default function LoginPage() {
 
       await signOut(auth);
 
-      alert(
-        "Tài khoản này đang bị khóa"
-      );
+      if (showAlert) {
+        alert(
+          "Tài khoản này đang bị khóa"
+        );
+      }
 
       return null;
     }
@@ -170,7 +179,8 @@ export default function LoginPage() {
             const userInfo =
               await saveUserPermission(
                 currentUser.uid,
-                currentUser.email
+                currentUser.email,
+                false
               );
 
             if (!isMounted) {
@@ -185,7 +195,7 @@ export default function LoginPage() {
             const redirectPath =
               getRedirectPath(userInfo);
 
-            router.replace(redirectPath);
+            goToPage(redirectPath);
           } catch (error) {
             console.error(error);
 
@@ -206,7 +216,7 @@ export default function LoginPage() {
       isMounted = false;
       unsubscribe();
     };
-  }, [router]);
+  }, []);
 
   const handleLogin = async () => {
     const cleanEmail =
@@ -239,17 +249,19 @@ export default function LoginPage() {
       const userInfo =
         await saveUserPermission(
           result.user.uid,
-          result.user.email
+          result.user.email,
+          true
         );
 
       if (!userInfo) {
+        setLoading(false);
         return;
       }
 
       const redirectPath =
         getRedirectPath(userInfo);
 
-      router.replace(redirectPath);
+      goToPage(redirectPath);
     } catch (error: any) {
       console.error(error);
 
