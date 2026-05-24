@@ -85,7 +85,9 @@ export default function RestockHistoryPage() {
       return item.code;
     }
 
-    return `PNH-CU-${String(item.id || "").slice(0, 6).toUpperCase()}`;
+    return `PNH-CU-${String(item.id || "")
+      .slice(0, 6)
+      .toUpperCase()}`;
   };
 
   const getItems = (item: any) => {
@@ -98,36 +100,43 @@ export default function RestockHistoryPage() {
         productId: item.productId || "",
         productName: item.productName || "",
         productCode: item.productCode || "",
-        productLocation: item.productLocation || "",
-        beforeStock:
-          Number(item.beforeStock || 0),
-        quantity:
-          Number(item.quantity || 0),
-        afterStock:
-          Number(
-            item.afterStock ||
-              Number(item.beforeStock || 0) +
-                Number(item.quantity || 0)
-          ),
+        productLocation:
+          item.productLocation || "",
+        beforeStock: Number(
+          item.beforeStock || 0
+        ),
+        quantity: Number(
+          item.quantity || 0
+        ),
+        afterStock: Number(
+          item.afterStock ||
+            Number(item.beforeStock || 0) +
+              Number(item.quantity || 0)
+        ),
       },
     ];
   };
 
   const getTotalQuantity = (item: any) => {
     if (item.totalQuantity !== undefined) {
-      return Number(item.totalQuantity || 0);
+      return Number(
+        item.totalQuantity || 0
+      );
     }
 
     return getItems(item).reduce(
       (sum: number, product: any) =>
-        sum + Number(product.quantity || 0),
+        sum +
+        Number(product.quantity || 0),
       0
     );
   };
 
   const getItemCount = (item: any) => {
     if (item.itemCount !== undefined) {
-      return Number(item.itemCount || 0);
+      return Number(
+        item.itemCount || 0
+      );
     }
 
     return getItems(item).length;
@@ -142,7 +151,9 @@ export default function RestockHistoryPage() {
           </h1>
 
           <p className="text-gray-500 mt-2">
-            Danh sách đơn nhập hàng, đơn mới nhất sẽ hiển thị trên đầu.
+            Danh sách đơn nhập hàng,
+            đơn mới nhất sẽ hiển thị
+            trên đầu.
           </p>
         </div>
 
@@ -154,7 +165,9 @@ export default function RestockHistoryPage() {
               </h2>
 
               <p className="text-gray-500 text-sm mt-1">
-                Click vào mũi tên để xem chi tiết sản phẩm trong đơn nhập.
+                Click vào mũi tên để
+                xem chi tiết sản phẩm
+                trong đơn nhập.
               </p>
             </div>
 
@@ -192,163 +205,172 @@ export default function RestockHistoryPage() {
                 </tr>
               </thead>
 
-              <tbody>
-                {history.map((item) => {
-                  const isOpen =
-                    openId === item.id;
+              {history.map((item) => {
+                const isOpen =
+                  openId === item.id;
 
-                  const items =
-                    getItems(item);
+                const items =
+                  getItems(item);
 
-                  return (
-                    <>
-                      <tr
-                        key={item.id}
-                        className="border-b hover:bg-gray-50"
-                      >
-                        <td className="p-4 font-bold text-blue-700">
-                          {getRestockCode(item)}
-                        </td>
+                return (
+                  <tbody key={item.id}>
+                    <tr className="border-b hover:bg-gray-50">
+                      <td className="p-4 font-bold text-blue-700">
+                        {getRestockCode(
+                          item
+                        )}
+                      </td>
 
-                        <td className="p-4 font-semibold">
-                          {getItemCount(item)}
-                        </td>
+                      <td className="p-4 font-semibold">
+                        {getItemCount(item)}
+                      </td>
 
-                        <td className="p-4 text-green-600 font-bold">
-                          +{getTotalQuantity(item)}
-                        </td>
+                      <td className="p-4 text-green-600 font-bold">
+                        +
+                        {getTotalQuantity(
+                          item
+                        )}
+                      </td>
 
-                        <td className="p-4">
-                          {formatDate(item.createdAt)}
-                        </td>
+                      <td className="p-4">
+                        {formatDate(
+                          item.createdAt
+                        )}
+                      </td>
 
-                        <td className="p-4 text-center">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setOpenId(
-                                isOpen
-                                  ? null
-                                  : item.id
-                              )
-                            }
-                            className="bg-gray-100 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-bold"
-                          >
-                            {isOpen ? "▲" : "▼"}
-                          </button>
+                      <td className="p-4 text-center">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOpenId(
+                              isOpen
+                                ? null
+                                : item.id
+                            )
+                          }
+                          className="bg-gray-100 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-bold"
+                        >
+                          {isOpen
+                            ? "▲"
+                            : "▼"}
+                        </button>
+                      </td>
+                    </tr>
+
+                    {isOpen && (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="bg-gray-50 p-5"
+                        >
+                          <div className="rounded-2xl border bg-white overflow-hidden">
+                            <div className="px-5 py-3 bg-gray-100 font-bold">
+                              Chi tiết sản
+                              phẩm nhập
+                            </div>
+
+                            <table className="w-full min-w-[900px]">
+                              <thead>
+                                <tr className="border-b">
+                                  <th className="p-3 text-left">
+                                    Sản phẩm
+                                  </th>
+
+                                  <th className="p-3 text-left">
+                                    Mã SP
+                                  </th>
+
+                                  <th className="p-3 text-left">
+                                    Vị trí
+                                  </th>
+
+                                  <th className="p-3 text-left">
+                                    Tồn cũ
+                                  </th>
+
+                                  <th className="p-3 text-left">
+                                    Số lượng
+                                    nhập
+                                  </th>
+
+                                  <th className="p-3 text-left">
+                                    Tồn mới
+                                  </th>
+                                </tr>
+                              </thead>
+
+                              <tbody>
+                                {items.map(
+                                  (
+                                    product: any,
+                                    index: number
+                                  ) => (
+                                    <tr
+                                      key={`${item.id}-${product.productId}-${index}`}
+                                      className="border-b hover:bg-gray-50"
+                                    >
+                                      <td className="p-3 font-semibold">
+                                        {product.productName ||
+                                          "---"}
+                                      </td>
+
+                                      <td className="p-3">
+                                        {product.productCode ||
+                                          "---"}
+                                      </td>
+
+                                      <td className="p-3">
+                                        {product.productLocation ||
+                                          "---"}
+                                      </td>
+
+                                      <td className="p-3 font-bold text-blue-700">
+                                        {Number(
+                                          product.beforeStock ||
+                                            0
+                                        )}
+                                      </td>
+
+                                      <td className="p-3 font-bold text-green-600">
+                                        +
+                                        {Number(
+                                          product.quantity ||
+                                            0
+                                        )}
+                                      </td>
+
+                                      <td className="p-3 font-bold text-purple-700">
+                                        {Number(
+                                          product.afterStock ||
+                                            0
+                                        )}
+                                      </td>
+                                    </tr>
+                                  )
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
                         </td>
                       </tr>
+                    )}
+                  </tbody>
+                );
+              })}
 
-                      {isOpen && (
-                        <tr>
-                          <td
-                            colSpan={5}
-                            className="bg-gray-50 p-5"
-                          >
-                            <div className="rounded-2xl border bg-white overflow-hidden">
-                              <div className="px-5 py-3 bg-gray-100 font-bold">
-                                Chi tiết sản phẩm nhập
-                              </div>
-
-                              <table className="w-full min-w-[900px]">
-                                <thead>
-                                  <tr className="border-b">
-                                    <th className="p-3 text-left">
-                                      Sản phẩm
-                                    </th>
-
-                                    <th className="p-3 text-left">
-                                      Mã SP
-                                    </th>
-
-                                    <th className="p-3 text-left">
-                                      Vị trí
-                                    </th>
-
-                                    <th className="p-3 text-left">
-                                      Tồn cũ
-                                    </th>
-
-                                    <th className="p-3 text-left">
-                                      Số lượng nhập
-                                    </th>
-
-                                    <th className="p-3 text-left">
-                                      Tồn mới
-                                    </th>
-                                  </tr>
-                                </thead>
-
-                                <tbody>
-                                  {items.map(
-                                    (
-                                      product: any,
-                                      index: number
-                                    ) => (
-                                      <tr
-                                        key={`${item.id}-${product.productId}-${index}`}
-                                        className="border-b hover:bg-gray-50"
-                                      >
-                                        <td className="p-3 font-semibold">
-                                          {product.productName ||
-                                            "---"}
-                                        </td>
-
-                                        <td className="p-3">
-                                          {product.productCode ||
-                                            "---"}
-                                        </td>
-
-                                        <td className="p-3">
-                                          {product.productLocation ||
-                                            "---"}
-                                        </td>
-
-                                        <td className="p-3 font-bold text-blue-700">
-                                          {Number(
-                                            product.beforeStock ||
-                                              0
-                                          )}
-                                        </td>
-
-                                        <td className="p-3 font-bold text-green-600">
-                                          +
-                                          {Number(
-                                            product.quantity ||
-                                              0
-                                          )}
-                                        </td>
-
-                                        <td className="p-3 font-bold text-purple-700">
-                                          {Number(
-                                            product.afterStock ||
-                                              0
-                                          )}
-                                        </td>
-                                      </tr>
-                                    )
-                                  )}
-                                </tbody>
-                              </table>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </>
-                  );
-                })}
-
-                {history.length === 0 && (
+              {history.length === 0 && (
+                <tbody>
                   <tr>
                     <td
                       colSpan={5}
                       className="p-8 text-center text-gray-500"
                     >
-                      Chưa có lịch sử nhập hàng
+                      Chưa có lịch sử
+                      nhập hàng
                     </td>
                   </tr>
-                )}
-              </tbody>
+                </tbody>
+              )}
             </table>
           </div>
         </div>

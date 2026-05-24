@@ -58,7 +58,7 @@ export default function PrintTemplatePage() {
     useState("A5");
 
   const [activeTemplate, setActiveTemplate] =
-    useState<ActiveTemplate>("sales_invoice");
+  useState<ActiveTemplate>("delivery_note");
 
   const [loading, setLoading] =
     useState(true);

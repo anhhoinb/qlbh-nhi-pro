@@ -941,6 +941,30 @@ export default function OrdersPage() {
 >
   In đơn hàng
 </button>
+<button
+  type="button"
+  onClick={() => {
+    if (selectedOrders.length !== 1) {
+      alert("Chỉ chọn 1 đơn hàng");
+      return;
+    }
+
+    const order = selectedOrders[0];
+
+    const orderCode =
+      order.orderCode ||
+      order.code ||
+      order.id;
+
+    window.open(
+      `/print-order/export?orderCode=${orderCode}&autoPrint=1`,
+      "_blank"
+    );
+  }}
+  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-semibold"
+>
+  In phiếu xuất kho
+</button>
 
             <button
               type="button"
