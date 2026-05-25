@@ -836,17 +836,26 @@ export default function OrdersPage() {
   }
 
   selectedOrders.forEach((order) => {
-    const orderCode = getOrderCode(order);
+    const orderId =
+      order.id ||
+      order.orderCode ||
+      order.order_code;
+
+    if (!orderId) {
+      return;
+    }
 
     const printWindow = window.open(
-      `/print-order?type=invoice&orderCode=${encodeURIComponent(
-        orderCode
-      )}&autoPrint=1`,
+      `/print-order/invoice?id=${encodeURIComponent(
+        orderId
+      )}`,
       "_blank"
     );
 
     if (!printWindow) {
-      alert("Trình duyệt đang chặn cửa sổ in. Vui lòng cho phép popup.");
+      alert(
+        "Trình duyệt đang chặn cửa sổ in. Vui lòng cho phép popup."
+      );
     }
   });
 };
@@ -877,19 +886,36 @@ export default function OrdersPage() {
   };
 
   const createShippingForSelectedOrders = () => {
-    if (selectedOrders.length === 0) {
-      alert("Vui lòng tích chọn đơn hàng cần tạo phiếu vận chuyển");
-      return;
-    }
 
-    const orderCodes = selectedOrders
-      .map((order) => getOrderCode(order))
-      .join(", ");
+  if (selectedOrders.length !== 1) {
 
     alert(
-      `Đã chọn ${selectedOrders.length} đơn để tạo phiếu vận chuyển: ${orderCodes}`
+      "Vui lòng chọn đúng 1 đơn hàng"
     );
-  };
+
+    return;
+  }
+
+  const order =
+    selectedOrders[0];
+
+  const orderId =
+    order.id;
+
+  if (!orderId) {
+
+    alert(
+      "Không tìm thấy đơn hàng"
+    );
+
+    return;
+  }
+
+  window.open(
+    `/print-order/delivery?id=${encodeURIComponent(orderId)}`,
+    "_blank"
+  );
+};
 
   return (
     <main className="min-h-screen bg-gray-100 p-6">
@@ -944,20 +970,30 @@ export default function OrdersPage() {
 <button
   type="button"
   onClick={() => {
+
     if (selectedOrders.length !== 1) {
-      alert("Chỉ chọn 1 đơn hàng");
+
+      alert(
+        "Chỉ chọn 1 đơn hàng"
+      );
+
       return;
     }
 
-    const order = selectedOrders[0];
+    const order =
+      selectedOrders[0];
 
-    const orderCode =
-      order.orderCode ||
-      order.code ||
-      order.id;
+    if (!order?.id) {
+
+      alert(
+        "Không tìm thấy đơn hàng"
+      );
+
+      return;
+    }
 
     window.open(
-      `/print-order/export?orderCode=${orderCode}&autoPrint=1`,
+      `/print-order/export?id=${encodeURIComponent(order.id)}&autoPrint=1`,
       "_blank"
     );
   }}
@@ -967,12 +1003,12 @@ export default function OrdersPage() {
 </button>
 
             <button
-              type="button"
-              onClick={createShippingForSelectedOrders}
-              className="px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold"
-            >
-              Tạo phiếu vận chuyển
-            </button>
+  type="button"
+  onClick={createShippingForSelectedOrders}
+  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-semibold"
+>
+  Tạo phiếu vận chuyển
+</button>
 
             <button
               type="button"

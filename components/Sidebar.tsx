@@ -29,23 +29,32 @@ type CurrentUserInfo = {
 };
 
 export default function Sidebar() {
+
   const pathname = usePathname();
   const router = useRouter();
 
   const [currentUserInfo, setCurrentUserInfo] =
     useState<CurrentUserInfo | null>(null);
 
+  const [openPrintMenu, setOpenPrintMenu] =
+    useState(false);
+
   useEffect(() => {
+
     const savedUser =
       localStorage.getItem("currentUserInfo");
 
     if (savedUser) {
+
       try {
+
         const parsedUser =
           JSON.parse(savedUser);
 
         setCurrentUserInfo(parsedUser);
+
       } catch (error) {
+
         console.error(
           "Không đọc được quyền người dùng:",
           error
@@ -54,9 +63,23 @@ export default function Sidebar() {
         setCurrentUserInfo(null);
       }
     }
+
   }, []);
 
+  useEffect(() => {
+
+    if (
+      pathname.startsWith(
+        "/dashboard/print-template"
+      )
+    ) {
+      setOpenPrintMenu(true);
+    }
+
+  }, [pathname]);
+
   const handleLogout = async () => {
+
     const confirmLogout = confirm(
       "Bạn có chắc muốn đăng xuất không?"
     );
@@ -66,6 +89,7 @@ export default function Sidebar() {
     }
 
     try {
+
       localStorage.removeItem(
         "currentUserInfo"
       );
@@ -73,7 +97,9 @@ export default function Sidebar() {
       await signOut(auth);
 
       router.replace("/login");
+
     } catch (error) {
+
       console.error(error);
 
       alert(
@@ -90,6 +116,7 @@ export default function Sidebar() {
   const hasPermission = (
     permissionKey?: string
   ) => {
+
     if (!permissionKey) {
       return true;
     }
@@ -141,30 +168,6 @@ export default function Sidebar() {
             {
               label: "Mẫu in",
               href: "/print-template",
-              permissionKey:
-                "admin",
-            },
-
-            {
-              label:
-                "└ Đơn bán hàng",
-              href: "/dashboard/print-template/sales",
-              permissionKey:
-                "admin",
-            },
-
-            {
-              label:
-                "└ Phiếu xuất kho",
-              href: "/dashboard/print-template/export",
-              permissionKey:
-                "admin",
-            },
-
-            {
-              label:
-                "└ Phiếu giao hàng",
-              href: "/dashboard/print-template/delivery",
               permissionKey:
                 "admin",
             },
@@ -287,6 +290,7 @@ export default function Sidebar() {
   const visibleMenuGroups =
     menuGroups
       .map((group) => {
+
         const visibleItems =
           group.items.filter((item) =>
             hasPermission(
@@ -298,8 +302,10 @@ export default function Sidebar() {
           ...group,
           items: visibleItems,
         };
+
       })
       .filter((group) => {
+
         if (
           group.items.length <= 0
         ) {
@@ -314,17 +320,13 @@ export default function Sidebar() {
   const isExactActive = (
     href: string
   ) => {
+
     if (href === "/dashboard") {
+
       return (
         pathname ===
           "/dashboard" ||
         pathname === "/"
-      );
-    }
-
-    if (href === "/reports") {
-      return (
-        pathname === "/reports"
       );
     }
 
@@ -334,19 +336,6 @@ export default function Sidebar() {
   const isGroupActive = (
     href: string
   ) => {
-    if (href === "/dashboard") {
-      return (
-        pathname ===
-          "/dashboard" ||
-        pathname === "/"
-      );
-    }
-
-    if (href === "/reports") {
-      return (
-        pathname === "/reports"
-      );
-    }
 
     return (
       pathname === href ||
@@ -358,6 +347,7 @@ export default function Sidebar() {
 
   const getOpenGroupsByPath =
     () => {
+
       const result: Record<
         string,
         boolean
@@ -365,13 +355,27 @@ export default function Sidebar() {
 
       visibleMenuGroups.forEach(
         (group) => {
+
           result[group.title] =
-            group.items.some(
-              (item) =>
-                isGroupActive(
-                  item.href
-                )
-            );
+  group.title === "Bán hàng"
+    ? (
+        group.items.some(
+          (item) =>
+            isGroupActive(
+              item.href
+            )
+        ) ||
+
+        pathname.startsWith(
+          "/dashboard/print-template"
+        )
+      )
+    : group.items.some(
+        (item) =>
+          isGroupActive(
+            item.href
+          )
+      );
         }
       );
 
@@ -386,7 +390,9 @@ export default function Sidebar() {
   >({});
 
   useEffect(() => {
+
     setOpenGroups((prev) => {
+
       const autoOpen =
         getOpenGroupsByPath();
 
@@ -395,11 +401,13 @@ export default function Sidebar() {
         ...autoOpen,
       };
     });
+
   }, [pathname, currentUserInfo]);
 
   const toggleGroup = (
     title: string
   ) => {
+
     setOpenGroups((prev) => ({
       ...prev,
       [title]:
@@ -408,8 +416,11 @@ export default function Sidebar() {
   };
 
   return (
+
     <aside className="w-64 min-h-screen bg-blue-700 text-white flex flex-col">
+
       <div className="px-6 py-6 border-b border-blue-500">
+
         <Link
           href="/dashboard"
           className="block text-2xl font-bold tracking-wide"
@@ -418,7 +429,9 @@ export default function Sidebar() {
         </Link>
 
         {currentUserInfo?.name && (
+
           <div className="mt-3 text-sm text-blue-100">
+
             <div className="font-semibold">
               {
                 currentUserInfo.name
@@ -431,33 +444,52 @@ export default function Sidebar() {
                 ? "Quản trị viên"
                 : "Nhân viên"}
             </div>
+
           </div>
         )}
+
       </div>
 
       <nav className="flex-1 px-4 py-5 space-y-3 overflow-y-auto">
+
         {visibleMenuGroups.map(
           (group) => {
+
             const isOpen =
               openGroups[
                 group.title
               ] || false;
 
             const hasActiveChild =
-              group.items.some(
-                (item) =>
-                  isGroupActive(
-                    item.href
-                  )
-              );
+  group.title === "Bán hàng"
+    ? (
+        group.items.some(
+          (item) =>
+            isGroupActive(
+              item.href
+            )
+        ) ||
+
+        pathname.startsWith(
+          "/dashboard/print-template"
+        )
+      )
+    : group.items.some(
+        (item) =>
+          isGroupActive(
+            item.href
+          )
+      );
 
             return (
+
               <div
                 key={
                   group.title
                 }
                 className="space-y-2"
               >
+
                 <button
                   type="button"
                   onClick={() =>
@@ -471,6 +503,7 @@ export default function Sidebar() {
                       : "bg-blue-600/60 hover:bg-blue-600"
                   }`}
                 >
+
                   <span>
                     {
                       group.title
@@ -486,14 +519,111 @@ export default function Sidebar() {
                   >
                     ›
                   </span>
+
                 </button>
 
                 {isOpen && (
+
                   <div className="ml-3 pl-3 border-l border-blue-400 space-y-2">
+
                     {group.items.map(
-                      (item) =>
-                        item.href ===
-                        "/pos" ? (
+                      (item) => {
+
+                        if (
+                          item.label ===
+                          "Mẫu in"
+                        ) {
+
+                          return (
+
+                            <div
+                              key={
+                                item.href
+                              }
+                            >
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setOpenPrintMenu(
+                                    !openPrintMenu
+                                  )
+                                }
+                                className={`w-full flex items-center justify-between rounded-xl px-4 py-2 text-sm transition ${
+                                  pathname.startsWith(
+                                    "/dashboard/print-template"
+                                  )
+                                    ? "bg-white text-blue-700 font-bold shadow"
+                                    : "text-blue-50 hover:bg-blue-600"
+                                }`}
+                              >
+
+                                <span>
+                                  Mẫu in
+                                </span>
+
+                                <span
+                                  className={`transition-transform ${
+                                    openPrintMenu
+                                      ? "rotate-90"
+                                      : ""
+                                  }`}
+                                >
+                                  ›
+                                </span>
+
+                              </button>
+
+                              {openPrintMenu && (
+
+                                <div className="ml-4 mt-2 border-l border-blue-300 pl-3 space-y-1">
+
+                                  <Link
+                                    href="/dashboard/print-template/sales"
+                                    className={`block rounded-lg px-3 py-2 text-sm transition ${
+                                      pathname ===
+                                      "/dashboard/print-template/sales"
+                                        ? "bg-white text-blue-700 font-bold"
+                                        : "text-blue-100 hover:bg-blue-600"
+                                    }`}
+                                  >
+                                    Đơn bán hàng
+                                  </Link>
+
+                                  <Link
+                                    href="/dashboard/print-template/export"
+                                    className={`block rounded-lg px-3 py-2 text-sm transition ${
+                                      pathname ===
+                                      "/dashboard/print-template/export"
+                                        ? "bg-white text-blue-700 font-bold"
+                                        : "text-blue-100 hover:bg-blue-600"
+                                    }`}
+                                  >
+                                    Phiếu xuất kho
+                                  </Link>
+
+                                  <Link
+                                    href="/dashboard/print-template/delivery"
+                                    className={`block rounded-lg px-3 py-2 text-sm transition ${
+                                      pathname ===
+                                      "/dashboard/print-template/delivery"
+                                        ? "bg-white text-blue-700 font-bold"
+                                        : "text-blue-100 hover:bg-blue-600"
+                                    }`}
+                                  >
+                                    Phiếu giao hàng
+                                  </Link>
+
+                                </div>
+                              )}
+
+                            </div>
+                          );
+                        }
+
+                        return item.href ===
+                          "/pos" ? (
+
                           <a
                             key={
                               item.href
@@ -515,7 +645,9 @@ export default function Sidebar() {
                               item.label
                             }
                           </a>
+
                         ) : (
+
                           <Link
                             key={
                               item.href
@@ -535,17 +667,22 @@ export default function Sidebar() {
                               item.label
                             }
                           </Link>
-                        )
+                        );
+                      }
                     )}
+
                   </div>
                 )}
+
               </div>
             );
           }
         )}
+
       </nav>
 
       <div className="p-4 border-t border-blue-500">
+
         <button
           type="button"
           onClick={handleLogout}
@@ -553,7 +690,9 @@ export default function Sidebar() {
         >
           Đăng xuất
         </button>
+
       </div>
+
     </aside>
   );
 }

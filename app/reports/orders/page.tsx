@@ -1174,91 +1174,146 @@ export default function OrdersReportPage() {
                             className="px-4 pb-4 pt-2"
                           >
                             <div className="ml-auto w-[58%] min-w-[760px] rounded-xl border border-blue-100 bg-white p-3 shadow-sm">
-                              <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                                <div>
-                                  <span className="text-gray-500">
-                                    Mã đơn:{" "}
-                                  </span>
-                                  <span className="font-bold text-blue-700">
-                                    {getOrderCode(order)}
-                                  </span>
-                                </div>
+                              <div className="mb-4 flex flex-wrap items-center gap-2">
+  <button
+    type="button"
+    onClick={() =>
+      window.open(
+  `/print-order/invoice?id=${
+    order.id || order.orderCode
+  }`,
+  "_blank"
+)
+    }
+    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold"
+  >
+    In đơn hàng
+  </button>
 
-                                <div>
-                                  <span className="text-gray-500">
-                                    Thanh toán:{" "}
-                                  </span>
-                                  <span className="font-semibold">
-                                    {getPaymentMethodLabel(order)}
-                                  </span>
-                                </div>
+  <button
+    type="button"
+    onClick={() =>
+      window.open(
+  `/print-order/export?id=${
+    order.id || order.orderCode
+  }`,
+  "_blank"
+)
+    }
+    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-semibold"
+  >
+    In phiếu xuất kho
+  </button>
 
-                                <div>
-                                  <span className="text-gray-500">
-                                    Khách:{" "}
-                                  </span>
-                                  <span className="font-semibold">
-                                    {order.customerName ||
-                                      order.customer?.name ||
-                                      "Khách lẻ"}
-                                  </span>
-                                </div>
+  <button
+    type="button"
+    onClick={() =>
+      window.open(
+  `/print-order/delivery?id=${
+    order.id || order.orderCode
+  }`,
+  "_blank"
+)
+    }
+    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-semibold"
+  >
+    Phiếu giao hàng
+  </button>
+</div>
 
-                                <div>
-                                  <span className="text-gray-500">
-                                    Tổng:{" "}
-                                  </span>
-                                  <span className="font-bold text-green-600">
-                                    {formatMoney(getOrderTotal(order))}
-                                  </span>
-                                </div>
+<div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+  <div>
+    <span className="text-gray-500">
+      Mã đơn:{" "}
+    </span>
 
-                                <div>
-                                  <span className="text-gray-500">
-                                    TM:{" "}
-                                  </span>
-                                  <span className="font-semibold text-green-600">
-                                    {formatMoney(getCashAmount(order))}
-                                  </span>
-                                </div>
+    <span className="font-bold text-blue-700">
+      {getOrderCode(order)}
+    </span>
+  </div>
 
-                                <div>
-                                  <span className="text-gray-500">
-                                    CK:{" "}
-                                  </span>
-                                  <span className="font-semibold text-blue-600">
-                                    {formatMoney(getTransferAmount(order))}
-                                  </span>
-                                </div>
+  <div>
+    <span className="text-gray-500">
+      Thanh toán:{" "}
+    </span>
 
-                                <div>
-                                  <span className="text-gray-500">
-                                    COD:{" "}
-                                  </span>
-                                  <span className="font-semibold text-orange-600">
-                                    {formatMoney(getCodAmount(order))}
-                                  </span>
-                                </div>
+    <span className="font-semibold">
+      {getPaymentMethodLabel(order)}
+    </span>
+  </div>
 
-                                <div>
-                                  <span className="text-gray-500">
-                                    Còn lại:{" "}
-                                  </span>
-                                  <span className="font-semibold text-red-600">
-                                    {formatMoney(getRemainingAmount(order))}
-                                  </span>
-                                </div>
+  <div>
+    <span className="text-gray-500">
+      Khách:{" "}
+    </span>
 
-                                <div>
-                                  <span className="text-gray-500">
-                                    Vốn:{" "}
-                                  </span>
-                                  <span className="font-semibold">
-                                    {formatMoney(getCapitalMoney(order))}
-                                  </span>
-                                </div>
-                              </div>
+    <span className="font-semibold">
+      {order.customerName ||
+        order.customer?.name ||
+        "Khách lẻ"}
+    </span>
+  </div>
 
+  <div>
+    <span className="text-gray-500">
+      Tổng:{" "}
+    </span>
+
+    <span className="font-bold text-green-600">
+      {formatMoney(getOrderTotal(order))}
+    </span>
+  </div>
+
+  <div>
+    <span className="text-gray-500">
+      TM:{" "}
+    </span>
+
+    <span className="font-semibold text-green-600">
+      {formatMoney(getCashAmount(order))}
+    </span>
+  </div>
+
+  <div>
+    <span className="text-gray-500">
+      CK:{" "}
+    </span>
+
+    <span className="font-semibold text-blue-600">
+      {formatMoney(getTransferAmount(order))}
+    </span>
+  </div>
+
+  <div>
+    <span className="text-gray-500">
+      COD:{" "}
+    </span>
+
+    <span className="font-semibold text-orange-600">
+      {formatMoney(getCodAmount(order))}
+    </span>
+  </div>
+
+  <div>
+    <span className="text-gray-500">
+      Còn lại:{" "}
+    </span>
+
+    <span className="font-semibold text-red-600">
+      {formatMoney(getRemainingAmount(order))}
+    </span>
+  </div>
+
+  <div>
+    <span className="text-gray-500">
+      Vốn:{" "}
+    </span>
+
+    <span className="font-semibold">
+      {formatMoney(getCapitalMoney(order))}
+    </span>
+  </div>
+</div>
                               <div className="overflow-hidden rounded-lg border">
                                 <table className="w-full text-sm">
                                   <thead className="bg-gray-50 text-gray-600">

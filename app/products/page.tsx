@@ -495,7 +495,13 @@ export default function ProductsPage() {
               className="hidden"
               onChange={importProductsFromCSV}
             />
-
+<a
+  href="/templates/mau-nhap-san-pham.xlsx"
+  download
+  className="border border-blue-500 text-blue-600 hover:bg-blue-50 px-5 py-3 rounded-2xl font-semibold transition"
+>
+  Tải file mẫu
+</a>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}

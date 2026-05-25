@@ -199,6 +199,7 @@ export default function PrintTemplatePage() {
                 };
 
                 background: white;
+
                 padding: 18px;
                 color: #000;
                 font-size: 14px;
@@ -254,17 +255,6 @@ export default function PrintTemplatePage() {
                 text-align: center;
                 line-height: 1.8;
               }
-
-              @media print {
-                body {
-                  background: white;
-                  padding: 0;
-                }
-
-                .page {
-                  width: 100%;
-                }
-              }
             </style>
           </head>
 
@@ -293,23 +283,16 @@ export default function PrintTemplatePage() {
 
               <div class="line">
                 <span>Mã đơn:</span>
-
-                <strong>
-                  DH0001
-                </strong>
+                <strong>DH0001</strong>
               </div>
 
               <div class="line">
                 <span>Khách hàng:</span>
-
-                <strong>
-                  Khách lẻ
-                </strong>
+                <strong>Khách lẻ</strong>
               </div>
 
               <div class="line">
                 <span>Ngày:</span>
-
                 <strong>
                   ${new Date().toLocaleString(
                     "vi-VN"
@@ -322,47 +305,23 @@ export default function PrintTemplatePage() {
               <table>
                 <thead>
                   <tr>
-                    <th>
-                      Sản phẩm
-                    </th>
-
-                    <th>
-                      SL
-                    </th>
-
-                    <th>
-                      Giá
-                    </th>
+                    <th>Sản phẩm</th>
+                    <th>SL</th>
+                    <th>Giá</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   <tr>
-                    <td>
-                      Arduino Uno
-                    </td>
-
-                    <td>
-                      2
-                    </td>
-
-                    <td>
-                      250.000đ
-                    </td>
+                    <td>Arduino Uno</td>
+                    <td>2</td>
+                    <td>250.000đ</td>
                   </tr>
 
                   <tr>
-                    <td>
-                      ESP32
-                    </td>
-
-                    <td>
-                      1
-                    </td>
-
-                    <td>
-                      180.000đ
-                    </td>
+                    <td>ESP32</td>
+                    <td>1</td>
+                    <td>180.000đ</td>
                   </tr>
                 </tbody>
               </table>
@@ -370,13 +329,8 @@ export default function PrintTemplatePage() {
               <div class="divider"></div>
 
               <div class="line">
-                <strong>
-                  Tổng tiền:
-                </strong>
-
-                <strong>
-                  680.000đ
-                </strong>
+                <strong>Tổng tiền:</strong>
+                <strong>680.000đ</strong>
               </div>
 
               <div class="footer">
@@ -417,25 +371,26 @@ export default function PrintTemplatePage() {
 
   return (
     <main className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-6xl mx-auto">
 
-        <div className="flex items-end justify-between gap-4 mb-8">
+      <div className="max-w-5xl mx-auto">
+
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+
           <div>
+
             <h1 className="text-4xl font-bold text-blue-700">
-              Mẫu đơn bán hàng
+              Đơn bán hàng
             </h1>
 
             <p className="text-gray-600 mt-2">
-              Cấu hình mẫu in hóa đơn bán hàng.
+              Cấu hình mẫu đơn bán hàng.
             </p>
+
           </div>
+
         </div>
 
         <div className="bg-white rounded-3xl shadow p-6 space-y-5">
-
-          <h2 className="text-2xl font-bold text-black">
-            Thông tin cửa hàng
-          </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
@@ -494,55 +449,43 @@ export default function PrintTemplatePage() {
 
           <div className="border-t pt-5">
 
-            <h2 className="text-2xl font-bold text-black mb-4">
-              Tiêu đề hóa đơn
-            </h2>
+            <label className="block mb-2 font-semibold text-black">
+              Tiêu đề đơn bán hàng
+            </label>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-              <div>
-                <label className="block mb-2 font-semibold text-black">
-                  Tiêu đề đơn bán hàng
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={invoiceTitle}
-                  onChange={(e) =>
-                    setInvoiceTitle(
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-semibold text-black">
-                  Tiêu đề tạm tính
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={temporaryTitle}
-                  onChange={(e) =>
-                    setTemporaryTitle(
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-
-            </div>
+            <input
+              type="text"
+              className="w-full border p-4 rounded-2xl text-black"
+              value={invoiceTitle}
+              onChange={(e) =>
+                setInvoiceTitle(
+                  e.target.value
+                )
+              }
+            />
 
           </div>
 
           <div className="border-t pt-5">
 
-            <h2 className="text-2xl font-bold text-black mb-4">
-              Nội dung cuối hóa đơn
-            </h2>
+            <label className="block mb-2 font-semibold text-black">
+              Tiêu đề phiếu tạm tính
+            </label>
+
+            <input
+              type="text"
+              className="w-full border p-4 rounded-2xl text-black"
+              value={temporaryTitle}
+              onChange={(e) =>
+                setTemporaryTitle(
+                  e.target.value
+                )
+              }
+            />
+
+          </div>
+
+          <div className="border-t pt-5">
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
@@ -610,7 +553,7 @@ export default function PrintTemplatePage() {
 
           </div>
 
-          <div className="flex justify-end border-t pt-5">
+          <div className="flex justify-end gap-4 border-t pt-5">
 
             <button
               type="button"
@@ -619,10 +562,6 @@ export default function PrintTemplatePage() {
             >
               In thử mẫu
             </button>
-
-          </div>
-
-          <div className="flex justify-end border-t pt-5">
 
             <button
               type="button"
@@ -635,7 +574,9 @@ export default function PrintTemplatePage() {
           </div>
 
         </div>
+
       </div>
+
     </main>
   );
 }

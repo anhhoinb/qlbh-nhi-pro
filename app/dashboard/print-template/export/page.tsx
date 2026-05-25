@@ -14,9 +14,6 @@ export default function PrintTemplatePage() {
   const [shopName, setShopName] =
     useState("NhiPro23");
 
-  const [department, setDepartment] =
-    useState("Kho hàng");
-
   const [address, setAddress] =
     useState("TP.HCM");
 
@@ -26,17 +23,11 @@ export default function PrintTemplatePage() {
   const [warehouseTitle, setWarehouseTitle] =
     useState("PHIẾU XUẤT KHO");
 
-  const [reason, setReason] =
-    useState("Xuất bán hàng");
+  const [thankYouText, setThankYouText] =
+    useState("Cảm ơn quý khách!");
 
-  const [receiver, setReceiver] =
-    useState("Nguyễn Văn A");
-
-  const [receiverDepartment, setReceiverDepartment] =
-    useState("Phòng kinh doanh");
-
-  const [exportPlace, setExportPlace] =
-    useState("Kho chính");
+  const [seeYouText, setSeeYouText] =
+    useState("Hẹn gặp lại ❤️");
 
   const [paperSize, setPaperSize] =
     useState("A5");
@@ -66,10 +57,6 @@ export default function PrintTemplatePage() {
               data.shopName || "NhiPro23"
             );
 
-            setDepartment(
-              data.department || "Kho hàng"
-            );
-
             setAddress(
               data.address || "TP.HCM"
             );
@@ -83,24 +70,14 @@ export default function PrintTemplatePage() {
                 "PHIẾU XUẤT KHO"
             );
 
-            setReason(
-              data.reason ||
-                "Xuất bán hàng"
+            setThankYouText(
+              data.thankYouText ||
+                "Cảm ơn quý khách!"
             );
 
-            setReceiver(
-              data.receiver ||
-                "Nguyễn Văn A"
-            );
-
-            setReceiverDepartment(
-              data.receiverDepartment ||
-                "Phòng kinh doanh"
-            );
-
-            setExportPlace(
-              data.exportPlace ||
-                "Kho chính"
+            setSeeYouText(
+              data.seeYouText ||
+                "Hẹn gặp lại ❤️"
             );
 
             setPaperSize(
@@ -109,6 +86,10 @@ export default function PrintTemplatePage() {
           }
         } catch (error) {
           console.log(error);
+
+          alert(
+            "Không tải được mẫu in"
+          );
         }
 
         setLoading(false);
@@ -127,16 +108,27 @@ export default function PrintTemplatePage() {
             "print_template"
           ),
           {
-            shopName,
-            department,
-            address,
-            phone,
-            warehouseTitle,
-            reason,
-            receiver,
-            receiverDepartment,
-            exportPlace,
-            paperSize,
+            shopName:
+              shopName.trim(),
+
+            address:
+              address.trim(),
+
+            phone:
+              phone.trim(),
+
+            warehouseTitle:
+              warehouseTitle.trim(),
+
+            thankYouText:
+              thankYouText.trim(),
+
+            seeYouText:
+              seeYouText.trim(),
+
+            paperSize:
+              paperSize || "A5",
+
             updatedAt:
               new Date(),
           },
@@ -146,13 +138,13 @@ export default function PrintTemplatePage() {
         );
 
         alert(
-          "Đã lưu mẫu phiếu xuất kho"
+          "Đã lưu mẫu in"
         );
       } catch (error) {
         console.log(error);
 
         alert(
-          "Lưu thất bại"
+          "Lưu mẫu in thất bại"
         );
       }
     };
@@ -163,7 +155,7 @@ export default function PrintTemplatePage() {
         window.open(
           "",
           "_blank",
-          "width=1000,height=900"
+          "width=900,height=900"
         );
 
       if (!printWindow) return;
@@ -171,281 +163,189 @@ export default function PrintTemplatePage() {
       printWindow.document.write(`
         <html>
           <head>
-            <title>Phiếu xuất kho</title>
+            <title>In thử mẫu</title>
 
             <style>
-              body{
-                font-family: Times New Roman;
-                padding:20px;
-                color:#000;
+              * {
+                box-sizing: border-box;
               }
 
-              .page{
-                width:900px;
-                margin:auto;
+              body {
+                margin: 0;
+                padding: 20px;
+                background: #f3f4f6;
+                font-family: Arial, sans-serif;
+
+                display: flex;
+                justify-content: center;
               }
 
-              .top{
-                display:flex;
-                justify-content:space-between;
+              .page {
+                width: ${
+                  paperSize === "K80"
+                    ? "80mm"
+                    : "148mm"
+                };
+
+                background: white;
+
+                padding: 18px;
+                color: #000;
+                font-size: 14px;
               }
 
-              .center{
-                text-align:center;
+              .center {
+                text-align: center;
               }
 
-              .title{
-                font-size:32px;
-                font-weight:bold;
-                margin-top:20px;
+              .shop-name {
+                font-size: 28px;
+                font-weight: bold;
               }
 
-              .line{
-                margin:8px 0;
+              .title {
+                font-size: 24px;
+                font-weight: bold;
+                text-align: center;
+                margin: 18px 0;
               }
 
-              table{
-                width:100%;
-                border-collapse:collapse;
-                margin-top:20px;
+              .divider {
+                border-top: 1px dashed #999;
+                margin: 12px 0;
               }
 
-              table,
-              th,
-              td{
-                border:1px solid #000;
+              .line {
+                display: flex;
+                justify-content: space-between;
+                gap: 20px;
+                margin: 7px 0;
               }
 
-              th,
-              td{
-                padding:8px;
-                text-align:center;
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 10px;
               }
 
-              .sign{
-                margin-top:50px;
-                display:grid;
-                grid-template-columns:
-                repeat(5,1fr);
-                gap:20px;
-                text-align:center;
+              th {
+                text-align: left;
+                padding: 8px 0;
+                border-bottom: 1px dashed #ccc;
               }
 
-              .sign-title{
-                font-weight:bold;
+              td {
+                padding: 8px 0;
+                border-bottom: 1px dashed #eee;
               }
 
-              .sign-note{
-                font-style:italic;
-              }
-
-              @media print{
-                body{
-                  padding:0;
-                }
-
-                .page{
-                  width:100%;
-                }
+              .footer {
+                margin-top: 18px;
+                text-align: center;
+                line-height: 1.8;
               }
             </style>
           </head>
 
           <body>
-
             <div class="page">
 
-              <div class="top">
-
-                <div>
-                  <div>
-                    <strong>
-                      Đơn vị:
-                    </strong>
-                    ${shopName}
-                  </div>
-
-                  <div>
-                    <strong>
-                      Bộ phận:
-                    </strong>
-                    ${department}
-                  </div>
-                </div>
-
-                <div class="center">
-                  <div>
-                    <strong>
-                      Mẫu số 02 - VT
-                    </strong>
-                  </div>
-
-                  <div>
-                    (Ban hành theo TT200)
-                  </div>
-                </div>
-
-              </div>
-
               <div class="center">
-                <div class="title">
-                  ${warehouseTitle}
+                <div class="shop-name">
+                  ${shopName}
                 </div>
 
                 <div>
-                  Ngày ${new Date().getDate()}
-                  tháng ${
-                    new Date().getMonth() + 1
-                  }
-                  năm ${new Date().getFullYear()}
+                  ${address}
+                </div>
+
+                <div>
+                  Hotline: ${phone}
                 </div>
               </div>
 
-              <div class="line">
-                Họ tên người nhận hàng:
-                ${receiver}
+              <div class="divider"></div>
+
+              <div class="title">
+                ${warehouseTitle}
               </div>
 
               <div class="line">
-                Bộ phận:
-                ${receiverDepartment}
+                <span>Mã phiếu:</span>
+                <strong>PXK0001</strong>
               </div>
 
               <div class="line">
-                Lý do xuất kho:
-                ${reason}
+                <span>Người nhận:</span>
+                <strong>Khách lẻ</strong>
               </div>
 
               <div class="line">
-                Xuất tại kho:
-                ${exportPlace}
+                <span>Ngày xuất:</span>
+                <strong>
+                  ${new Date().toLocaleString(
+                    "vi-VN"
+                  )}
+                </strong>
               </div>
+
+              <div class="divider"></div>
 
               <table>
-
                 <thead>
                   <tr>
-                    <th>
-                      STT
-                    </th>
-
-                    <th>
-                      Tên hàng hóa
-                    </th>
-
-                    <th>
-                      ĐVT
-                    </th>
-
-                    <th>
-                      SL
-                    </th>
-
-                    <th>
-                      Đơn giá
-                    </th>
-
-                    <th>
-                      Thành tiền
-                    </th>
+                    <th>Sản phẩm</th>
+                    <th>SL</th>
+                    <th>Giá</th>
                   </tr>
                 </thead>
 
                 <tbody>
-
                   <tr>
-                    <td>1</td>
                     <td>Arduino Uno</td>
-                    <td>Cái</td>
                     <td>2</td>
-                    <td>250.000</td>
-                    <td>500.000</td>
+                    <td>250.000đ</td>
                   </tr>
 
                   <tr>
-                    <td>2</td>
                     <td>ESP32</td>
-                    <td>Cái</td>
                     <td>1</td>
-                    <td>180.000</td>
-                    <td>180.000</td>
+                    <td>180.000đ</td>
                   </tr>
-
-                  <tr>
-                    <td colspan="5">
-                      <strong>
-                        Tổng cộng
-                      </strong>
-                    </td>
-
-                    <td>
-                      <strong>
-                        680.000
-                      </strong>
-                    </td>
-                  </tr>
-
                 </tbody>
-
               </table>
 
-              <div class="line" style="margin-top:20px;">
-                Tổng số tiền:
-                680.000đ
+              <div class="divider"></div>
+
+              <div class="line">
+                <strong>Tổng giá trị:</strong>
+                <strong>680.000đ</strong>
               </div>
 
-              <div class="sign">
-
+              <div style="margin-top:40px; display:flex; justify-content:space-between; text-align:center;">
                 <div>
-                  <div class="sign-title">
-                    Người lập phiếu
-                  </div>
-
-                  <div class="sign-note">
-                    (Ký, họ tên)
+                  <strong>Người giao</strong>
+                  <div style="margin-top:60px;">
+                    (Ký tên)
                   </div>
                 </div>
 
                 <div>
-                  <div class="sign-title">
-                    Người nhận hàng
+                  <strong>Người nhận</strong>
+                  <div style="margin-top:60px;">
+                    (Ký tên)
                   </div>
+                </div>
+              </div>
 
-                  <div class="sign-note">
-                    (Ký, họ tên)
-                  </div>
+              <div class="footer">
+                <div>
+                  ${thankYouText}
                 </div>
 
                 <div>
-                  <div class="sign-title">
-                    Thủ kho
-                  </div>
-
-                  <div class="sign-note">
-                    (Ký, họ tên)
-                  </div>
+                  ${seeYouText}
                 </div>
-
-                <div>
-                  <div class="sign-title">
-                    Kế toán
-                  </div>
-
-                  <div class="sign-note">
-                    (Ký, họ tên)
-                  </div>
-                </div>
-
-                <div>
-                  <div class="sign-title">
-                    Giám đốc
-                  </div>
-
-                  <div class="sign-note">
-                    (Ký, họ tên)
-                  </div>
-                </div>
-
               </div>
 
             </div>
@@ -457,7 +357,6 @@ export default function PrintTemplatePage() {
                 }, 300);
               };
             </script>
-
           </body>
         </html>
       `);
@@ -467,8 +366,10 @@ export default function PrintTemplatePage() {
 
   if (loading) {
     return (
-      <main className="p-10">
-        Đang tải...
+      <main className="min-h-screen bg-gray-100 p-6">
+        <div className="text-2xl text-black">
+          Đang tải mẫu in...
+        </div>
       </main>
     );
   }
@@ -476,129 +377,187 @@ export default function PrintTemplatePage() {
   return (
     <main className="min-h-screen bg-gray-100 p-6">
 
-      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow p-8 space-y-6">
+      <div className="max-w-5xl mx-auto">
 
-        <h1 className="text-4xl font-bold text-blue-700">
-          Mẫu phiếu xuất kho
-        </h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
 
           <div>
-            <label className="font-semibold block mb-2">
-              Tên đơn vị
-            </label>
 
-            <input
-              className="w-full border rounded-2xl p-4"
-              value={shopName}
-              onChange={(e) =>
-                setShopName(
-                  e.target.value
-                )
-              }
-            />
-          </div>
+            <h1 className="text-4xl font-bold text-blue-700">
+              Phiếu xuất kho
+            </h1>
 
-          <div>
-            <label className="font-semibold block mb-2">
-              Bộ phận
-            </label>
+            <p className="text-gray-600 mt-2">
+              Cấu hình mẫu phiếu xuất kho.
+            </p>
 
-            <input
-              className="w-full border rounded-2xl p-4"
-              value={department}
-              onChange={(e) =>
-                setDepartment(
-                  e.target.value
-                )
-              }
-            />
-          </div>
-
-          <div>
-            <label className="font-semibold block mb-2">
-              Người nhận hàng
-            </label>
-
-            <input
-              className="w-full border rounded-2xl p-4"
-              value={receiver}
-              onChange={(e) =>
-                setReceiver(
-                  e.target.value
-                )
-              }
-            />
-          </div>
-
-          <div>
-            <label className="font-semibold block mb-2">
-              Bộ phận nhận
-            </label>
-
-            <input
-              className="w-full border rounded-2xl p-4"
-              value={receiverDepartment}
-              onChange={(e) =>
-                setReceiverDepartment(
-                  e.target.value
-                )
-              }
-            />
-          </div>
-
-          <div>
-            <label className="font-semibold block mb-2">
-              Lý do xuất kho
-            </label>
-
-            <input
-              className="w-full border rounded-2xl p-4"
-              value={reason}
-              onChange={(e) =>
-                setReason(
-                  e.target.value
-                )
-              }
-            />
-          </div>
-
-          <div>
-            <label className="font-semibold block mb-2">
-              Xuất tại kho
-            </label>
-
-            <input
-              className="w-full border rounded-2xl p-4"
-              value={exportPlace}
-              onChange={(e) =>
-                setExportPlace(
-                  e.target.value
-                )
-              }
-            />
           </div>
 
         </div>
 
-        <div className="flex justify-between pt-6">
+        <div className="bg-white rounded-3xl shadow p-6 space-y-5">
 
-          <button
-            type="button"
-            onClick={printTestTemplate}
-            className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-2xl font-semibold"
-          >
-            In thử mẫu
-          </button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-          <button
-            type="button"
-            onClick={saveTemplate}
-            className="bg-blue-700 hover:bg-blue-800 text-white px-8 py-4 rounded-2xl font-semibold"
-          >
-            Lưu mẫu
-          </button>
+            <div>
+              <label className="block mb-2 font-semibold text-black">
+                Tên shop
+              </label>
+
+              <input
+                type="text"
+                className="w-full border p-4 rounded-2xl text-black"
+                value={shopName}
+                onChange={(e) =>
+                  setShopName(
+                    e.target.value
+                  )
+                }
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 font-semibold text-black">
+                Địa chỉ
+              </label>
+
+              <input
+                type="text"
+                className="w-full border p-4 rounded-2xl text-black"
+                value={address}
+                onChange={(e) =>
+                  setAddress(
+                    e.target.value
+                  )
+                }
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 font-semibold text-black">
+                Hotline
+              </label>
+
+              <input
+                type="text"
+                className="w-full border p-4 rounded-2xl text-black"
+                value={phone}
+                onChange={(e) =>
+                  setPhone(
+                    e.target.value
+                  )
+                }
+              />
+            </div>
+
+          </div>
+
+          <div className="border-t pt-5">
+
+            <label className="block mb-2 font-semibold text-black">
+              Tiêu đề phiếu xuất kho
+            </label>
+
+            <input
+              type="text"
+              className="w-full border p-4 rounded-2xl text-black"
+              value={warehouseTitle}
+              onChange={(e) =>
+                setWarehouseTitle(
+                  e.target.value
+                )
+              }
+            />
+
+          </div>
+
+          <div className="border-t pt-5">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+              <div>
+                <label className="block mb-2 font-semibold text-black">
+                  Lời cảm ơn
+                </label>
+
+                <input
+                  type="text"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={thankYouText}
+                  onChange={(e) =>
+                    setThankYouText(
+                      e.target.value
+                    )
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-semibold text-black">
+                  Dòng hẹn gặp lại
+                </label>
+
+                <input
+                  type="text"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={seeYouText}
+                  onChange={(e) =>
+                    setSeeYouText(
+                      e.target.value
+                    )
+                  }
+                />
+              </div>
+
+            </div>
+
+          </div>
+
+          <div className="border-t pt-5">
+
+            <label className="block mb-2 font-semibold text-black">
+              Khổ giấy
+            </label>
+
+            <select
+              className="w-full md:w-80 border p-4 rounded-2xl text-black"
+              value={paperSize}
+              onChange={(e) =>
+                setPaperSize(
+                  e.target.value
+                )
+              }
+            >
+              <option value="A5">
+                A5
+              </option>
+
+              <option value="K80">
+                K80
+              </option>
+            </select>
+
+          </div>
+
+          <div className="flex justify-end gap-4 border-t pt-5">
+
+            <button
+              type="button"
+              onClick={printTestTemplate}
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-2xl font-semibold"
+            >
+              In thử mẫu
+            </button>
+
+            <button
+              type="button"
+              onClick={saveTemplate}
+              className="bg-blue-700 hover:bg-blue-800 text-white px-8 py-4 rounded-2xl font-semibold"
+            >
+              Lưu mẫu in
+            </button>
+
+          </div>
 
         </div>
 

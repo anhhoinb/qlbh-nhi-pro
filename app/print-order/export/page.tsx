@@ -3,18 +3,14 @@
 import { useEffect, useState } from "react";
 
 import {
-  collection,
   doc,
   getDoc,
-  getDocs,
-  limit,
-  query,
-  where,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
 
 export default function PrintOrderPage() {
+
   const [loading, setLoading] =
     useState(true);
 
@@ -42,40 +38,19 @@ export default function PrintOrderPage() {
   const [exportPlace, setExportPlace] =
     useState("Kho chính");
 
-  const [paperSize, setPaperSize] =
-    useState("A5");
-
   const formatMoney = (
     value: any
   ) => {
+
     return Number(
       value || 0
     ).toLocaleString("vi-VN");
   };
 
-  const formatDate = (
-    value: any
-  ) => {
-    if (!value) return "";
-
-    try {
-      const date = value.seconds
-        ? new Date(
-            value.seconds * 1000
-          )
-        : new Date(value);
-
-      return `${date.getDate()}/${
-        date.getMonth() + 1
-      }/${date.getFullYear()}`;
-    } catch {
-      return "";
-    }
-  };
-
   const getOrderCode = (
     item: any
   ) => {
+
     return (
       item?.orderCode ||
       item?.order_code ||
@@ -87,6 +62,7 @@ export default function PrintOrderPage() {
   const getItems = (
     item: any
   ) => {
+
     return (
       item?.items ||
       item?.products ||
@@ -98,6 +74,7 @@ export default function PrintOrderPage() {
   const getProductName = (
     product: any
   ) => {
+
     return (
       product.name ||
       product.productName ||
@@ -108,16 +85,18 @@ export default function PrintOrderPage() {
   const getProductQuantity = (
     product: any
   ) => {
+
     return Number(
       product.quantity ||
-        product.qty ||
-        0
+      product.qty ||
+      0
     );
   };
 
   const getProductUnit = (
     product: any
   ) => {
+
     return (
       product.unit ||
       product.unitName ||
@@ -128,20 +107,20 @@ export default function PrintOrderPage() {
   const getProductPrice = (
     product: any
   ) => {
+
     return Number(
       product.price ||
-        product.sellPrice ||
-        0
+      product.sellPrice ||
+      0
     );
   };
 
   const getProductTotal = (
     product: any
   ) => {
+
     return (
-      getProductQuantity(
-        product
-      ) *
+      getProductQuantity(product) *
       getProductPrice(product)
     );
   };
@@ -149,27 +128,29 @@ export default function PrintOrderPage() {
   const getGrandTotal = (
     item: any
   ) => {
+
     return Number(
       item?.total ||
-        item?.grand_total ||
-        item?.totalAmount ||
-        0
+      item?.grand_total ||
+      item?.totalAmount ||
+      0
     );
   };
 
   useEffect(() => {
+
     const loadData =
       async () => {
+
         try {
+
           const params =
             new URLSearchParams(
               window.location.search
             );
 
-          const orderCode =
-            params.get(
-              "orderCode"
-            ) || "";
+          const orderId =
+            params.get("id") || "";
 
           const templateRef =
             doc(
@@ -186,120 +167,97 @@ export default function PrintOrderPage() {
           if (
             templateSnap.exists()
           ) {
+
             const data: any =
               templateSnap.data();
 
             setShopName(
               data.shopName ||
-                "NhiPro23"
+              "NhiPro23"
             );
 
             setDepartment(
               data.department ||
-                "Kho hàng"
+              "Kho hàng"
             );
 
             setWarehouseTitle(
               data.warehouseTitle ||
-                "PHIẾU XUẤT KHO"
+              "PHIẾU XUẤT KHO"
             );
 
             setReceiver(
               data.receiver ||
-                "Khách hàng"
+              "Khách hàng"
             );
 
             setReceiverDepartment(
               data.receiverDepartment ||
-                "Kinh doanh"
+              "Kinh doanh"
             );
 
             setReason(
               data.reason ||
-                "Xuất bán hàng"
+              "Xuất bán hàng"
             );
 
             setExportPlace(
               data.exportPlace ||
-                "Kho chính"
-            );
-
-            setPaperSize(
-              data.paperSize ||
-                "A5"
+              "Kho chính"
             );
           }
 
-          if (!orderCode) {
+          if (!orderId) {
+
             setOrder(null);
-            return;
-          }
-
-          const q1 = query(
-            collection(
-              db,
-              "orders"
-            ),
-            where(
-              "orderCode",
-              "==",
-              orderCode
-            ),
-            limit(1)
-          );
-
-          const snap1 =
-            await getDocs(q1);
-
-          if (!snap1.empty) {
-            const docItem =
-              snap1.docs[0];
-
-            setOrder({
-              id: docItem.id,
-              ...docItem.data(),
-            });
 
             return;
           }
 
-          const directRef =
+          const orderRef =
             doc(
               db,
               "orders",
-              orderCode
+              orderId
             );
 
-          const directSnap =
+          const orderSnap =
             await getDoc(
-              directRef
+              orderRef
             );
 
           if (
-            directSnap.exists()
+            orderSnap.exists()
           ) {
+
             setOrder({
-              id: directSnap.id,
-              ...directSnap.data(),
+              id: orderSnap.id,
+              ...orderSnap.data(),
             });
 
-            return;
+          } else {
+
+            setOrder(null);
           }
 
-          setOrder(null);
         } catch (error) {
+
           console.log(error);
 
           setOrder(null);
+
         } finally {
+
           setLoading(false);
         }
       };
 
     loadData();
+
   }, []);
 
   useEffect(() => {
+
     const params =
       new URLSearchParams(
         window.location.search
@@ -319,16 +277,20 @@ export default function PrintOrderPage() {
 
     const timer =
       setTimeout(() => {
+
         window.focus();
 
         window.print();
+
       }, 800);
 
     return () =>
       clearTimeout(timer);
+
   }, [loading, order]);
 
   if (loading) {
+
     return (
       <main className="p-6">
         Đang tải...
@@ -337,6 +299,7 @@ export default function PrintOrderPage() {
   }
 
   if (!order) {
+
     return (
       <main className="p-6">
         Không tìm thấy đơn hàng.
@@ -347,22 +310,39 @@ export default function PrintOrderPage() {
   const items =
     getItems(order);
 
+  const vatAmount = 4000;
+
+  const subtotal =
+    getGrandTotal(order) -
+    vatAmount;
+
   return (
-    <main className="print-area bg-gray-200 min-h-screen p-6 print:bg-white print:p-0">
+
+    <main className="fixed inset-0 z-[999999] bg-white overflow-auto">
 
       <style jsx global>{`
+        html,
+        body {
+          background: white !important;
+          margin: 0 !important;
+          overflow: auto !important;
+        }
+
+        aside,
+        nav,
+        header,
+        .sidebar,
+        .dashboard-sidebar {
+          display: none !important;
+        }
+
         @page {
           size: A5 portrait;
-          margin: 10mm;
+          margin: 8mm;
         }
 
         @media print {
           body {
-            background: white !important;
-          }
-
-          .print-area {
-            padding: 0 !important;
             background: white !important;
           }
 
@@ -372,11 +352,12 @@ export default function PrintOrderPage() {
         }
       `}</style>
 
-      <div className="print-box bg-white max-w-[900px] mx-auto p-10 text-black shadow">
+      <div className="print-box bg-white w-[136mm] min-h-[190mm] mx-auto p-[7mm] text-black">
 
-        <div className="flex justify-between">
+        <div className="flex justify-between items-start text-[11px] leading-4">
 
           <div>
+
             <div>
               <strong>
                 Đơn vị:
@@ -384,116 +365,150 @@ export default function PrintOrderPage() {
               {shopName}
             </div>
 
-            <div>
+            <div className="mt-1">
               <strong>
                 Bộ phận:
               </strong>{" "}
               {department}
             </div>
+
           </div>
 
-          <div className="text-center text-sm">
+          <div className="text-center text-[10px]">
+
             <div className="font-bold">
               Mẫu số 02 - VT
             </div>
 
             <div>
-              (Ban hành theo
-              TT200)
+              (Ban hành theo TT200)
             </div>
+
           </div>
 
         </div>
 
-        <div className="text-center mt-8">
+        <div className="text-center mt-5">
 
-          <div className="text-3xl font-bold">
+          <div className="text-[20px] font-bold">
             {warehouseTitle}
           </div>
 
-          <div className="mt-2 italic">
-            Ngày{" "}
-            {new Date().getDate()}
-            {" "}tháng{" "}
-            {new Date().getMonth() +
-              1}
-            {" "}năm{" "}
-            {new Date().getFullYear()}
+          <div className="mt-1 text-[10px] flex justify-center gap-2">
+
+            <span>
+              {String(
+                new Date().getDate()
+              ).padStart(2, "0")}
+              -
+              {String(
+                new Date().getMonth() + 1
+              ).padStart(2, "0")}
+              -
+              {new Date().getFullYear()}
+            </span>
+
+            <span>|</span>
+
+            <span>
+              Mã đơn:
+              {" "}
+              <strong>
+                {getOrderCode(order)}
+              </strong>
+            </span>
+
           </div>
 
         </div>
 
-        <div className="mt-8 space-y-2 text-[16px]">
+        <div className="mt-3 flex justify-center">
 
-          <div>
-            Họ tên người nhận
-            hàng:{" "}
-            <strong>
-              {receiver}
-            </strong>
-          </div>
+          <div className="w-full flex justify-between text-[11px] leading-5">
 
-          <div>
-            Bộ phận:{" "}
-            <strong>
-              {
-                receiverDepartment
-              }
-            </strong>
-          </div>
+            <div className="space-y-[2px]">
 
-          <div>
-            Lý do xuất kho:{" "}
-            <strong>
-              {reason}
-            </strong>
-          </div>
+              <div className="flex gap-2">
+                <span>
+                  Họ tên người nhận:
+                </span>
 
-          <div>
-            Xuất tại kho:{" "}
-            <strong>
-              {exportPlace}
-            </strong>
-          </div>
+                <strong>
+                  {receiver}
+                </strong>
+              </div>
 
-          <div>
-            Mã đơn:{" "}
-            <strong>
-              {getOrderCode(
-                order
-              )}
-            </strong>
+              <div className="flex gap-2">
+                <span>
+                  Bộ phận:
+                </span>
+
+                <strong>
+                  {receiverDepartment}
+                </strong>
+              </div>
+
+            </div>
+
+            <div className="space-y-[2px] text-right">
+
+              <div className="flex gap-2 justify-end">
+                <span>
+                  Lý do xuất kho:
+                </span>
+
+                <strong>
+                  {reason}
+                </strong>
+              </div>
+
+              <div className="flex gap-2 justify-end">
+                <span>
+                  Xuất tại kho:
+                </span>
+
+                <strong>
+                  {exportPlace}
+                </strong>
+              </div>
+
+            </div>
+
           </div>
 
         </div>
 
-        <table className="w-full border-collapse border border-black mt-6 text-sm">
+        <table className="w-full border-collapse border border-gray-300 mt-3 text-[11px]">
 
           <thead>
 
             <tr>
 
-              <th className="border border-black p-2">
+              <th className="border border-gray-400 p-1 w-[38px]">
                 STT
               </th>
 
-              <th className="border border-black p-2">
+              <th className="border border-gray-400 p-1 min-w-[220px]">
                 Tên hàng hóa
               </th>
 
-              <th className="border border-black p-2">
+              <th className="border border-gray-400 p-1 w-[45px]">
                 ĐVT
               </th>
 
-              <th className="border border-black p-2">
+              <th className="border border-gray-400 p-1 w-[40px]">
                 SL
               </th>
 
-              <th className="border border-black p-2">
+              <th className="border border-gray-400 p-1 w-[80px]">
                 Đơn giá
               </th>
 
-              <th className="border border-black p-2">
+              <th className="border border-gray-400 p-1 w-[38px]">
+                VAT
+              </th>
+
+              <th className="border border-gray-400 p-1 w-[90px]">
                 Thành tiền
               </th>
 
@@ -508,45 +523,54 @@ export default function PrintOrderPage() {
                 product: any,
                 index: number
               ) => (
-                <tr
-                  key={index}
-                >
 
-                  <td className="border border-black p-2 text-center">
+                <tr key={index}>
+
+                  <td className="border border-gray-400 p-1 text-center">
                     {index + 1}
                   </td>
 
-                  <td className="border border-black p-2">
-                    {getProductName(
-                      product
-                    )}
+                  <td className="border border-gray-400 p-1 align-top">
+
+                    <div className="leading-4 break-words">
+                      {getProductName(product)}
+                    </div>
+
+                    <div className="text-[7px] text-gray-500 mt-[1px] leading-3">
+                      MSP:
+                      {" "}
+                      {product.code ||
+                        product.productCode ||
+                        product.sku ||
+                        "---"}
+                    </div>
+
                   </td>
 
-                  <td className="border border-black p-2 text-center">
-                    {getProductUnit(
-                      product
-                    )}
+                  <td className="border border-gray-400 p-1 text-center">
+                    {getProductUnit(product)}
                   </td>
 
-                  <td className="border border-black p-2 text-center">
-                    {getProductQuantity(
-                      product
-                    )}
+                  <td className="border border-gray-400 p-1 text-center">
+                    {getProductQuantity(product)}
                   </td>
 
-                  <td className="border border-black p-2 text-right">
+                  <td className="border border-gray-400 p-1 text-right">
                     {formatMoney(
-                      getProductPrice(
-                        product
-                      )
+                      getProductPrice(product)
                     )}
                   </td>
 
-                  <td className="border border-black p-2 text-right">
+                  <td className="border border-gray-400 p-1 text-center text-[10px]">
+                    {product.vat ||
+                      product.tax ||
+                      8}
+                    %
+                  </td>
+
+                  <td className="border border-gray-400 p-1 text-right">
                     {formatMoney(
-                      getProductTotal(
-                        product
-                      )
+                      getProductTotal(product)
                     )}
                   </td>
 
@@ -557,17 +581,45 @@ export default function PrintOrderPage() {
             <tr>
 
               <td
-                colSpan={5}
-                className="border border-black p-2 text-right font-bold"
+                colSpan={6}
+                className="border border-gray-400 p-1 text-right"
+              >
+                Tạm tính
+              </td>
+
+              <td className="border border-gray-400 p-1 text-right">
+                {formatMoney(subtotal)}
+              </td>
+
+            </tr>
+
+            <tr>
+
+              <td
+                colSpan={6}
+                className="border border-gray-400 p-1 text-right"
+              >
+                VAT
+              </td>
+
+              <td className="border border-gray-400 p-1 text-right">
+                {formatMoney(vatAmount)}
+              </td>
+
+            </tr>
+
+            <tr>
+
+              <td
+                colSpan={6}
+                className="border border-gray-400 p-1 text-right font-bold"
               >
                 Tổng cộng
               </td>
 
-              <td className="border border-black p-2 text-right font-bold">
+              <td className="border border-gray-400 p-1 text-right font-bold">
                 {formatMoney(
-                  getGrandTotal(
-                    order
-                  )
+                  getGrandTotal(order)
                 )}
               </td>
 
@@ -577,28 +629,14 @@ export default function PrintOrderPage() {
 
         </table>
 
-        <div className="mt-5 text-[16px]">
-
-          Tổng số tiền:{" "}
-          <strong>
-            {formatMoney(
-              getGrandTotal(
-                order
-              )
-            )}
-            đ
-          </strong>
-
-        </div>
-
-        <div className="grid grid-cols-5 gap-6 text-center mt-20">
+        <div className="grid grid-cols-5 gap-2 text-center mt-12 text-[11px]">
 
           <div>
             <div className="font-bold">
               Người lập phiếu
             </div>
 
-            <div className="italic text-sm">
+            <div className="italic text-[10px]">
               (Ký, họ tên)
             </div>
           </div>
@@ -608,7 +646,7 @@ export default function PrintOrderPage() {
               Người nhận hàng
             </div>
 
-            <div className="italic text-sm">
+            <div className="italic text-[10px]">
               (Ký, họ tên)
             </div>
           </div>
@@ -618,7 +656,7 @@ export default function PrintOrderPage() {
               Thủ kho
             </div>
 
-            <div className="italic text-sm">
+            <div className="italic text-[10px]">
               (Ký, họ tên)
             </div>
           </div>
@@ -628,7 +666,7 @@ export default function PrintOrderPage() {
               Kế toán
             </div>
 
-            <div className="italic text-sm">
+            <div className="italic text-[10px]">
               (Ký, họ tên)
             </div>
           </div>
@@ -638,7 +676,7 @@ export default function PrintOrderPage() {
               Giám đốc
             </div>
 
-            <div className="italic text-sm">
+            <div className="italic text-[10px]">
               (Ký, họ tên)
             </div>
           </div>

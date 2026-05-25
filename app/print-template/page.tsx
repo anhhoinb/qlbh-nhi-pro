@@ -16,6 +16,7 @@ type ActiveTemplate =
   | "delivery_note";
 
 export default function PrintTemplatePage() {
+
   const [shopName, setShopName] =
     useState("NhiPro23");
 
@@ -64,27 +65,10 @@ export default function PrintTemplatePage() {
     useState(true);
 
   useEffect(() => {
-    const params =
-      new URLSearchParams(window.location.search);
-
-    const autoPrint =
-      params.get("autoPrint");
-
-    if (autoPrint === "1" && !loading) {
-      const timer =
-        setTimeout(() => {
-          window.print();
-        }, 800);
-
-      return () =>
-        clearTimeout(timer);
-    }
-  }, [loading]);
-
-  useEffect(() => {
     const loadTemplate =
       async () => {
         try {
+
           const ref =
             doc(
               db,
@@ -96,6 +80,7 @@ export default function PrintTemplatePage() {
             await getDoc(ref);
 
           if (snap.exists()) {
+
             const data: any =
               snap.data();
 
@@ -165,7 +150,9 @@ export default function PrintTemplatePage() {
                 "sales_invoice"
             );
           }
+
         } catch (error) {
+
           console.log(error);
 
           alert(
@@ -181,7 +168,9 @@ export default function PrintTemplatePage() {
 
   const saveTemplate =
     async () => {
+
       try {
+
         await setDoc(
           doc(
             db,
@@ -189,48 +178,20 @@ export default function PrintTemplatePage() {
             "print_template"
           ),
           {
-            shopName:
-              shopName.trim(),
-
-            address:
-              address.trim(),
-
-            phone:
-              phone.trim(),
-
-            invoiceTitle:
-              invoiceTitle.trim(),
-
-            temporaryTitle:
-              temporaryTitle.trim(),
-
-            warehouseTitle:
-              warehouseTitle.trim(),
-
-            deliveryTitle:
-              deliveryTitle.trim(),
-
-            thankYouText:
-              thankYouText.trim(),
-
-            seeYouText:
-              seeYouText.trim(),
-
-            receiverName:
-              receiverName.trim(),
-
-            receiverPhone:
-              receiverPhone.trim(),
-
-            receiverAddress:
-              receiverAddress.trim(),
-
-            paperSize:
-              paperSize || "A5",
-
-            activeTemplate:
-              activeTemplate,
-
+            shopName,
+            address,
+            phone,
+            invoiceTitle,
+            temporaryTitle,
+            warehouseTitle,
+            deliveryTitle,
+            thankYouText,
+            seeYouText,
+            receiverName,
+            receiverPhone,
+            receiverAddress,
+            paperSize,
+            activeTemplate,
             updatedAt:
               new Date(),
           },
@@ -242,7 +203,9 @@ export default function PrintTemplatePage() {
         alert(
           "Đã lưu mẫu in"
         );
+
       } catch (error) {
+
         console.log(error);
 
         alert(
@@ -251,776 +214,437 @@ export default function PrintTemplatePage() {
       }
     };
 
-  const printTestTemplate =
-    () => {
-      const printWindow =
-        window.open(
-          "",
-          "_blank",
-          "width=900,height=900"
-        );
-
-      if (!printWindow) return;
-
-      const currentTitle =
-        activeTemplate ===
-        "sales_invoice"
-          ? invoiceTitle
-          : activeTemplate ===
-            "warehouse_export"
-          ? warehouseTitle
-          : deliveryTitle;
-
-      const isDelivery =
-        activeTemplate ===
-        "delivery_note";
-
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>In thử mẫu</title>
-
-            <style>
-              * {
-                box-sizing: border-box;
-              }
-
-              body {
-                margin: 0;
-                padding: 20px;
-                background: #f3f4f6;
-                font-family: Arial, sans-serif;
-
-                display: flex;
-                justify-content: center;
-              }
-
-              .page {
-                width: ${
-                  paperSize === "K80"
-                    ? "80mm"
-                    : "148mm"
-                };
-
-                background: white;
-
-                padding: 18px;
-                color: #000;
-                font-size: 14px;
-              }
-
-              .center {
-                text-align: center;
-              }
-
-              .shop-name {
-                font-size: 28px;
-                font-weight: bold;
-              }
-
-              .title {
-                font-size: 24px;
-                font-weight: bold;
-                text-align: center;
-                margin: 18px 0;
-              }
-
-              .divider {
-                border-top: 1px dashed #999;
-                margin: 12px 0;
-              }
-
-              .line {
-                display: flex;
-                justify-content: space-between;
-                gap: 20px;
-                margin: 7px 0;
-              }
-
-              .line strong {
-                text-align: right;
-              }
-
-              table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 10px;
-              }
-
-              th {
-                text-align: left;
-                padding: 8px 0;
-                border-bottom: 1px dashed #ccc;
-              }
-
-              td {
-                padding: 8px 0;
-                border-bottom: 1px dashed #eee;
-              }
-
-              .footer {
-                margin-top: 18px;
-                text-align: center;
-                line-height: 1.8;
-              }
-
-              .receiver-box {
-                margin-top: 12px;
-                padding: 10px;
-                border: 1px dashed #999;
-                border-radius: 8px;
-              }
-
-              .receiver-title {
-                font-weight: bold;
-                margin-bottom: 10px;
-                text-align: center;
-              }
-
-              .receiver-line {
-                margin: 8px 0;
-                line-height: 1.6;
-              }
-
-              @media print {
-                body {
-                  background: white;
-                  padding: 0;
-                }
-
-                .page {
-                  width: 100%;
-                }
-              }
-            </style>
-          </head>
-
-          <body>
-            <div class="page">
-
-              <div class="center">
-                <div class="shop-name">
-                  ${shopName}
-                </div>
-
-                <div>
-                  ${address}
-                </div>
-
-                <div>
-                  Hotline: ${phone}
-                </div>
-              </div>
-
-              <div class="divider"></div>
-
-              <div class="title">
-                ${currentTitle}
-              </div>
-
-              <div class="line">
-                <span>Mã đơn:</span>
-
-                <strong>
-                  DH0001
-                </strong>
-              </div>
-
-              <div class="line">
-                <span>Khách hàng:</span>
-
-                <strong>
-                  Khách lẻ
-                </strong>
-              </div>
-
-              <div class="line">
-                <span>Ngày:</span>
-
-                <strong>
-                  ${new Date().toLocaleString(
-                    "vi-VN"
-                  )}
-                </strong>
-              </div>
-
-              ${
-                isDelivery
-                  ? `
-                <div class="receiver-box">
-                  <div class="receiver-title">
-                    THÔNG TIN NGƯỜI NHẬN
-                  </div>
-
-                  <div class="receiver-line">
-                    <strong>Người nhận:</strong>
-                    ${receiverName}
-                  </div>
-
-                  <div class="receiver-line">
-                    <strong>Số điện thoại:</strong>
-                    ${receiverPhone}
-                  </div>
-
-                  <div class="receiver-line">
-                    <strong>Địa chỉ:</strong>
-                    ${receiverAddress}
-                  </div>
-                </div>
-              `
-                  : ""
-              }
-
-              <div class="divider"></div>
-
-              <table>
-                <thead>
-                  <tr>
-                    <th>
-                      Sản phẩm
-                    </th>
-
-                    <th>
-                      SL
-                    </th>
-
-                    <th>
-                      Giá
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  <tr>
-                    <td>
-                      Arduino Uno
-                    </td>
-
-                    <td>
-                      2
-                    </td>
-
-                    <td>
-                      250.000đ
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>
-                      ESP32
-                    </td>
-
-                    <td>
-                      1
-                    </td>
-
-                    <td>
-                      180.000đ
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <div class="divider"></div>
-
-              <div class="line">
-                <strong>
-                  Tổng tiền:
-                </strong>
-
-                <strong>
-                  680.000đ
-                </strong>
-              </div>
-
-              <div class="footer">
-                <div>
-                  ${thankYouText}
-                </div>
-
-                <div>
-                  ${seeYouText}
-                </div>
-              </div>
-
-            </div>
-
-            <script>
-              window.onload = () => {
-                setTimeout(() => {
-                  window.print();
-                }, 300);
-              };
-            </script>
-          </body>
-        </html>
-      `);
-
-      printWindow.document.close();
-    };
-
   const templateOptions = [
     {
       key: "sales_invoice",
       title: "Đơn bán hàng",
       description:
-        "Dùng để in hóa đơn bán hàng cho khách sau khi thanh toán.",
-      previewTitle:
-        invoiceTitle || "HÓA ĐƠN BÁN HÀNG",
+        "Hóa đơn bán hàng cho khách",
     },
+
     {
       key: "warehouse_export",
       title: "Phiếu xuất kho",
       description:
-        "Dùng để in phiếu xuất kho nội bộ khi xuất hàng khỏi kho.",
-      previewTitle:
-        warehouseTitle || "PHIẾU XUẤT KHO",
+        "Phiếu xuất kho nội bộ",
     },
+
     {
       key: "delivery_note",
       title: "Phiếu giao hàng",
       description:
-        "Dùng để in phiếu giao hàng cho nhân viên giao hàng hoặc đơn vị vận chuyển.",
-      previewTitle:
-        deliveryTitle || "PHIẾU GIAO HÀNG",
+        "Phiếu giao cho shipper",
     },
   ] as const;
 
-  const getActiveTemplateName = () => {
-    if (activeTemplate === "sales_invoice") {
-      return "Đơn bán hàng";
+  const getCurrentTitle = () => {
+
+    if (
+      activeTemplate ===
+      "sales_invoice"
+    ) {
+      return invoiceTitle;
     }
 
-    if (activeTemplate === "warehouse_export") {
-      return "Phiếu xuất kho";
+    if (
+      activeTemplate ===
+      "warehouse_export"
+    ) {
+      return warehouseTitle;
     }
 
-    if (activeTemplate === "delivery_note") {
-      return "Phiếu giao hàng";
-    }
-
-    return "Đơn bán hàng";
+    return deliveryTitle;
   };
 
   if (loading) {
     return (
       <main className="min-h-screen bg-gray-100 p-6">
-        <div className="text-2xl text-black">
-          Đang tải mẫu in...
-        </div>
+        Đang tải...
       </main>
     );
   }
 
   return (
+
     <main className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-blue-700">
-              Mẫu in
-            </h1>
 
-            <p className="text-gray-600 mt-2">
-              Cấu hình thông tin cửa hàng và chọn mẫu in đang sử dụng.
-            </p>
-          </div>
+      <div className="max-w-7xl mx-auto">
 
-          <div className="bg-white rounded-2xl shadow px-5 py-4 text-black">
-            <p className="text-sm text-gray-500">
-              Mẫu đang dùng
-            </p>
+        <div className="mb-8">
 
-            <p className="font-bold text-blue-700">
-              {getActiveTemplateName()}
-            </p>
-          </div>
+          <h1 className="text-4xl font-bold text-blue-700">
+            Mẫu in
+          </h1>
+
+          <p className="text-gray-600 mt-2">
+            Cấu hình mẫu in cho hệ thống
+          </p>
+
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-6">
-          {templateOptions.map((item) => {
-            const isActive =
-              activeTemplate === item.key;
+        <div className="grid grid-cols-12 gap-6">
 
-            return (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() =>
-                  setActiveTemplate(item.key)
-                }
-                className={`text-left rounded-3xl border-2 p-5 shadow bg-white transition ${
-                  isActive
-                    ? "border-blue-700 ring-4 ring-blue-100"
-                    : "border-transparent hover:border-blue-300"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
+          {/* LEFT */}
+
+          <div className="col-span-12 lg:col-span-3">
+
+            <div className="bg-white rounded-3xl shadow p-4 sticky top-6">
+
+              <h2 className="text-xl font-bold text-black mb-4">
+                Danh sách mẫu in
+              </h2>
+
+              <div className="space-y-3">
+
+                {templateOptions.map((item) => {
+
+                  const isActive =
+                    activeTemplate === item.key;
+
+                  return (
+
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() =>
+                        setActiveTemplate(item.key)
+                      }
+                      className={`w-full text-left rounded-2xl border p-4 transition-all ${
+                        isActive
+                          ? "bg-blue-700 border-blue-700 text-white"
+                          : "bg-white border-gray-200 hover:border-blue-300 text-black"
+                      }`}
+                    >
+
+                      <div className="font-bold text-base">
+                        {item.title}
+                      </div>
+
+                      <div
+                        className={`text-sm mt-1 ${
+                          isActive
+                            ? "text-blue-100"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {item.description}
+                      </div>
+
+                    </button>
+                  );
+                })}
+
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* RIGHT */}
+
+          <div className="col-span-12 lg:col-span-9">
+
+            <div className="bg-white rounded-3xl shadow p-6 space-y-5">
+
+              <div>
+
+                <h2 className="text-3xl font-bold text-black">
+                  {getCurrentTitle()}
+                </h2>
+
+                <p className="text-gray-500 mt-2">
+                  Cấu hình thông tin mẫu in
+                </p>
+
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+                <div>
+
+                  <label className="block mb-2 font-semibold text-black">
+                    Tên shop
+                  </label>
+
+                  <input
+                    type="text"
+                    className="w-full border p-4 rounded-2xl text-black"
+                    value={shopName}
+                    onChange={(e) =>
+                      setShopName(
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </div>
+
+                <div>
+
+                  <label className="block mb-2 font-semibold text-black">
+                    Địa chỉ
+                  </label>
+
+                  <input
+                    type="text"
+                    className="w-full border p-4 rounded-2xl text-black"
+                    value={address}
+                    onChange={(e) =>
+                      setAddress(
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </div>
+
+                <div>
+
+                  <label className="block mb-2 font-semibold text-black">
+                    Hotline
+                  </label>
+
+                  <input
+                    type="text"
+                    className="w-full border p-4 rounded-2xl text-black"
+                    value={phone}
+                    onChange={(e) =>
+                      setPhone(
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </div>
+
+              </div>
+
+              <div className="border-t pt-5">
+
+                <h2 className="text-2xl font-bold text-black mb-4">
+                  Tiêu đề mẫu in
+                </h2>
+
+                <div className="space-y-5">
+
                   <div>
-                    <h2 className="text-xl font-bold text-black">
-                      {item.title}
-                    </h2>
 
-                    <p className="text-gray-500 mt-2 leading-relaxed">
-                      {item.description}
-                    </p>
+                    <label className="block mb-2 font-semibold text-black">
+                      Tiêu đề chính
+                    </label>
+
+                    <input
+                      type="text"
+                      className="w-full border p-4 rounded-2xl text-black"
+                      value={getCurrentTitle()}
+                      onChange={(e) => {
+
+                        if (
+                          activeTemplate ===
+                          "sales_invoice"
+                        ) {
+                          setInvoiceTitle(
+                            e.target.value
+                          );
+                        }
+
+                        if (
+                          activeTemplate ===
+                          "warehouse_export"
+                        ) {
+                          setWarehouseTitle(
+                            e.target.value
+                          );
+                        }
+
+                        if (
+                          activeTemplate ===
+                          "delivery_note"
+                        ) {
+                          setDeliveryTitle(
+                            e.target.value
+                          );
+                        }
+                      }}
+                    />
+
                   </div>
 
-                  <div
-                    className={`w-7 h-7 rounded-full border flex items-center justify-center text-sm font-bold ${
-                      isActive
-                        ? "bg-blue-700 text-white border-blue-700"
-                        : "bg-white text-gray-400 border-gray-300"
-                    }`}
-                  >
-                    {isActive ? "✓" : ""}
-                  </div>
                 </div>
 
-                <div className="mt-5 rounded-2xl bg-gray-50 border p-4 text-black">
-                  <div className="text-center border-b pb-3 mb-3">
-                    <p className="font-bold">
-                      {shopName || "Tên shop"}
-                    </p>
+              </div>
 
-                    <p className="text-xs text-gray-500 mt-1">
-                      {address || "Địa chỉ"}
-                    </p>
+              <div className="border-t pt-5">
 
-                    <p className="text-xs text-gray-500">
-                      Hotline: {phone || "Số điện thoại"}
-                    </p>
+                <h2 className="text-2xl font-bold text-black mb-4">
+                  Nội dung cuối phiếu
+                </h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                  <div>
+
+                    <label className="block mb-2 font-semibold text-black">
+                      Lời cảm ơn
+                    </label>
+
+                    <input
+                      type="text"
+                      className="w-full border p-4 rounded-2xl text-black"
+                      value={thankYouText}
+                      onChange={(e) =>
+                        setThankYouText(
+                          e.target.value
+                        )
+                      }
+                    />
+
                   </div>
 
-                  <p className="text-center font-bold text-blue-700">
-                    {item.previewTitle}
-                  </p>
+                  <div>
 
-                  <div className="mt-4 space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>
-                        Mã đơn:
-                      </span>
+                    <label className="block mb-2 font-semibold text-black">
+                      Hẹn gặp lại
+                    </label>
 
-                      <strong>
-                        DH0001
-                      </strong>
-                    </div>
+                    <input
+                      type="text"
+                      className="w-full border p-4 rounded-2xl text-black"
+                      value={seeYouText}
+                      onChange={(e) =>
+                        setSeeYouText(
+                          e.target.value
+                        )
+                      }
+                    />
 
-                    <div className="flex justify-between">
-                      <span>
-                        Khách hàng:
-                      </span>
-
-                      <strong>
-                        Khách lẻ
-                      </strong>
-                    </div>
-
-                    <div className="flex justify-between">
-                      <span>
-                        Tổng tiền:
-                      </span>
-
-                      <strong>
-                        500.000đ
-                      </strong>
-                    </div>
                   </div>
+
                 </div>
-              </button>
-            );
-          })}
+
+              </div>
+
+              {activeTemplate ===
+                "delivery_note" && (
+
+                <div className="border-t pt-5">
+
+                  <h2 className="text-2xl font-bold text-black mb-4">
+                    Thông tin người nhận
+                  </h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+                    <div>
+
+                      <label className="block mb-2 font-semibold text-black">
+                        Người nhận
+                      </label>
+
+                      <input
+                        type="text"
+                        className="w-full border p-4 rounded-2xl text-black"
+                        value={receiverName}
+                        onChange={(e) =>
+                          setReceiverName(
+                            e.target.value
+                          )
+                        }
+                      />
+
+                    </div>
+
+                    <div>
+
+                      <label className="block mb-2 font-semibold text-black">
+                        Số điện thoại
+                      </label>
+
+                      <input
+                        type="text"
+                        className="w-full border p-4 rounded-2xl text-black"
+                        value={receiverPhone}
+                        onChange={(e) =>
+                          setReceiverPhone(
+                            e.target.value
+                          )
+                        }
+                      />
+
+                    </div>
+
+                    <div>
+
+                      <label className="block mb-2 font-semibold text-black">
+                        Địa chỉ
+                      </label>
+
+                      <input
+                        type="text"
+                        className="w-full border p-4 rounded-2xl text-black"
+                        value={receiverAddress}
+                        onChange={(e) =>
+                          setReceiverAddress(
+                            e.target.value
+                          )
+                        }
+                      />
+
+                    </div>
+
+                  </div>
+
+                </div>
+              )}
+
+              <div className="border-t pt-5">
+
+                <label className="block mb-2 font-semibold text-black">
+                  Khổ giấy
+                </label>
+
+                <select
+                  className="w-full md:w-72 border p-4 rounded-2xl text-black"
+                  value={paperSize}
+                  onChange={(e) =>
+                    setPaperSize(
+                      e.target.value
+                    )
+                  }
+                >
+
+                  <option value="A5">
+                    A5
+                  </option>
+
+                  <option value="K80">
+                    K80
+                  </option>
+
+                </select>
+
+              </div>
+
+              <div className="flex justify-end border-t pt-5">
+
+                <button
+                  type="button"
+                  onClick={saveTemplate}
+                  className="bg-blue-700 hover:bg-blue-800 text-white px-8 py-4 rounded-2xl font-semibold"
+                >
+                  Lưu mẫu in
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
         </div>
 
-        <div className="bg-white rounded-3xl shadow p-6 space-y-5">
-          <h2 className="text-2xl font-bold text-black">
-            Thông tin chung trên mẫu in
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div>
-              <label className="block mb-2 font-semibold text-black">
-                Tên shop
-              </label>
-
-              <input
-                type="text"
-                className="w-full border p-4 rounded-2xl text-black"
-                value={shopName}
-                onChange={(e) =>
-                  setShopName(
-                    e.target.value
-                  )
-                }
-              />
-            </div>
-
-            <div>
-              <label className="block mb-2 font-semibold text-black">
-                Địa chỉ
-              </label>
-
-              <input
-                type="text"
-                className="w-full border p-4 rounded-2xl text-black"
-                value={address}
-                onChange={(e) =>
-                  setAddress(
-                    e.target.value
-                  )
-                }
-              />
-            </div>
-
-            <div>
-              <label className="block mb-2 font-semibold text-black">
-                Hotline
-              </label>
-
-              <input
-                type="text"
-                className="w-full border p-4 rounded-2xl text-black"
-                value={phone}
-                onChange={(e) =>
-                  setPhone(
-                    e.target.value
-                  )
-                }
-              />
-            </div>
-          </div>
-
-          <div className="border-t pt-5">
-            <h2 className="text-2xl font-bold text-black mb-4">
-              Tiêu đề từng loại mẫu
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block mb-2 font-semibold text-black">
-                  Tiêu đề đơn bán hàng
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={invoiceTitle}
-                  onChange={(e) =>
-                    setInvoiceTitle(
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-semibold text-black">
-                  Tiêu đề tạm tính
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={temporaryTitle}
-                  onChange={(e) =>
-                    setTemporaryTitle(
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-semibold text-black">
-                  Tiêu đề phiếu xuất kho
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={warehouseTitle}
-                  onChange={(e) =>
-                    setWarehouseTitle(
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-semibold text-black">
-                  Tiêu đề phiếu giao hàng
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={deliveryTitle}
-                  onChange={(e) =>
-                    setDeliveryTitle(
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t pt-5">
-            <h2 className="text-2xl font-bold text-black mb-4">
-              Nội dung cuối phiếu
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block mb-2 font-semibold text-black">
-                  Lời cảm ơn
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={thankYouText}
-                  onChange={(e) =>
-                    setThankYouText(
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-semibold text-black">
-                  Dòng hẹn gặp lại
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={seeYouText}
-                  onChange={(e) =>
-                    setSeeYouText(
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t pt-5">
-            <h2 className="text-2xl font-bold text-black mb-4">
-              Thông tin người nhận trên phiếu giao hàng
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div>
-                <label className="block mb-2 font-semibold text-black">
-                  Tên người nhận
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={receiverName}
-                  onChange={(e) =>
-                    setReceiverName(
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-semibold text-black">
-                  Số điện thoại
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={receiverPhone}
-                  onChange={(e) =>
-                    setReceiverPhone(
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 font-semibold text-black">
-                  Địa chỉ giao hàng
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border p-4 rounded-2xl text-black"
-                  value={receiverAddress}
-                  onChange={(e) =>
-                    setReceiverAddress(
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t pt-5">
-            <label className="block mb-2 font-semibold text-black">
-              Khổ giấy
-            </label>
-
-            <select
-              className="w-full md:w-80 border p-4 rounded-2xl text-black"
-              value={paperSize}
-              onChange={(e) =>
-                setPaperSize(
-                  e.target.value
-                )
-              }
-            >
-              <option value="A5">
-                A5
-              </option>
-
-              <option value="K80">
-                K80
-              </option>
-            </select>
-          </div>
-
-          <div className="flex justify-end border-t pt-5">
-            <button
-              type="button"
-              onClick={printTestTemplate}
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-2xl font-semibold"
-            >
-              In thử mẫu
-            </button>
-          </div>
-
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-t pt-5">
-            <div className="text-gray-600">
-              Sau khi lưu, hệ thống sẽ dùng mẫu{" "}
-              <strong className="text-blue-700">
-                {getActiveTemplateName()}
-              </strong>{" "}
-              khi in đơn hàng.
-            </div>
-
-            <button
-              type="button"
-              onClick={saveTemplate}
-              className="bg-blue-700 hover:bg-blue-800 text-white px-8 py-4 rounded-2xl font-semibold"
-            >
-              Lưu mẫu in
-            </button>
-          </div>
-        </div>
       </div>
+
     </main>
   );
 }
