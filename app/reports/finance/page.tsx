@@ -562,6 +562,28 @@ export default function FinanceReportPage() {
       0
     );
 
+    const estimatedProfit =
+  filteredOrders.reduce(
+    (sum, order) => {
+
+      const revenue =
+        getOrderTotal(order);
+
+      const discount =
+        getOrderDiscount(order);
+
+      const vat =
+        getOrderVat(order);
+
+      const profit =
+        (revenue - discount - vat) * 0.35;
+
+      return sum + profit;
+
+    },
+    0
+  );
+
   const totalPages =
     Math.max(
       1,
@@ -706,7 +728,7 @@ export default function FinanceReportPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
 
           <div className="bg-white rounded-2xl shadow p-4 min-h-[95px]">
             <p className="text-gray-500 text-sm">
@@ -738,150 +760,56 @@ export default function FinanceReportPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow p-4 min-h-[95px]">
-            <p className="text-gray-500 text-sm">
-              Số đơn hàng
-            </p>
+<div className="bg-white rounded-2xl shadow p-4 min-h-[95px]">
+  <p className="text-gray-500 text-sm">
+    Số đơn hàng
+  </p>
 
-            <p className="text-2xl font-bold text-orange-600 mt-2">
-              {filteredOrders.length}
-            </p>
-          </div>
+  <p className="text-2xl font-bold text-orange-600 mt-2">
+    {filteredOrders.length}
+  </p>
 
-        </div>
+  <div className="mt-3 pt-3 border-t">
+    <p className="text-gray-500 text-sm">
+      Lãi tạm tính
+    </p>
 
-        <div className="bg-white rounded-2xl shadow overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-2">
+    <p className="text-xl font-bold text-emerald-600 mt-1">
+      {formatMoney(estimatedProfit)}đ
+    </p>
+  </div>
+</div>
 
-            <div className="p-5 border-b lg:border-b-0 lg:border-r">
-              <h2 className="text-xl font-bold mb-5">
-                Cơ cấu thanh toán
-              </h2>
+<div className="bg-white rounded-2xl shadow p-4 min-h-[95px]">
+  <p className="text-gray-500 text-sm">
+    VAT & Chiết khấu
+  </p>
 
-              <div className="space-y-5">
+  <div className="mt-4 space-y-3">
 
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span>
-                      Tiền mặt
-                    </span>
+    <div className="flex justify-between items-center">
+      <span className="text-gray-600">
+        VAT
+      </span>
 
-                    <strong>
-                      {formatMoney(cashTotal)}đ
-                    </strong>
-                  </div>
+      <strong className="text-blue-700">
+        {formatMoney(vatTotal)}đ
+      </strong>
+    </div>
 
-                  <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-green-500"
-                      style={{
-                        width: `${
-                          totalRevenue > 0
-                            ? (cashTotal /
-                                totalRevenue) *
-                              100
-                            : 0
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
+    <div className="flex justify-between items-center">
+      <span className="text-gray-600">
+        Chiết khấu
+      </span>
 
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span>
-                      Chuyển khoản / thẻ
-                    </span>
+      <strong className="text-red-600">
+        {formatMoney(discountTotal)}đ
+      </strong>
+    </div>
 
-                    <strong>
-                      {formatMoney(bankTotal)}đ
-                    </strong>
-                  </div>
+  </div>
+</div>
 
-                  <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500"
-                      style={{
-                        width: `${
-                          totalRevenue > 0
-                            ? (bankTotal /
-                                totalRevenue) *
-                              100
-                            : 0
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            <div className="p-5">
-              <h2 className="text-xl font-bold mb-5">
-                VAT & chiết khấu
-              </h2>
-
-              <div className="space-y-5">
-
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span>
-                      Tổng VAT
-                    </span>
-
-                    <strong className="text-blue-700">
-                      {formatMoney(vatTotal)}đ
-                    </strong>
-                  </div>
-
-                  <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-600"
-                      style={{
-                        width: `${
-                          totalRevenue > 0
-                            ? (vatTotal /
-                                totalRevenue) *
-                              100
-                            : 0
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span>
-                      Tổng chiết khấu
-                    </span>
-
-                    <strong className="text-red-600">
-                      {formatMoney(discountTotal)}đ
-                    </strong>
-                  </div>
-
-                  <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-red-500"
-                      style={{
-                        width: `${
-                          totalRevenue > 0
-                            ? (discountTotal /
-                                totalRevenue) *
-                              100
-                            : 0
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-          </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow overflow-hidden">

@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+} from "react";
 
 import {
   addDoc,
@@ -21,7 +25,6 @@ export default function ProductsPage() {
   const [price, setPrice] = useState("");
   const [importPrice, setImportPrice] = useState("");
   const [capitalPrice, setCapitalPrice] = useState("");
-  const [costPrice, setCostPrice] = useState("");
   const [stock, setStock] = useState("");
   const [unit, setUnit] = useState("");
   const [tax, setTax] = useState("");
@@ -38,11 +41,69 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
 
+  const [imagePreview, setImagePreview] =
+  useState("");
+
   // IMPORT FILE
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // EDIT MODAL
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [showColumnSettings, setShowColumnSettings] =
+  useState(false);
+
+  const columnPopupRef =
+  useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+  const handleClickOutside = (
+    event: MouseEvent
+  ) => {
+    if (
+      columnPopupRef.current &&
+      !columnPopupRef.current.contains(
+        event.target as Node
+      )
+    ) {
+      setShowColumnSettings(false);
+    }
+  };
+
+  document.addEventListener(
+    "mousedown",
+    handleClickOutside
+  );
+
+  return () => {
+    document.removeEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+  };
+}, []);
+
+const [visibleColumns, setVisibleColumns] =
+  useState({
+    importPrice: true,
+    capitalPrice: true,
+    stock: true,
+    vat: true,
+    actions: true,
+  });
+
+  const handleImageChange = (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
+  const file = e.target.files?.[0];
+
+  if (file) {
+    const imageUrl =
+      URL.createObjectURL(file);
+
+    setImagePreview(imageUrl);
+
+  }
+};
   const [editName, setEditName] = useState("");
   const [editProductCode, setEditProductCode] = useState("");
   const [editProductLocation, setEditProductLocation] = useState("");
@@ -123,8 +184,8 @@ export default function ProductsPage() {
         price: Number(price || 0),
         import_price: Number(importPrice || 0),
         capital_price: Number(
-          costPrice || capitalPrice || 0
-        ),
+  capitalPrice || 0
+),
 
         stock: Number(stock || 0),
         unit: unit.trim() || "cái",
@@ -141,11 +202,10 @@ export default function ProductsPage() {
       setPrice("");
       setImportPrice("");
       setCapitalPrice("");
-      setCostPrice("");
       setStock("");
       setUnit("");
       setTax("");
-
+      setImagePreview("");
       setShowAddForm(false);
       setCurrentPage(1);
 
@@ -488,6 +548,7 @@ export default function ProductsPage() {
           </div>
 
           <div className="flex flex-wrap gap-3">
+            
             <input
               ref={fileInputRef}
               type="file"
@@ -527,10 +588,24 @@ export default function ProductsPage() {
             </button>
           </div>
         </div>
-
+<div
+  className={`fixed inset-0 bg-black/40 z-40 ${
+    showAddForm
+      ? "block"
+      : "hidden"
+  }`}
+  onClick={() => setShowAddForm(false)}
+/>
         {/* ADD FORM */}
+        
         {showAddForm && (
-          <div className="bg-white p-7 rounded-3xl shadow-sm border border-gray-100 mb-8">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div
+    className="bg-white w-full max-w-7xl max-h-[90vh] overflow-y-auto p-7 rounded-3xl shadow-2xl border border-gray-100"
+    onClick={(e) =>
+      e.stopPropagation()
+    }
+  >
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
               <div className="xl:col-span-2">
                 <label className="block mb-2 text-sm font-semibold text-black">
@@ -548,7 +623,7 @@ export default function ProductsPage() {
 
               <div>
                 <label className="block mb-2 text-sm font-semibold text-black">
-                  Mã sản phẩm
+                  Mã sản phẩm <span className="text-red-500">*</span>
                 </label>
 
                 <input
@@ -594,7 +669,7 @@ export default function ProductsPage() {
 
               <div>
                 <label className="block mb-2 text-sm font-semibold text-black">
-                  Giá nhập
+                  Giá nhập <span className="text-red-500">*</span>
                 </label>
 
                 <input
@@ -610,24 +685,23 @@ export default function ProductsPage() {
 
               <div>
                 <label className="block mb-2 text-sm font-semibold text-black">
-                  Giá vốn
+                  Giá vốn <span className="text-red-500">*</span>
                 </label>
 
                 <input
                   type="number"
                   placeholder="Nhập giá vốn"
                   className="w-full border p-4 rounded-2xl text-black"
-                  value={costPrice || capitalPrice}
-                  onChange={(e) => {
-                    setCostPrice(e.target.value);
-                    setCapitalPrice(e.target.value);
-                  }}
+                  value={capitalPrice}
+onChange={(e) =>
+  setCapitalPrice(e.target.value)
+}
                 />
               </div>
 
               <div>
                 <label className="block mb-2 text-sm font-semibold text-black">
-                  Tồn kho
+                  Tồn kho <span className="text-red-500">*</span>
                 </label>
 
                 <input
@@ -641,7 +715,7 @@ export default function ProductsPage() {
 
               <div>
                 <label className="block mb-2 text-sm font-semibold text-black">
-                  Đơn vị
+                  Đơn vị <span className="text-red-500">*</span>
                 </label>
 
                 <input
@@ -655,7 +729,7 @@ export default function ProductsPage() {
 
               <div>
                 <label className="block mb-2 text-sm font-semibold text-black">
-                  VAT
+                  VAT <span className="text-red-500">*</span>
                 </label>
 
                 <select
@@ -700,7 +774,8 @@ export default function ProductsPage() {
               </button>
             </div>
           </div>
-        )}
+          </div>
+)}
 
         {/* SEARCH */}
         <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 mb-6">
@@ -723,9 +798,122 @@ export default function ProductsPage() {
             <thead className="bg-blue-700 text-white">
               <tr>
                 <th className="p-4 text-left">
-                  Tên sản phẩm
-                </th>
 
+  <div className="flex items-center gap-2">
+
+    <button
+      type="button"
+      onClick={() =>
+        setShowColumnSettings(
+          !showColumnSettings
+        )
+      }
+      className="hover:scale-110 transition text-lg"
+    >
+      ⚙️
+    </button>
+
+    <span>Tên sản phẩm</span>
+
+  </div>
+
+  {showColumnSettings && (
+    <div
+      ref={columnPopupRef}
+      className="fixed bg-white border border-gray-200 shadow-2xl rounded-2xl p-4 w-38 z-[9999]"
+      style={{
+        top: "300px",
+        left: "560px",
+      }}
+    >
+
+      <h3 className="font-bold mb-4 text-black text-base">
+        Hiển thị cột
+      </h3>
+
+      <div className="space-y-3 text-sm text-black">
+
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={visibleColumns.importPrice}
+            onChange={() =>
+              setVisibleColumns((prev) => ({
+                ...prev,
+                importPrice:
+                  !prev.importPrice,
+              }))
+            }
+          />
+          <span>Giá nhập</span>
+        </label>
+
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={visibleColumns.capitalPrice}
+            onChange={() =>
+              setVisibleColumns((prev) => ({
+                ...prev,
+                capitalPrice:
+                  !prev.capitalPrice,
+              }))
+            }
+          />
+          <span>Giá vốn</span>
+        </label>
+
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={visibleColumns.stock}
+            onChange={() =>
+              setVisibleColumns((prev) => ({
+                ...prev,
+                stock:
+                  !prev.stock,
+              }))
+            }
+          />
+          <span>Tồn kho</span>
+        </label>
+
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={visibleColumns.vat}
+            onChange={() =>
+              setVisibleColumns((prev) => ({
+                ...prev,
+                vat:
+                  !prev.vat,
+              }))
+            }
+          />
+          <span>VAT</span>
+        </label>
+
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={visibleColumns.actions}
+            onChange={() =>
+              setVisibleColumns((prev) => ({
+                ...prev,
+                actions:
+                  !prev.actions,
+              }))
+            }
+          />
+          <span>Hành động</span>
+        </label>
+
+      </div>
+
+    </div>
+  )}
+
+</th>
                 <th className="p-4 text-left">
                   Mã SP
                 </th>
@@ -734,33 +922,43 @@ export default function ProductsPage() {
                   Vị trí
                 </th>
 
-                <th className="p-4 text-right">
-                  Giá nhập
-                </th>
+                {visibleColumns.importPrice && (
+  <th className="p-4 text-right">
+    Giá nhập
+  </th>
+)}
 
                 <th className="p-4 text-right">
                   Giá bán
                 </th>
 
-                <th className="p-4 text-right">
-                  Giá vốn
-                </th>
+                {visibleColumns.capitalPrice && (
+  <th className="p-4 text-right">
+    Giá vốn
+  </th>
+)}
 
-                <th className="p-4 text-right">
-                  Tồn kho
-                </th>
+                {visibleColumns.stock && (
+  <th className="p-4 text-right">
+    Tồn kho
+  </th>
+)}
 
                 <th className="p-4 text-left">
                   Đơn vị
                 </th>
 
-                <th className="p-4 text-center">
-                  VAT
-                </th>
+                {visibleColumns.vat && (
+  <th className="p-4 text-center">
+    VAT
+  </th>
+)}
 
-                <th className="p-4 text-center">
-                  Hành động
-                </th>
+                {visibleColumns.actions && (
+<th className="p-4 text-center">
+  Hành động
+</th>
+)}
               </tr>
             </thead>
 
@@ -782,21 +980,27 @@ export default function ProductsPage() {
                     {item.product_location || "---"}
                   </td>
 
-                  <td className="p-4 text-right text-black">
-                    {formatMoney(item.import_price)}
-                  </td>
+                  {visibleColumns.importPrice && (
+  <td className="p-4 text-right text-black">
+    {formatMoney(item.import_price)}
+  </td>
+)}
 
                   <td className="p-4 text-right text-blue-700 font-semibold">
                     {formatMoney(item.price)}
                   </td>
 
-                  <td className="p-4 text-right text-black">
-                    {formatMoney(item.capital_price)}
-                  </td>
+                  {visibleColumns.capitalPrice && (
+  <td className="p-4 text-right text-black">
+    {formatMoney(item.capital_price)}
+  </td>
+)}
 
-                  <td className="p-4 text-right text-black font-semibold">
-                    {Number(item.stock || 0).toLocaleString("vi-VN")}
-                  </td>
+                  {visibleColumns.stock && (
+  <td className="p-4 text-right text-black font-semibold">
+    {Number(item.stock || 0).toLocaleString("vi-VN")}
+  </td>
+)}
 
                   <td className="p-4 text-black">
                     {typeof item.unit === "string"
@@ -804,12 +1008,15 @@ export default function ProductsPage() {
                       : item.unit?.name || "cái"}
                   </td>
 
-                  <td className="p-4 text-center text-black">
-                    {Number(item.tax || 0)}%
-                  </td>
+                  {visibleColumns.vat && (
+  <td className="p-4 text-center text-black">
+    {Number(item.tax || 0)}%
+  </td>
+)}
 
-                  <td className="p-4">
-                    <div className="flex justify-center gap-2">
+                  {visibleColumns.actions && (
+  <td className="p-4">
+    <div className="flex justify-center gap-2">
                       <button
                         type="button"
                         onClick={() => openEditModal(item)}
@@ -827,6 +1034,7 @@ export default function ProductsPage() {
                       </button>
                     </div>
                   </td>
+                  )}
                 </tr>
               ))}
 
@@ -1093,7 +1301,26 @@ export default function ProductsPage() {
                   </select>
                 </div>
               </div>
+<div>
+  <label className="block text-sm font-medium mb-2">
+    Hình ảnh sản phẩm
+  </label>
 
+  <input
+    type="file"
+    accept="image/*"
+    onChange={handleImageChange}
+    className="w-full border p-3 rounded-2xl"
+  />
+
+  {imagePreview && (
+    <img
+      src={imagePreview}
+      alt="Preview"
+      className="w-32 h-32 object-cover rounded-xl mt-3 border"
+    />
+  )}
+</div>
               <div className="flex justify-end gap-3 mt-7">
                 <button
                   type="button"

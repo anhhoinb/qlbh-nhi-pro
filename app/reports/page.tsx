@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { collection, getDocs } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import * as XLSX from "xlsx";
 
 type OrderItem = {
   name?: string;
@@ -16,13 +17,23 @@ type OrderItem = {
 
 type OrderData = {
   id: string;
+
+  orderCode?: string;
+  code?: string;
+  order_id?: string;
+
   total?: number;
   grand_total?: number;
   totalAmount?: number;
+
   profit?: number;
+
   paymentMethod?: string;
+
   createdAt?: any;
+
   items?: OrderItem[];
+
   status?: string;
 };
 
@@ -462,16 +473,187 @@ export default function SalesReportPage() {
     router.push(path);
   };
 
+  const exportSalesReport = async () => {
+
+  try {
+
+    if (filteredOrders.length === 0) {
+      alert("Không có dữ liệu để xuất");
+      return;
+    }
+
+    const exportData: any[] = [];
+
+    filteredOrders.forEach(
+      (order, orderIndex) => {
+
+        const orderDate =
+          getOrderDate(order);
+
+        if (
+          order.items &&
+          order.items.length > 0
+        ) {
+
+          order.items.forEach(
+            (item, itemIndex) => {
+
+              exportData.push({
+
+  STT:
+    exportData.length + 1,
+
+  "Mã đơn":
+    order.orderCode ||
+    order.code ||
+    order.order_id ||
+    order.id ||
+    "---",
+
+  "Ngày tạo":
+    orderDate
+      ? orderDate.toLocaleString("vi-VN")
+      : "---",
+
+  "Tên sản phẩm":
+    item.name ||
+    item.productName ||
+    "---",
+
+  "Mã sản phẩm":
+    (item as any).sku ||
+    (item as any).productCode ||
+    "---",
+
+  "Số lượng":
+    item.quantity || 0,
+
+  "Đơn giá":
+    item.price || 0,
+
+  "Doanh thu":
+    getOrderTotal(order),
+
+  "Lợi nhuận":
+    getOrderProfit(order),
+
+  "Thanh toán":
+    order.paymentMethod || "---",
+
+  "Trạng thái":
+    order.status || "---",
+});
+            }
+          );
+
+        } else {
+
+          exportData.push({
+
+            STT:
+              exportData.length + 1,
+
+            "Mã đơn":
+  order.orderCode ||
+  order.code ||
+  order.order_id ||
+  order.id ||
+  "---",
+
+            "Ngày tạo":
+              orderDate
+                ? orderDate.toLocaleString("vi-VN")
+                : "---",
+
+            "Tên sản phẩm":
+              "---",
+
+            "Mã sản phẩm":
+              "---",
+
+            "Số lượng":
+              0,
+
+            "Đơn giá":
+              0,
+
+            "Doanh thu":
+              getOrderTotal(order),
+
+            "Lợi nhuận":
+              getOrderProfit(order),
+
+            "Thanh toán":
+              order.paymentMethod || "---",
+
+            "Trạng thái":
+              order.status || "---",
+          });
+        }
+      }
+    );
+
+    const worksheet =
+      XLSX.utils.json_to_sheet(
+        exportData
+      );
+
+    worksheet["!cols"] = [
+      { wch: 8 },
+      { wch: 18 },
+      { wch: 22 },
+      { wch: 40 },
+      { wch: 20 },
+      { wch: 12 },
+      { wch: 15 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 18 },
+    ];
+
+    const workbook =
+      XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      "BaoCaoBanHang"
+    );
+
+    XLSX.writeFile(
+      workbook,
+      `bao-cao-ban-hang-${Date.now()}.xlsx`
+    );
+
+    alert("Xuất file Excel thành công");
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert("Lỗi xuất file Excel");
+  }
+};
+
   return (
     <main className="min-h-screen bg-gray-100 p-5 text-black">
       <div className="max-w-[1700px] mx-auto space-y-5">
 
         {/* TOP ACTION */}
         <div className="flex justify-end">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded font-semibold">
-            + Thêm báo cáo
-          </button>
-        </div>
+
+  <button
+    type="button"
+    onClick={() => {
+      exportSalesReport();
+    }}
+    className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-semibold"
+  >
+    Xuất báo cáo bán hàng
+  </button>
+
+</div>
 
         {/* FILTER */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">

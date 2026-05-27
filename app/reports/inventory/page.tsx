@@ -6,6 +6,7 @@ import {
   collection,
   getDocs,
 } from "firebase/firestore";
+import * as XLSX from "xlsx";
 
 import { db } from "@/lib/firebase";
 
@@ -93,6 +94,77 @@ export default function InventoryReportPage() {
     );
   };
 
+  const exportInventoryReport = () => {
+
+  const exportData =
+    products.map(
+      (product, index) => {
+
+        const stock =
+          getProductStock(product);
+
+        const price =
+          getProductPrice(product);
+
+        const total =
+          stock * price;
+
+        return {
+          STT: index + 1,
+          "Tên sản phẩm":
+            getProductName(product),
+          SKU:
+            getProductSku(product),
+          "Vị trí":
+            getProductLocation(product),
+          "Giá bán":
+            price,
+          "Tồn kho":
+            stock,
+          "Giá trị tồn":
+            total,
+          "Trạng thái":
+            stock === 0
+              ? "Hết hàng"
+              : stock <= 5
+              ? "Dưới định mức"
+              : "Bình thường",
+        };
+      }
+    );
+
+  const worksheet =
+    XLSX.utils.json_to_sheet(
+      exportData
+    );
+
+  worksheet["!cols"] = [
+    { wch: 8 },
+    { wch: 40 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 15 },
+    { wch: 12 },
+    { wch: 18 },
+    { wch: 20 },
+  ];
+
+  const workbook =
+    XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "BaoCaoTonKho"
+  );
+
+  XLSX.writeFile(
+    workbook,
+    `bao-cao-ton-kho-${new Date()
+      .toLocaleDateString("vi-VN")
+      .replace(/\//g, "-")}.xlsx`
+  );
+};
   const handleSort = (
     key: "stock" | "value"
   ) => {
@@ -340,12 +412,27 @@ export default function InventoryReportPage() {
             </p>
           </div>
 
-          <button
-            onClick={loadProducts}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold"
-          >
-            Tải lại báo cáo
-          </button>
+          <div className="flex items-center gap-3">
+
+  <div className="flex items-center gap-3">
+
+  <button
+    onClick={exportInventoryReport}
+    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold"
+  >
+    Xuất file Excel
+  </button>
+
+  <button
+    onClick={loadProducts}
+    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold"
+  >
+    Tải lại báo cáo
+  </button>
+
+</div>
+
+</div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
