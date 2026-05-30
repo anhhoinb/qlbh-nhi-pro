@@ -1322,14 +1322,21 @@ const splitBankAmount =
   Number(splitPayment.bank || 0);
 
 if (paymentMethod === "cash") {
-  orderCashAmount = orderTotal;
+  orderCashAmount =
+    Number(customerPay || 0);
 }
 
 if (
   paymentMethod === "bank" ||
   paymentMethod === "transfer"
 ) {
-  orderTransferAmount = orderTotal;
+  orderTransferAmount =
+    Number(customerPay || 0);
+}
+
+if (paymentMethod === "cod") {
+  orderCodAmount =
+    Number(customerPay || 0);
 }
 
 if (paymentMethod === "cod") {
@@ -1337,30 +1344,61 @@ if (paymentMethod === "cod") {
 }
 
 if (paymentMethod === "mixed") {
-  orderCashAmount = splitCashAmount;
-  orderTransferAmount = splitBankAmount;
+
+  orderCashAmount =
+    splitCashAmount;
+
+  orderTransferAmount =
+    splitBankAmount;
 
   const mixedTotal =
-    orderCashAmount + orderTransferAmount;
+    orderCashAmount +
+    orderTransferAmount;
 
   if (mixedTotal <= 0) {
+
     alert(
       "Vui lòng nhập số tiền mặt hoặc chuyển khoản"
     );
 
     return;
+
   }
 
-  if (mixedTotal < orderTotal) {
-    const confirmDebt =
-      window.confirm(
-        `Khách còn thiếu ${formatMoney(orderTotal - mixedTotal)}đ. Bạn có muốn tiếp tục lưu đơn không?`
-      );
+}
 
-    if (!confirmDebt) {
-      return;
-    }
+const tempPaidAmount =
+
+  orderCashAmount +
+
+  orderTransferAmount +
+
+  orderCodAmount;
+
+if (
+  tempPaidAmount <
+  orderTotal
+) {
+
+  const confirmDebt =
+    window.confirm(
+
+`Khách thanh toán thiếu.
+
+Tổng đơn: ${formatMoney(orderTotal)}đ
+Đã trả: ${formatMoney(tempPaidAmount)}đ
+Còn nợ: ${formatMoney(orderTotal - tempPaidAmount)}đ
+
+OK = tạo công nợ`
+
+);
+
+  if (!confirmDebt) {
+
+    return;
+
   }
+
 }
 
 const orderPaidAmount =
@@ -1484,7 +1522,151 @@ await addDoc(
     createdAt: new Date(),
   }
 );
+console.log(
+  "TOTAL:",
+  orderTotal
+);
 
+console.log(
+  "PAID:",
+  orderPaidAmount
+);
+
+console.log(
+  "REMAIN:",
+  orderRemainingAmount
+);
+console.log(
+  "orderRemainingAmount:",
+  orderRemainingAmount
+);
+
+if (
+  Number(orderRemainingAmount) > 0
+) {
+
+  let oldDebts = [];
+
+  try {
+
+    oldDebts =
+      JSON.parse(
+        localStorage.getItem(
+          "debts"
+        ) || "[]"
+      );
+
+  } catch {
+
+    oldDebts = [];
+
+  }
+
+  const debtData = {
+
+    id:
+      "DEBT" +
+      Date.now(),
+
+    date:
+  new Date()
+    .toLocaleString(
+      "vi-VN",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    ),
+
+    orderCode:
+      orderCode,
+
+    customer:
+      selectedCustomer?.name ||
+      "Khách lẻ",
+
+    customerPhone:
+      selectedCustomer?.phone || "",
+
+    total:
+      Number(orderTotal),
+
+    paid:
+      Number(
+        orderPaidAmount
+      ),
+
+    remaining:
+      Number(
+        orderRemainingAmount
+      ),
+
+    status:
+      "unpaid",
+
+    type:
+      "customer",
+
+    note:
+      "Tự tạo từ POS",
+
+    products:
+      cart.map(
+        (item) => ({
+
+          name:
+            item.name,
+
+          qty:
+            Number(
+              item.quantity || 0
+            ),
+
+          price:
+            Number(
+              item.price || 0
+            ),
+
+        })
+      ),
+
+  };
+
+  console.log(
+    "SAVE DEBT:",
+    debtData
+  );
+
+  oldDebts.unshift(
+    debtData
+  );
+
+  localStorage.setItem(
+
+    "debts",
+
+    JSON.stringify(
+      oldDebts
+    )
+
+  );
+
+  console.log(
+
+    "DEBTS SAVED:",
+
+    JSON.parse(
+      localStorage.getItem(
+        "debts"
+      ) || "[]"
+    )
+
+  );
+
+}
       for (const item of cart) {
         const currentStock =
           Number(item.stock || 0);

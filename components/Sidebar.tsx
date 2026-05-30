@@ -245,6 +245,14 @@ export default function Sidebar() {
             },
 
             {
+ label:
+   "Công nợ",
+ href: "/reports/debts",
+ permissionKey:
+   "reports",
+},
+
+            {
               label:
                 "Báo cáo tồn kho",
               href: "/reports/inventory",

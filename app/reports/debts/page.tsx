@@ -1,0 +1,1010 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
+export default function DebtReportPage() {
+  const [debts, setDebts] = useState<any[]>([]);
+  const [showAddDebt, setShowAddDebt] =
+    useState(false);
+    const [selectedDebt, setSelectedDebt] =
+  useState<any>(null);
+    const [products, setProducts] =
+  useState([
+    {
+      name: "",
+      qty: 1,
+      price: 0,
+    },
+  ]);
+
+  const [
+  inventoryProducts,
+  setInventoryProducts,
+] = useState<any[]>([]);
+
+useEffect(() => {
+
+  const savedProducts =
+    localStorage.getItem(
+      "products"
+    );
+
+  if (savedProducts) {
+
+    setInventoryProducts(
+      JSON.parse(
+        savedProducts
+      )
+    );
+
+  }
+
+}, []);
+console.log(
+  "inventoryProducts:",
+  inventoryProducts
+);
+  const [newDebt, setNewDebt] =
+    useState({
+      customer: "",
+      type: "customer",
+      total: "",
+      paid: "",
+      createdDate: "",
+      dueDate: "",
+      note: "",
+    });
+
+  useEffect(() => {
+
+  const loadDebts = () => {
+
+    const savedDebts =
+      JSON.parse(
+        localStorage.getItem(
+          "debts"
+        ) || "[]"
+      );
+
+    setDebts(
+      savedDebts
+    );
+
+  };
+
+  loadDebts();
+
+  window.addEventListener(
+    "storage",
+    loadDebts
+  );
+
+  return () => {
+
+    window.removeEventListener(
+      "storage",
+      loadDebts
+    );
+
+  };
+
+}, []);
+
+  const formatMoney = (value: number) => {
+    return new Intl.NumberFormat(
+      "vi-VN"
+    ).format(value || 0);
+  };
+  
+  const productsTotal =
+  useMemo(() => {
+
+    return products.reduce(
+      (
+        sum,
+        item
+      ) =>
+
+        sum +
+        (
+          item.qty *
+          item.price
+        ),
+
+      0
+    );
+
+  }, [products]);
+  const autoRemaining =
+  useMemo(() => {
+
+    const paid =
+      Number(
+        newDebt.paid || 0
+      );
+
+    return Math.max(
+      productsTotal - paid,
+      0
+    );
+
+  }, [
+    productsTotal,
+    newDebt.paid,
+  ]);
+
+  const totalReceivable =
+    debts.reduce(
+      (sum, item) =>
+        sum +
+        Number(
+          item.remaining || 0
+        ),
+      0
+    );
+
+  const totalPaid =
+    debts.reduce(
+      (sum, item) =>
+        sum +
+        Number(item.paid || 0),
+      0
+    );
+
+  const totalDebt =
+    debts.reduce(
+      (sum, item) =>
+        sum +
+        Number(item.total || 0),
+      0
+    );
+
+  const saveDebt = () => {
+    if (
+      !newDebt.customer ||
+      !newDebt.total
+    ) {
+      alert(
+        "Nhập khách hàng và tổng tiền"
+      );
+      return;
+    }
+
+    const debtItem = {
+      date:
+        newDebt.createdDate ||
+        new Date().toLocaleDateString(
+          "vi-VN"
+        ),
+
+      orderCode:
+        "DEBT" +
+        Date.now()
+          .toString()
+          .slice(-5),
+
+      customer:
+        newDebt.customer,
+
+      total: Number(
+        newDebt.total
+      ),
+
+      paid: Number(
+        newDebt.paid || 0
+      ),
+
+      remaining:
+        autoRemaining,
+
+      status:
+        autoRemaining <= 0
+          ? "paid"
+          : "unpaid",
+
+      dueDate:
+        newDebt.dueDate,
+
+      note: newDebt.note,
+
+      type: newDebt.type,
+      products,
+    };
+
+    const updatedDebts = [
+  debtItem,
+  ...debts,
+];
+
+setDebts(
+  updatedDebts
+);
+
+localStorage.setItem(
+  "debts",
+  JSON.stringify(
+    updatedDebts
+  )
+);
+
+    setNewDebt({
+      customer: "",
+      type: "customer",
+      total: "",
+      paid: "",
+      createdDate: "",
+      dueDate: "",
+      note: "",
+    });
+setProducts([
+  {
+    name: "",
+    qty: 1,
+    price: 0,
+  },
+]);
+
+    setShowAddDebt(false);
+  };
+
+  return (
+    <main className="min-h-screen bg-gray-100 p-6">
+
+      <div className="max-w-[1800px] mx-auto">
+
+        <div className="mb-8">
+
+          <h1 className="text-4xl font-bold text-blue-700">
+            Báo cáo công nợ
+          </h1>
+
+          <p className="text-gray-500 mt-2">
+            Theo dõi công nợ khách hàng và nhà cung cấp
+          </p>
+
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+
+          <div className="bg-white rounded-3xl p-6 shadow-sm border">
+            <p className="text-gray-500">
+              Tổng phải thu
+            </p>
+
+            <h2 className="text-3xl font-bold text-red-600 mt-2">
+              {formatMoney(
+                totalReceivable
+              )}đ
+            </h2>
+
+          </div>
+
+          <div className="bg-white rounded-3xl p-6 shadow-sm border">
+
+            <p className="text-gray-500">
+              Tổng phải trả
+            </p>
+
+            <h2 className="text-3xl font-bold text-orange-500 mt-2">
+              0đ
+            </h2>
+
+          </div>
+
+          <div className="bg-white rounded-3xl p-6 shadow-sm border">
+
+            <p className="text-gray-500">
+              Đã thu
+            </p>
+
+            <h2 className="text-3xl font-bold text-green-600 mt-2">
+              {formatMoney(
+                totalPaid
+              )}đ
+            </h2>
+
+          </div>
+
+          <div className="bg-white rounded-3xl p-6 shadow-sm border">
+
+            <p className="text-gray-500">
+              Còn nợ
+            </p>
+
+            <h2 className="text-3xl font-bold text-blue-700 mt-2">
+              {formatMoney(
+                totalDebt
+              )}đ
+            </h2>
+
+          </div>
+
+        </div>
+
+        <div className="bg-white rounded-3xl border shadow-sm p-6">
+
+          <div className="flex items-center justify-between mb-5">
+
+            <h2 className="text-xl font-bold">
+              Danh sách công nợ
+            </h2>
+
+            <button
+              onClick={() =>
+                setShowAddDebt(true)
+              }
+              className="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-2xl font-semibold"
+            >
+              + Thêm công nợ
+            </button>
+
+          </div>
+
+          <div className="overflow-x-auto">
+
+            <table className="w-full">
+
+              <thead>
+
+                <tr className="border-b text-gray-600">
+
+                  <th className="p-4 text-left">
+                    Ngày
+                  </th>
+
+                  <th className="p-4 text-left">
+                    Mã đơn
+                  </th>
+
+                  <th className="p-4 text-left">
+                    Đối tượng
+                  </th>
+
+                  <th className="p-4 text-right">
+                    Tổng tiền
+                  </th>
+
+                  <th className="p-4 text-right">
+                    Đã thanh toán
+                  </th>
+
+                  <th className="p-4 text-right">
+                    Còn nợ
+                  </th>
+
+                  <th className="p-4 text-center">
+                    Trạng thái
+                  </th>
+
+                  <th className="p-4 text-left">
+                    Ghi chú
+                </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                {debts.map(
+                  (
+                    item,
+                    index
+                  ) => (
+
+                    <tr
+                      key={index}
+                      className="border-b hover:bg-gray-50"
+                    >
+
+                      <td className="p-4">
+                        {item.date}
+                      </td>
+
+                      <td className="p-4">
+
+  <button
+    type="button"
+    onClick={() =>
+      setSelectedDebt(
+        item
+      )
+    }
+    className="
+      text-blue-700
+      font-semibold
+      hover:underline
+    "
+  >
+
+    {item.orderCode}
+
+  </button>
+
+</td>
+
+                      <td className="p-4">
+                        {item.customer}
+                      </td>
+
+                      <td className="p-4 text-right">
+                        {formatMoney(
+                          item.total
+                        )}đ
+                      </td>
+
+                      <td className="p-4 text-right text-green-600">
+                        {formatMoney(
+                          item.paid
+                        )}đ
+                      </td>
+
+                      <td className="p-4 text-right text-red-600 font-bold">
+                        {formatMoney(
+                          item.remaining
+                        )}đ
+                      </td>
+
+                      <td className="p-4 text-center">
+
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            item.status ===
+                            "paid"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {item.status ===
+                          "paid"
+                            ? "Đã thanh toán"
+                            : "Còn nợ"}
+                        </span>
+
+                      </td>
+
+                      <td className="p-4 text-gray-600 max-w-[250px] truncate">
+                        {item.note || "-"}
+                    </td>
+
+                    </tr>
+                  )
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {showAddDebt && (
+
+        <div
+          className="fixed inset-0 bg-black/40 flex items-start justify-center pt-20 z-50"
+          onClick={() =>
+            setShowAddDebt(false)
+          }
+        >
+
+          <div
+            className="bg-white p-7 rounded-3xl w-full max-w-2xl"
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+
+            <h2 className="text-3xl font-bold mb-6">
+              Thêm công nợ
+            </h2>
+
+            <div className="grid grid-cols-2 gap-4">
+
+              <input
+                placeholder="Tên khách hàng / NCC *"
+                value={
+                  newDebt.customer
+                }
+                onChange={(e) =>
+                  setNewDebt({
+                    ...newDebt,
+                    customer:
+                      e.target.value,
+                  })
+                }
+                className="border p-4 rounded-2xl"
+              />
+
+              <select
+                value={
+                  newDebt.type
+                }
+                onChange={(e) =>
+                  setNewDebt({
+                    ...newDebt,
+                    type:
+                      e.target.value,
+                  })
+                }
+                className="border p-4 rounded-2xl"
+              >
+
+                <option value="customer">
+                  Công nợ khách hàng
+                </option>
+
+                <option value="supplier">
+                  Công nợ NCC
+                </option>
+
+              </select>
+
+              <input
+  placeholder="Tổng tiền tự tính"
+  value={
+    formatMoney(
+      productsTotal
+    )
+  }
+  readOnly
+  className="border p-4 rounded-2xl bg-gray-100"
+/>
+
+              <input
+                placeholder="Đã thanh toán"
+                value={
+                  newDebt.paid
+                }
+                onChange={(e) =>
+                  setNewDebt({
+                    ...newDebt,
+                    paid:
+                      e.target.value,
+                  })
+                }
+                className="border p-4 rounded-2xl"
+              />
+
+              <div className="col-span-2">
+
+                <label className="text-sm text-gray-500 block mb-2">
+                  Còn nợ
+                </label>
+
+                <div className="border rounded-2xl p-4 bg-gray-100 font-semibold text-red-600">
+
+                  {formatMoney(
+                    autoRemaining
+                  )}đ
+
+                </div>
+
+              </div>
+
+              <div>
+
+                <label className="text-sm text-gray-500 mb-2 block">
+                  Ngày tạo
+                </label>
+
+                <input
+                  type="date"
+                  value={
+                    newDebt.createdDate
+                  }
+                  onChange={(e) =>
+                    setNewDebt({
+                      ...newDebt,
+                      createdDate:
+                        e.target.value,
+                    })
+                  }
+                  className="border p-4 rounded-2xl w-full"
+                />
+
+              </div>
+
+              <div>
+
+                <label className="text-sm text-gray-500 mb-2 block">
+                  Hạn thanh toán
+                </label>
+
+                <input
+                  type="date"
+                  value={
+                    newDebt.dueDate
+                  }
+                  onChange={(e) =>
+                    setNewDebt({
+                      ...newDebt,
+                      dueDate:
+                        e.target.value,
+                    })
+                  }
+                  className="border p-4 rounded-2xl w-full"
+                />
+
+              </div>
+<div className="col-span-2">
+
+  <label className="font-medium mb-3 block">
+    Danh sách sản phẩm
+  </label>
+
+  {products.map((item, index) => (
+
+    <div
+      key={index}
+      className="grid grid-cols-[3fr_1fr_1fr_1fr_60px] gap-3 mb-4 items-end"
+    >
+
+      <div>
+
+        <label className="text-xs text-gray-500 mb-1 block">
+          Sản phẩm
+        </label>
+
+        <input
+  list={`product-list-${index}`}
+  placeholder="Tên SP"
+  value={item.name}
+  onChange={(e) => {
+
+  const clone =
+    [...products];
+
+  const selected =
+    inventoryProducts.find(
+      (p:any) =>
+
+        p.name ===
+        e.target.value
+    );
+
+  clone[index].name =
+    e.target.value;
+
+  if (selected) {
+
+    clone[index].price =
+      Number(
+        selected.price || 0
+      );
+
+  }
+
+  setProducts(
+    clone
+  );
+
+}}
+  className="border p-3 rounded-xl w-full"
+/>
+
+        <datalist
+  id={`product-list-${index}`}
+>
+
+  {inventoryProducts.map(
+    (product:any)=>(
+
+      <option
+        key={
+          product.id ||
+          product.product_code
+        }
+
+        value={
+          product.name ||
+          ""
+        }
+
+      />
+
+    )
+  )}
+
+</datalist>
+
+      </div>
+
+      <div>
+
+        <label className="text-xs text-gray-500 mb-1 block">
+          SL
+        </label>
+
+        <input
+          type="number"
+          value={item.qty}
+          onChange={(e) => {
+
+            const clone =
+              [...products];
+
+            clone[index].qty =
+              Number(
+                e.target.value
+              );
+
+            setProducts(clone);
+
+          }}
+          className="border p-3 rounded-xl w-full"
+        />
+
+      </div>
+
+      <div>
+
+        <label className="text-xs text-gray-500 mb-1 block">
+          Đơn giá
+        </label>
+
+        <input
+          type="number"
+          value={item.price}
+          onChange={(e) => {
+
+            const clone =
+              [...products];
+
+            clone[index].price =
+              Number(
+                e.target.value
+              );
+
+            setProducts(clone);
+
+          }}
+          className="border p-3 rounded-xl w-full"
+        />
+
+      </div>
+
+      <div>
+
+        <label className="text-xs text-gray-500 mb-1 block">
+          Thành tiền
+        </label>
+
+        <div className="border rounded-xl p-3 bg-gray-100">
+
+          {formatMoney(
+            item.qty *
+            item.price
+          )}đ
+
+        </div>
+
+      </div>
+
+      <button
+        type="button"
+        onClick={() => {
+
+          const clone =
+            products.filter(
+              (_, i) =>
+                i !== index
+            );
+
+          setProducts(
+            clone.length
+              ? clone
+              : [
+                  {
+                    name: "",
+                    qty: 1,
+                    price: 0,
+                  },
+                ]
+          );
+
+        }}
+        className="h-11 w-11 rounded-xl bg-red-500 text-white text-lg"
+      >
+
+        ✕
+
+      </button>
+
+    </div>
+
+  ))}
+
+  <button
+    type="button"
+    onClick={() =>
+      setProducts([
+        ...products,
+        {
+          name: "",
+          qty: 1,
+          price: 0,
+        },
+      ])
+    }
+    className="bg-gray-200 px-4 py-2 rounded-xl"
+  >
+    + Thêm sản phẩm
+  </button>
+
+</div>
+              <textarea
+                placeholder="Ghi chú"
+                value={
+                  newDebt.note
+                }
+                onChange={(e) =>
+                  setNewDebt({
+                    ...newDebt,
+                    note:
+                      e.target.value,
+                  })
+                }
+                className="border p-4 rounded-2xl col-span-2 h-24"
+              />
+
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+
+              <button
+                onClick={() =>
+                  setShowAddDebt(false)
+                }
+                className="bg-gray-200 px-6 py-3 rounded-2xl"
+              >
+                Hủy
+              </button>
+
+              <button
+                onClick={saveDebt}
+                className="bg-blue-700 text-white px-6 py-3 rounded-2xl"
+              >
+                Lưu công nợ
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+{selectedDebt && (
+
+<div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+
+  <div className="bg-white rounded-3xl w-[900px] max-h-[85vh] overflow-auto p-6">
+
+    <div className="flex justify-between mb-6">
+
+      <h2 className="text-2xl font-bold">
+
+        {selectedDebt.orderCode}
+
+      </h2>
+
+      <button
+        onClick={() =>
+          setSelectedDebt(null)
+        }
+        className="text-3xl"
+      >
+        ×
+      </button>
+
+    </div>
+
+    <div className="grid grid-cols-2 gap-4 mb-6">
+
+      <div>
+        Khách:
+        <b>
+          {" "}
+          {selectedDebt.customer}
+        </b>
+      </div>
+
+      <div>
+        Còn nợ:
+        <b>
+          {" "}
+          {formatMoney(
+            selectedDebt.remaining
+          )}đ
+        </b>
+      </div>
+
+      <div>
+        Tổng:
+        {formatMoney(
+          selectedDebt.total
+        )}đ
+      </div>
+
+      <div>
+        Đã trả:
+        {formatMoney(
+          selectedDebt.paid
+        )}đ
+      </div>
+
+    </div>
+
+    <table className="w-full border">
+
+      <thead>
+
+        <tr className="bg-gray-100">
+
+          <th className="p-3">
+            SP
+          </th>
+
+          <th>
+            SL
+          </th>
+
+          <th>
+            Giá
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        {(selectedDebt.products || [])
+          .map(
+            (
+              item:any,
+              index:number
+            ) => (
+
+<tr key={index}>
+
+<td className="p-3">
+
+{item.name}
+
+</td>
+
+<td>
+
+{item.qty}
+
+</td>
+
+<td>
+
+{formatMoney(
+ item.price
+)}đ
+
+</td>
+
+</tr>
+
+          ))}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+)}
+    </main>
+  );
+}

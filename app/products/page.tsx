@@ -40,6 +40,100 @@ export default function ProductsPage() {
   // DATA
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
+  useEffect(() => {
+
+  const savedProducts =
+    localStorage.getItem(
+      "products"
+    );
+
+  if (savedProducts) {
+
+    setProducts(
+      JSON.parse(
+        savedProducts
+      )
+    );
+
+  }
+
+}, []);
+
+useEffect(() => {
+
+  console.log(
+    "SAVE PRODUCTS:",
+    products
+  );
+
+  localStorage.setItem(
+    "products",
+    JSON.stringify(
+      products
+    )
+  );
+
+}, [products]);
+
+  useEffect(() => {
+
+  const savedProducts =
+    localStorage.getItem(
+      "products"
+    );
+
+  if (savedProducts) {
+
+    setProducts(
+      JSON.parse(
+        savedProducts
+      )
+    );
+
+  }
+
+}, []);
+
+useEffect(() => {
+
+  localStorage.setItem(
+    "products",
+    JSON.stringify(
+      products
+    )
+  );
+
+}, [products]);
+
+  useEffect(() => {
+
+  const savedProducts =
+    localStorage.getItem(
+      "products"
+    );
+
+  if (savedProducts) {
+
+    setProducts(
+      JSON.parse(
+        savedProducts
+      )
+    );
+
+  }
+
+}, []);
+
+useEffect(() => {
+
+  localStorage.setItem(
+    "products",
+    JSON.stringify(
+      products
+    )
+  );
+
+}, [products]);
 
   const [imagePreview, setImagePreview] =
   useState("");
