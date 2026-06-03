@@ -81,7 +81,7 @@ const parseInputMoney = (value: string) => {
     customer: null,
     useProductVat: true,
     paymentMethod: "cash",
-    customerPay: "",
+    customerPay: "0",
     search: "",
     barcode: "",
     showProductDropdown: false,
@@ -114,12 +114,44 @@ const parseInputMoney = (value: string) => {
     useState<any[]>([]);
 
   const [orders, setOrders] =
-    useState<OrderTab[]>([
-      createEmptyOrder(1),
-    ]);
+  useState<OrderTab[]>(() => {
+
+    const saved =
+      localStorage.getItem(
+        "pos_orders"
+      );
+
+    return saved
+      ? JSON.parse(saved)
+      : [createEmptyOrder(1)];
+
+  });
 
   const [activeOrder, setActiveOrder] =
-    useState(1);
+  useState(() => {
+    
+  const saved =
+      localStorage.getItem(
+        "pos_active_order"
+      );
+
+    return saved
+      ? Number(saved)
+      : 1;
+
+  });
+
+    useEffect(() => {
+  localStorage.setItem(
+    "pos_orders",
+    JSON.stringify(orders)
+  );
+
+  localStorage.setItem(
+    "pos_active_order",
+    String(activeOrder)
+  );
+}, [orders, activeOrder]);
 
   const [showBarcodeInput, setShowBarcodeInput] =
     useState(true);
@@ -842,14 +874,22 @@ const parseInputMoney = (value: string) => {
       0
     );
 
+    useEffect(() => {
+  if (paymentMethod !== "mixed") {
+    updateCurrentOrder({
+      customerPay: String(total),
+    });
+  }
+}, [total, paymentMethod]);
+
   const splitPaymentTotal =
     Number(splitPayment.cash || 0) +
     Number(splitPayment.bank || 0);
 
   const customerPayAmount =
-    paymentMethod === "mixed"
-      ? splitPaymentTotal
-      : Number(customerPay || 0);
+  paymentMethod === "mixed"
+    ? splitPaymentTotal
+    : Number(customerPay || total);
 
   const changeAmount =
     Math.max(
@@ -1547,20 +1587,16 @@ if (
 
   let oldDebts = [];
 
-  try {
-
-    oldDebts =
-      JSON.parse(
-        localStorage.getItem(
-          "debts"
-        ) || "[]"
-      );
-
-  } catch {
-
-    oldDebts = [];
-
-  }
+try {
+  oldDebts =
+    JSON.parse(
+      localStorage.getItem(
+        "debts"
+      ) || "[]"
+    );
+} catch {
+  oldDebts = [];
+}
 
   const debtData = {
 
@@ -1640,31 +1676,15 @@ if (
     debtData
   );
 
-  oldDebts.unshift(
-    debtData
-  );
+ await addDoc(
+  collection(db, "debts"),
+  debtData
+);
 
-  localStorage.setItem(
-
-    "debts",
-
-    JSON.stringify(
-      oldDebts
-    )
-
-  );
-
-  console.log(
-
-    "DEBTS SAVED:",
-
-    JSON.parse(
-      localStorage.getItem(
-        "debts"
-      ) || "[]"
-    )
-
-  );
+console.log(
+  "DEBTS SAVED:",
+  debtData
+);
 
 }
       for (const item of cart) {
@@ -1692,10 +1712,15 @@ if (
       );
 
       alert(
-        "Thanh toán thành công"
-      );
+  "Thanh toán thành công"
+);
 
-      resetOrRemoveCurrentOrder();
+resetOrRemoveCurrentOrder();
+
+localStorage.setItem(
+  "pos_orders",
+  JSON.stringify(orders)
+);
     };
 
   const openDiscountModal = () => {
@@ -2049,11 +2074,7 @@ if (
                 showProductDropdown: true,
               })
             }
-            onMouseLeave={() =>
-              updateCurrentOrder({
-                showProductDropdown: false,
-              })
-            }
+
           >
 
             <input
@@ -2076,7 +2097,14 @@ if (
             />
 
             {showProductDropdown && (
-              <div className="absolute top-full left-0 w-[620px] bg-white border rounded-xl shadow-lg z-50 max-h-96 overflow-auto mt-1">
+  <div
+    className="absolute top-full left-0 w-[620px] bg-white border rounded-xl shadow-lg z-50 max-h-96 overflow-auto mt-1"
+    onMouseLeave={() => {
+      updateCurrentOrder({
+        showProductDropdown: false,
+      });
+    }}
+  >
 
                 {filteredProducts.length === 0 ? (
                   <div className="p-4 text-gray-500">
@@ -2097,24 +2125,46 @@ if (
                       }}
                       className="w-full p-3 hover:bg-blue-50 border-b"
                     >
-                      <div className="flex justify-between gap-4">
+                      <div className="flex items-center justify-between gap-4">
 
                         {/* BÊN TRÁI */}
-                        <div className="text-left flex-1 min-w-0">
+                        {/* BÊN TRÁI */}
 
-                          <div className="font-semibold text-black truncate">
-                            {product.name}
-                          </div>
+<div className="flex items-center gap-3 flex-1 min-w-0">
 
-                          <div className="text-xs text-gray-500 mt-1">
-                            Mã: {getProductCode(product) || "-"}
-                          </div>
+  {product.imageUrl && (
 
-                          <div className="text-xs text-gray-500 mt-1">
-                            Vị trí: {getProductLocation(product) || "-"}
-                          </div>
+    <img
+      src={product.imageUrl}
+      alt={product.name}
+      className="
+        w-12
+        h-12
+        rounded-lg
+        object-cover
+        border
+      "
+    />
 
-                        </div>
+  )}
+
+  <div className="text-left flex-1 min-w-0">
+
+    <div className="font-semibold text-black truncate">
+      {product.name}
+    </div>
+
+    <div className="text-xs text-gray-500 mt-1">
+      Mã: {getProductCode(product) || "-"}
+    </div>
+
+    <div className="text-xs text-gray-500 mt-1">
+      Vị trí: {getProductLocation(product) || "-"}
+    </div>
+
+  </div>
+
+</div>
 
                         {/* BÊN PHẢI */}
                         <div className="text-right w-[130px] shrink-0">
@@ -2411,12 +2461,53 @@ if (
               </td>
 
               <td className="p-3">
-                {item.image ? (
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-10 h-10 object-cover rounded"
-                  />
+                {item.imageUrl ? (
+                  <div className="group relative">
+
+  <div className="relative group">
+
+  <img
+    src={item.imageUrl}
+    alt={item.name}
+    className="
+      w-10
+      h-10
+      object-cover
+      rounded
+      border
+      cursor-pointer
+    "
+  />
+
+  <div
+    className="
+      hidden
+      group-hover:block
+      fixed
+      z-[9999]
+      ml-14
+      -mt-4
+      pointer-events-none
+    "
+  >
+    <img
+      src={item.imageUrl}
+      alt={item.name}
+      className="
+        w-48
+        h-48
+        object-cover
+        rounded-xl
+        border
+        shadow-2xl
+        bg-white
+      "
+    />
+  </div>
+
+</div>
+
+</div>
                 ) : (
                   <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">
                     Ảnh
@@ -2429,20 +2520,35 @@ if (
               </td>
 
               <td className="p-3">
-                <div className="font-medium">
-                  {item.name}
-                </div>
+  <div className="flex items-start gap-2">
+    
+    <button
+  type="button"
+  onClick={() => removeItem(item.id)}
+  className="text-red-600 text-lg hover:scale-110 transition"
+  title="Xóa sản phẩm"
+>
+  🗑️
+</button>
 
-                <div className="text-xs text-gray-500">
-                  {item.product_location
-                    ? `Vị trí: ${item.product_location}`
-                    : "Mặc định"}
-                </div>
+    <div>
+      <div className="font-medium">
+        {item.name}
+      </div>
 
-                <div className="text-xs text-orange-600">
-                  VAT: {useProductVat ? Number(item.tax || 0) : 0}%
-                </div>
-              </td>
+      <div className="text-xs text-gray-500">
+        {item.product_location
+          ? `Vị trí: ${item.product_location}`
+          : "Mặc định"}
+      </div>
+
+      <div className="text-xs text-orange-600">
+        VAT: {useProductVat ? Number(item.tax || 0) : 0}%
+      </div>
+    </div>
+
+  </div>
+</td>
 
               <td className="p-3">
                 {getUnitText(item.unit)}
@@ -2502,18 +2608,6 @@ if (
 
               <td className="p-3 text-right font-semibold">
                 {formatMoney(itemFinalTotal)}
-              </td>
-
-              <td className="p-3 text-center">
-                <button
-                  type="button"
-                  onClick={() =>
-                    removeItem(item.id)
-                  }
-                  className="text-red-600 font-bold"
-                >
-                  ✕
-                </button>
               </td>
             </tr>
           );
@@ -2768,18 +2862,18 @@ if (
   type="text"
   inputMode="numeric"
   className="w-full border p-3 rounded-xl text-right text-xl font-bold"
-  value={
-    paymentMethod === "mixed"
-      ? formatInputMoney(customerPayAmount)
-      : formatInputMoney(customerPay)
-  }
-  onChange={(e) =>
-    updateCurrentOrder({
-      customerPay: String(
-        parseInputMoney(e.target.value)
-      ),
-    })
-  }
+ value={
+  paymentMethod === "mixed"
+    ? formatInputMoney(customerPayAmount)
+    : formatInputMoney(customerPayAmount)
+}
+  onChange={(e) => {
+  updateCurrentOrder({
+    customerPay: String(
+      parseInputMoney(e.target.value)
+    ),
+  });
+}}
   onFocus={() => {
     if (paymentMethod === "mixed") {
       openSplitPaymentModal();

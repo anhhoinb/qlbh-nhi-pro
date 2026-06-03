@@ -15,7 +15,9 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
-import { db } from "@/lib/firebase";
+import {
+  db
+} from "@/lib/firebase";
 
 export default function ProductsPage() {
   // ADD PRODUCT
@@ -138,6 +140,9 @@ useEffect(() => {
   const [imagePreview, setImagePreview] =
   useState("");
 
+  const [imageFile, setImageFile] =
+  useState<File | null>(null);
+
   // IMPORT FILE
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -188,15 +193,25 @@ const [visibleColumns, setVisibleColumns] =
   const handleImageChange = (
   e: React.ChangeEvent<HTMLInputElement>
 ) => {
-  const file = e.target.files?.[0];
 
-  if (file) {
-    const imageUrl =
-      URL.createObjectURL(file);
+  const file =
+  e.target.files?.[0];
 
-    setImagePreview(imageUrl);
+if (!file) return;
 
-  }
+setImageFile(file);
+
+const reader =
+  new FileReader();
+
+reader.onloadend = () => {
+  setImagePreview(
+    reader.result as string
+  );
+};
+
+reader.readAsDataURL(file);
+
 };
   const [editName, setEditName] = useState("");
   const [editProductCode, setEditProductCode] = useState("");
@@ -272,6 +287,7 @@ const [visibleColumns, setVisibleColumns] =
 
       await addDoc(collection(db, "products"), {
         name: name.trim(),
+        imageUrl: imagePreview,
         product_code: productCode.trim(),
         product_location: productLocation.trim(),
 
@@ -849,7 +865,26 @@ onChange={(e) =>
                 </select>
               </div>
             </div>
+<div className="xl:col-span-4">
+  <label className="block mb-2 text-sm font-semibold text-black">
+    Hình ảnh sản phẩm
+  </label>
 
+  <input
+    type="file"
+    accept="image/*"
+    onChange={handleImageChange}
+    className="w-full border p-3 rounded-2xl"
+  />
+
+  {imagePreview && (
+    <img
+      src={imagePreview}
+      alt="Preview"
+      className="w-32 h-32 object-cover rounded-xl mt-3 border"
+    />
+  )}
+</div>
             <div className="flex justify-end gap-3 mt-6">
               <button
                 type="button"
@@ -1062,9 +1097,27 @@ onChange={(e) =>
                   key={item.id}
                   className="border-b hover:bg-gray-50"
                 >
-                  <td className="p-4 text-black font-semibold">
-                    {item.name}
-                  </td>
+                  <td className="p-4">
+
+  <div className="flex items-center gap-3">
+
+    {item.imageUrl && (
+
+      <img
+        src={item.imageUrl}
+        alt=""
+        className="w-12 h-12 object-cover rounded-lg border"
+      />
+
+    )}
+
+    <span className="font-semibold text-black">
+      {item.name}
+    </span>
+
+  </div>
+
+</td>
 
                   <td className="p-4 text-black">
                     {item.product_code || "---"}

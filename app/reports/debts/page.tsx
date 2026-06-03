@@ -2,6 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import {
+  collection,
+  getDocs,
+  addDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+
+import { db } from "@/lib/firebase";
+
 export default function DebtReportPage() {
   const [debts, setDebts] = useState<any[]>([]);
   const [showAddDebt, setShowAddDebt] =
@@ -57,36 +67,34 @@ console.log(
 
   useEffect(() => {
 
-  const loadDebts = () => {
+const loadDebts = async () => {
 
-    const savedDebts =
-      JSON.parse(
-        localStorage.getItem(
-          "debts"
-        ) || "[]"
-      );
-
-    setDebts(
-      savedDebts
+  const snapshot =
+    await getDocs(
+      collection(db, "debts")
     );
 
-  };
+  const debtList =
+snapshot.docs
+  .map(
+    (doc) => ({
+      firestoreId: doc.id,
+      ...doc.data(),
+    })
+  )
+    .sort(
+      (a:any,b:any)=>
+        b.date?.localeCompare(
+          a.date
+        )
+    );
 
-  loadDebts();
-
-  window.addEventListener(
-    "storage",
-    loadDebts
+  setDebts(
+    debtList
   );
+};
 
-  return () => {
-
-    window.removeEventListener(
-      "storage",
-      loadDebts
-    );
-
-  };
+loadDebts();
 
 }, []);
 
@@ -134,14 +142,14 @@ console.log(
   ]);
 
   const totalReceivable =
-    debts.reduce(
-      (sum, item) =>
-        sum +
-        Number(
-          item.remaining || 0
-        ),
-      0
-    );
+  debts.reduce(
+    (sum, item) =>
+      sum +
+      Number(
+        item.total || 0
+      ),
+    0
+  );
 
   const totalPaid =
     debts.reduce(
@@ -152,14 +160,14 @@ console.log(
     );
 
   const totalDebt =
-    debts.reduce(
-      (sum, item) =>
-        sum +
-        Number(item.total || 0),
-      0
-    );
+  debts.reduce(
+    (sum, item) =>
+      sum +
+      Number(item.remaining || 0),
+    0
+  );
 
-  const saveDebt = () => {
+  const saveDebt = async () => {
     if (
       !newDebt.customer ||
       !newDebt.total
@@ -210,22 +218,14 @@ console.log(
       type: newDebt.type,
       products,
     };
-
-    const updatedDebts = [
+await addDoc(
+  collection(db, "debts"),
+  debtItem
+);
+    setDebts([
   debtItem,
   ...debts,
-];
-
-setDebts(
-  updatedDebts
-);
-
-localStorage.setItem(
-  "debts",
-  JSON.stringify(
-    updatedDebts
-  )
-);
+]);
 
     setNewDebt({
       customer: "",
@@ -246,6 +246,78 @@ setProducts([
 
     setShowAddDebt(false);
   };
+
+  const collectDebt = async (
+  debt:any
+) => {
+
+  const money = prompt(
+    `Khách còn nợ ${formatMoney(
+      debt.remaining
+    )}đ\nNhập số tiền thu:`
+  );
+
+  if (!money) return;
+
+  const collectAmount =
+    Number(money);
+
+  if (
+    collectAmount <= 0 ||
+    isNaN(collectAmount)
+  ) {
+    alert("Số tiền không hợp lệ");
+    return;
+  }
+
+  const newPaid =
+    Number(debt.paid || 0) +
+    collectAmount;
+
+  const newRemain =
+    Math.max(
+      Number(debt.remaining || 0)
+      - collectAmount,
+      0
+    );
+
+  await updateDoc(
+  doc(
+    db,
+    "debts",
+    debt.firestoreId
+  ),
+    {
+      paid: newPaid,
+      remaining: newRemain,
+      status:
+        newRemain <= 0
+          ? "paid"
+          : "unpaid",
+    }
+  );
+
+  setDebts((prev)=>
+    prev.map((item)=>
+
+      item.firestoreId ===
+debt.firestoreId
+        ? {
+            ...item,
+            paid: newPaid,
+            remaining:
+              newRemain,
+            status:
+              newRemain <= 0
+                ? "paid"
+                : "unpaid",
+          }
+        : item
+    )
+  );
+
+  alert("Đã thu nợ");
+};
 
   return (
     <main className="min-h-screen bg-gray-100 p-6">
@@ -380,6 +452,10 @@ setProducts([
                     Ghi chú
                 </th>
 
+                <th className="p-4 text-left">
+                    Hành động
+                </th>
+
                 </tr>
 
               </thead>
@@ -398,8 +474,34 @@ setProducts([
                     >
 
                       <td className="p-4">
-                        {item.date}
-                      </td>
+
+{(() => {
+
+  if (!item.date)
+    return "-";
+
+  const parts =
+    item.date.split(" ");
+
+  if (
+    parts.length >= 2
+  ) {
+
+    const time =
+      parts[0];
+
+    const date =
+      parts.slice(1)
+      .join(" ");
+
+    return `${date} - ${time}`;
+  }
+
+  return item.date;
+
+})()}
+
+</td>
 
                       <td className="p-4">
 
@@ -466,6 +568,25 @@ setProducts([
                       <td className="p-4 text-gray-600 max-w-[250px] truncate">
                         {item.note || "-"}
                     </td>
+
+<td>
+  {Number(item.remaining || 0) > 0 && (
+    <button
+      onClick={() =>
+        collectDebt(item)
+      }
+      className="
+      px-3 py-1
+      rounded-lg
+      bg-green-600
+      text-white
+      text-sm
+      "
+    >
+      Thu nợ
+    </button>
+  )}
+</td>
 
                     </tr>
                   )
