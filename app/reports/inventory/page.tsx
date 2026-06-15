@@ -414,8 +414,6 @@ export default function InventoryReportPage() {
 
           <div className="flex items-center gap-3">
 
-  <div className="flex items-center gap-3">
-
   <button
     onClick={exportInventoryReport}
     className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold"
@@ -429,8 +427,6 @@ export default function InventoryReportPage() {
   >
     Tải lại báo cáo
   </button>
-
-</div>
 
 </div>
         </div>

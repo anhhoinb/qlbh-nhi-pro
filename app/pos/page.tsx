@@ -114,43 +114,56 @@ const parseInputMoney = (value: string) => {
     useState<any[]>([]);
 
   const [orders, setOrders] =
-  useState<OrderTab[]>(() => {
+  useState<OrderTab[]>([
+    createEmptyOrder(1),
+  ]);
 
-    const saved =
-      localStorage.getItem(
-        "pos_orders"
-      );
+const [activeOrder, setActiveOrder] =
+  useState(1);
 
-    return saved
-      ? JSON.parse(saved)
-      : [createEmptyOrder(1)];
+useEffect(() => {
+  try {
+    const savedOrders =
+      localStorage.getItem("pos_orders");
 
-  });
+    const savedActive =
+      localStorage.getItem("pos_active_order");
 
-  const [activeOrder, setActiveOrder] =
-  useState(() => {
-    
-  const saved =
-      localStorage.getItem(
-        "pos_active_order"
-      );
+    if (savedOrders) {
+      setOrders(JSON.parse(savedOrders));
+    }
 
-    return saved
-      ? Number(saved)
-      : 1;
-
-  });
+    if (savedActive) {
+      setActiveOrder(Number(savedActive));
+    }
+  } catch (error) {
+    console.log(error);
+  }
+}, []);
 
     useEffect(() => {
-  localStorage.setItem(
-    "pos_orders",
-    JSON.stringify(orders)
-  );
 
-  localStorage.setItem(
-    "pos_active_order",
-    String(activeOrder)
-  );
+  try {
+
+    localStorage.setItem(
+      "pos_orders",
+      JSON.stringify(orders)
+    );
+
+    localStorage.setItem(
+      "pos_active_order",
+      String(activeOrder)
+    );
+
+  } catch (error) {
+
+    console.log(
+      "Cannot save POS orders",
+      error
+    );
+
+  }
+
 }, [orders, activeOrder]);
 
   const [showBarcodeInput, setShowBarcodeInput] =
@@ -650,17 +663,31 @@ const parseInputMoney = (value: string) => {
         setCart(updatedCart);
       } else {
         setCart([
-          ...cart,
-          {
-            ...product,
-            quantity: 1,
-            price: Number(product.price || 0),
-            tax: Number(product.tax || 0),
-            unit: getUnitText(product.unit),
-            product_code: getProductCode(product),
-            product_location: getProductLocation(product),
-          },
-        ]);
+  ...cart,
+  {
+    id: product.id,
+
+    name: product.name || "",
+
+    imageUrl: product.imageUrl || "",
+
+    quantity: 1,
+
+    price: Number(product.price || 0),
+
+    tax: Number(product.tax || 0),
+
+    stock: Number(product.stock || 0),
+
+    unit: getUnitText(product.unit),
+
+    product_code: getProductCode(product),
+
+    product_location: getProductLocation(product),
+
+    barcode: product.barcode || "",
+  },
+]);
       }
     };
 
@@ -1442,9 +1469,12 @@ OK = tạo công nợ`
 }
 
 const orderPaidAmount =
-  orderCashAmount +
-  orderTransferAmount +
-  orderCodAmount;
+  Math.min(
+    orderCashAmount +
+      orderTransferAmount +
+      orderCodAmount,
+    orderTotal
+  );
 
 const orderRemainingAmount =
   Math.max(
@@ -1558,7 +1588,10 @@ await addDoc(
         Number(payment.amount || 0) > 0
     ),
 
-    status: "completed",
+    status:
+      orderRemainingAmount > 0
+        ? "debt"
+        : "completed",
     createdAt: new Date(),
   }
 );
@@ -1716,11 +1749,6 @@ console.log(
 );
 
 resetOrRemoveCurrentOrder();
-
-localStorage.setItem(
-  "pos_orders",
-  JSON.stringify(orders)
-);
     };
 
   const openDiscountModal = () => {

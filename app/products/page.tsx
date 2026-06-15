@@ -37,105 +37,11 @@ export default function ProductsPage() {
   // SEARCH + PAGINATION
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const itemsPerPage = 15;
 
   // DATA
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
-  useEffect(() => {
-
-  const savedProducts =
-    localStorage.getItem(
-      "products"
-    );
-
-  if (savedProducts) {
-
-    setProducts(
-      JSON.parse(
-        savedProducts
-      )
-    );
-
-  }
-
-}, []);
-
-useEffect(() => {
-
-  console.log(
-    "SAVE PRODUCTS:",
-    products
-  );
-
-  localStorage.setItem(
-    "products",
-    JSON.stringify(
-      products
-    )
-  );
-
-}, [products]);
-
-  useEffect(() => {
-
-  const savedProducts =
-    localStorage.getItem(
-      "products"
-    );
-
-  if (savedProducts) {
-
-    setProducts(
-      JSON.parse(
-        savedProducts
-      )
-    );
-
-  }
-
-}, []);
-
-useEffect(() => {
-
-  localStorage.setItem(
-    "products",
-    JSON.stringify(
-      products
-    )
-  );
-
-}, [products]);
-
-  useEffect(() => {
-
-  const savedProducts =
-    localStorage.getItem(
-      "products"
-    );
-
-  if (savedProducts) {
-
-    setProducts(
-      JSON.parse(
-        savedProducts
-      )
-    );
-
-  }
-
-}, []);
-
-useEffect(() => {
-
-  localStorage.setItem(
-    "products",
-    JSON.stringify(
-      products
-    )
-  );
-
-}, [products]);
 
   const [imagePreview, setImagePreview] =
   useState("");
@@ -244,12 +150,12 @@ reader.readAsDataURL(file);
         });
       });
 
-      data.sort((a, b) =>
-        String(a.name || "").localeCompare(
-          String(b.name || ""),
-          "vi"
-        )
-      );
+      data.sort((a: any, b: any) => {
+  const timeA = a.createdAt?.seconds || 0;
+  const timeB = b.createdAt?.seconds || 0;
+
+  return timeB - timeA;
+});
 
       setProducts(data);
     } catch (error) {
@@ -268,22 +174,33 @@ reader.readAsDataURL(file);
   // ADD PRODUCT
   const addProduct = async () => {
     try {
-      if (!name || !price) {
-        alert("Nhập đầy đủ thông tin bắt buộc");
-        return;
-      }
+      if (!name || !productCode || !price) {
+  alert("Nhập đầy đủ thông tin bắt buộc");
+  return;
+}
 
-      const normalizedName = name.trim().toLowerCase();
+const normalizedName = name.trim().toLowerCase();
+const normalizedCode = productCode.trim().toLowerCase();
 
-      const duplicate = products.find(
-        (item: any) =>
-          item.name?.trim()?.toLowerCase() === normalizedName
-      );
+const duplicateName = products.find(
+  (item: any) =>
+    item.name?.trim()?.toLowerCase() === normalizedName
+);
 
-      if (duplicate) {
-        alert("Sản phẩm đã tồn tại");
-        return;
-      }
+if (duplicateName) {
+  alert("Tên sản phẩm đã tồn tại");
+  return;
+}
+
+const duplicateCode = products.find(
+  (item: any) =>
+    item.product_code?.trim()?.toLowerCase() === normalizedCode
+);
+
+if (duplicateCode) {
+  alert("Mã sản phẩm đã tồn tại");
+  return;
+}
 
       await addDoc(collection(db, "products"), {
         name: name.trim(),
@@ -353,6 +270,17 @@ reader.readAsDataURL(file);
     if (!editingProduct) return;
 
     try {
+      const duplicateCode = products.find(
+  (item: any) =>
+    item.id !== editingProduct.id &&
+    item.product_code?.trim()?.toLowerCase() ===
+      editProductCode.trim().toLowerCase()
+);
+
+if (duplicateCode) {
+  alert("Mã sản phẩm đã tồn tại");
+  return;
+}
       await updateDoc(
         doc(db, "products", editingProduct.id),
         {
@@ -534,13 +462,21 @@ reader.readAsDataURL(file);
       }
 
       let successCount = 0;
-      let skipCount = 0;
+let skipCount = 0;
 
-      const existingNames = new Set(
-        products.map((item: any) =>
-          String(item.name || "").trim().toLowerCase()
-        )
-      );
+const existingNames = new Set(
+  products.map((item: any) =>
+    String(item.name || "").trim().toLowerCase()
+  )
+);
+
+const existingCodes = new Set(
+  products.map((item: any) =>
+    String(item.product_code || "")
+      .trim()
+      .toLowerCase()
+  )
+);
 
       for (let i = 1; i < lines.length; i++) {
         const values = parseCSVLine(lines[i]);
@@ -559,12 +495,24 @@ reader.readAsDataURL(file);
         }
 
         const normalizedName =
-          productName.toLowerCase();
+  productName.toLowerCase();
 
-        if (existingNames.has(normalizedName)) {
-          skipCount++;
-          continue;
-        }
+const productCode = String(
+  row.product_code || ""
+).trim();
+
+const normalizedCode =
+  productCode.toLowerCase();
+
+if (existingNames.has(normalizedName)) {
+  skipCount++;
+  continue;
+}
+
+if (existingCodes.has(normalizedCode)) {
+  skipCount++;
+  continue;
+}
 
         await addDoc(collection(db, "products"), {
           name: productName,
@@ -585,7 +533,8 @@ reader.readAsDataURL(file);
         });
 
         existingNames.add(normalizedName);
-        successCount++;
+existingCodes.add(normalizedCode);
+successCount++;
       }
 
       alert(
