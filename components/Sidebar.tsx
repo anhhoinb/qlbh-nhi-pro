@@ -279,18 +279,22 @@ export default function Sidebar() {
         },
 
         {
-          title: "Quản trị",
-          permissionKey: "admin",
-          items: [
-            {
-              label:
-                "Quản trị hệ thống",
-              href: "/admin",
-              permissionKey:
-                "admin",
-            },
-          ],
-        },
+  title: "Quản trị",
+  permissionKey: "admin",
+  items: [
+    {
+      label: "Quản trị hệ thống",
+      href: "/admin",
+      permissionKey: "admin",
+    },
+
+    {
+      label: "Tài khoản nhân viên",
+      href: "/admin/users",
+      permissionKey: "admin",
+    },
+  ],
+},
       ],
       []
     );
