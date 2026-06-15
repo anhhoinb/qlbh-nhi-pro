@@ -15,28 +15,46 @@ export const checkAdmin =
       auth.currentUser;
 
     if (!user) {
-
       return false;
     }
 
-    const docRef = doc(
-      db,
-      "users",
-      "admin"
-    );
+    try {
 
-    const snap =
-      await getDoc(docRef);
+      const userRef = doc(
+        db,
+        "users",
+        user.uid
+      );
 
-    if (!snap.exists()) {
+      const userSnap =
+        await getDoc(userRef);
+
+      if (
+        !userSnap.exists()
+      ) {
+        return false;
+      }
+
+      const data =
+        userSnap.data();
+
+      const role =
+        String(
+          data.role || ""
+        )
+          .trim()
+          .toLowerCase();
+
+      return (
+        role === "admin" ||
+        data.permissions
+          ?.admin === true
+      );
+
+    } catch (error) {
+
+      console.error(error);
 
       return false;
     }
-
-    const data = snap.data();
-
-    return (
-      data.email === user.email &&
-      data.role === "admin"
-    );
   };
