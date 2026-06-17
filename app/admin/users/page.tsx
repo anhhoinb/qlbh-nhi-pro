@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import {
   collection,
   getDocs,
+  doc,
+  updateDoc,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -25,9 +27,31 @@ type User = {
   };
 };
 
+const permissionLabels: Record<
+  string,
+  string
+> = {
+  admin: "Quản trị hệ thống",
+  dashboard: "Dashboard",
+  pos: "POS bán hàng",
+  orders: "Đơn hàng",
+  products: "Sản phẩm",
+  customers: "Khách hàng",
+  reports: "Báo cáo",
+  finance: "Tài chính",
+};
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [open, setOpen] = useState(false);
+  const [permissionOpen, setPermissionOpen] =
+  useState(false);
+
+const [selectedUser, setSelectedUser] =
+  useState<User | null>(null);
+
+const [permissionForm, setPermissionForm] =
+  useState<any>(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -129,20 +153,30 @@ export default function AdminUsersPage() {
     }
   }
 
-  const toggleStatus = (
-    id: string
-  ) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === id
-          ? {
-              ...u,
-              active: !u.active,
-            }
-          : u
-      )
+  const toggleStatus = async (
+  id: string,
+  active: boolean
+) => {
+  try {
+
+    await updateDoc(
+      doc(db, "users", id),
+      {
+        active: !active,
+      }
     );
-  };
+
+    await loadUsers();
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "Không cập nhật được trạng thái tài khoản"
+    );
+  }
+};
 
   return (
     <main className="min-h-screen bg-gray-100 p-10">
@@ -217,19 +251,43 @@ export default function AdminUsersPage() {
                 </td>
 
                 <td className="p-3">
-                  <button
-                    onClick={() =>
-                      toggleStatus(
-                        user.id
-                      )
-                    }
-                    className="bg-red-500 text-white px-3 py-1 rounded"
-                  >
-                    {user.active
-                      ? "Khóa"
-                      : "Mở khóa"}
-                  </button>
-                </td>
+  <div className="flex gap-2">
+
+    {user.role !== "admin" && (
+  <button
+    onClick={() => {
+      setSelectedUser(user);
+
+      setPermissionForm(
+        user.permissions || {}
+      );
+
+      setPermissionOpen(true);
+    }}
+    className="bg-blue-600 text-white px-3 py-1 rounded"
+  >
+    Phân quyền
+  </button>
+)}
+
+    {user.role !== "admin" && (
+  <button
+    onClick={() =>
+      toggleStatus(
+        user.id,
+        user.active
+      )
+    }
+    className="bg-red-500 text-white px-3 py-1 rounded"
+  >
+    {user.active
+      ? "Khóa"
+      : "Mở khóa"}
+  </button>
+)}
+
+  </div>
+</td>
               </tr>
             ))}
           </tbody>
@@ -300,7 +358,7 @@ export default function AdminUsersPage() {
                           })
                         }
                       />{" "}
-                      {key}
+                      {permissionLabels[key] || key}
                     </label>
                   )
                 )}
@@ -327,6 +385,95 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
+      {permissionOpen &&
+ selectedUser && (
+
+<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+  <div className="bg-white rounded-2xl p-6 w-[500px]">
+
+    <h2 className="text-xl font-bold mb-4">
+      Phân quyền: {selectedUser.name}
+    </h2>
+
+    <div className="space-y-2">
+
+      {permissionForm &&
+  Object.entries(permissionForm).map(
+    ([key, value]) => (
+      <label
+        key={key}
+        className="block"
+      >
+        <input
+          type="checkbox"
+          checked={Boolean(value)}
+          onChange={(e) =>
+            setPermissionForm({
+              ...permissionForm,
+              [key]:
+                e.target.checked,
+            })
+          }
+        />
+
+        {" "}
+        {permissionLabels[key] || key}
+      </label>
+    )
+)}
+
+    </div>
+
+    <div className="flex gap-3 mt-5">
+
+      <button
+        onClick={async () => {
+
+          if (!selectedUser)
+            return;
+
+          await updateDoc(
+            doc(
+              db,
+              "users",
+              selectedUser.id
+            ),
+            {
+              permissions:
+                permissionForm,
+            }
+          );
+
+          await loadUsers();
+
+          setPermissionOpen(false);
+
+          alert(
+            "Cập nhật quyền thành công"
+          );
+        }}
+        className="bg-blue-600 text-white px-4 py-2 rounded"
+      >
+        Lưu quyền
+      </button>
+
+      <button
+        onClick={() =>
+          setPermissionOpen(false)
+        }
+        className="bg-gray-300 px-4 py-2 rounded"
+      >
+        Hủy
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+)}
     </main>
   );
 }

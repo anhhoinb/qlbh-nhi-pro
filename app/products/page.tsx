@@ -267,48 +267,81 @@ if (duplicateCode) {
 
   // SAVE EDIT
   const saveEditProduct = async () => {
-    if (!editingProduct) return;
+  if (!editingProduct) return;
 
-    try {
-      const duplicateCode = products.find(
-  (item: any) =>
-    item.id !== editingProduct.id &&
-    item.product_code?.trim()?.toLowerCase() ===
-      editProductCode.trim().toLowerCase()
-);
+  try {
 
-if (duplicateCode) {
-  alert("Mã sản phẩm đã tồn tại");
-  return;
-}
-      await updateDoc(
-        doc(db, "products", editingProduct.id),
-        {
-          name: editName.trim(),
-          product_code: editProductCode.trim(),
-          product_location: editProductLocation.trim(),
+    const normalizedCode = String(
+      editProductCode || ""
+    )
+      .trim()
+      .toUpperCase();
 
-          price: Number(editPrice || 0),
-          import_price: Number(editImportPrice || 0),
-          capital_price: Number(editCapitalPrice || 0),
+    const duplicateCode = products.find(
+      (item: any) =>
+        item.id !== editingProduct.id &&
+        String(
+          item.product_code || ""
+        )
+          .trim()
+          .toUpperCase() ===
+        normalizedCode
+    );
 
-          stock: Number(editStock || 0),
-          unit: editUnit.trim() || "cái",
-          tax: Number(editTax || 0),
-        }
+    if (duplicateCode) {
+      alert(
+        `Mã sản phẩm "${editProductCode}" đã tồn tại`
       );
-
-      alert("Cập nhật thành công");
-
-      setEditingProduct(null);
-
-      loadProducts();
-    } catch (error) {
-      console.log(error);
-
-      alert("Cập nhật thất bại");
+      return;
     }
-  };
+
+    await updateDoc(
+      doc(
+        db,
+        "products",
+        editingProduct.id
+      ),
+      {
+        name: editName.trim(),
+        product_code:
+          editProductCode.trim(),
+        product_location:
+          editProductLocation.trim(),
+
+        price: Number(
+          editPrice || 0
+        ),
+        import_price: Number(
+          editImportPrice || 0
+        ),
+        capital_price: Number(
+          editCapitalPrice || 0
+        ),
+
+        stock: Number(
+          editStock || 0
+        ),
+        unit:
+          editUnit.trim() || "cái",
+        tax: Number(
+          editTax || 0
+        ),
+      }
+    );
+
+    alert("Cập nhật thành công");
+
+    setEditingProduct(null);
+
+    loadProducts();
+
+  } catch (error) {
+
+    console.log(error);
+
+    alert("Cập nhật thất bại");
+  }
+};
 
   // DELETE PRODUCT
   const deleteProduct = async (id: string) => {

@@ -663,7 +663,6 @@ useEffect(() => {
         setCart(updatedCart);
       } else {
         setCart([
-  ...cart,
   {
     id: product.id,
 
@@ -687,6 +686,8 @@ useEffect(() => {
 
     barcode: product.barcode || "",
   },
+
+  ...cart,
 ]);
       }
     };
@@ -988,10 +989,6 @@ useEffect(() => {
       billType: "temporary" | "invoice" = "temporary",
       orderCodeParam?: string
     ) => {
-      const billWindow =
-        window.open("", "_blank");
-
-      if (!billWindow) return;
 
       const billTitle =
         billType === "invoice"
@@ -1117,7 +1114,14 @@ useEffect(() => {
         )
         .join("");
 
-      billWindow.document.write(`
+      const printArea =
+  document.getElementById(
+    "print-area"
+  );
+
+if (!printArea) return;
+
+printArea.innerHTML = `
         <html>
           <head>
             <title></title>
@@ -1299,13 +1303,41 @@ useEffect(() => {
             </div>
           </body>
         </html>
-      `);
+      `;
 
-      billWindow.document.close();
+const printFrame =
+  document.createElement("iframe");
 
-      billWindow.focus();
+printFrame.style.position = "fixed";
+printFrame.style.right = "0";
+printFrame.style.bottom = "0";
+printFrame.style.width = "0";
+printFrame.style.height = "0";
+printFrame.style.border = "0";
 
-      billWindow.print();
+document.body.appendChild(
+  printFrame
+);
+
+const frameDoc =
+  printFrame.contentWindow?.document;
+
+if (!frameDoc) return;
+
+frameDoc.open();
+frameDoc.write(printArea.innerHTML);
+frameDoc.close();
+
+setTimeout(() => {
+  printFrame.contentWindow?.focus();
+  printFrame.contentWindow?.print();
+
+  setTimeout(() => {
+    document.body.removeChild(
+      printFrame
+    );
+  }, 1000);
+}, 300);
     };
 
   const getNextOrderCode =
@@ -3547,7 +3579,10 @@ resetOrRemoveCurrentOrder();
 
         </div>
       )}
-
+<div
+  id="print-area"
+  style={{ display: "none" }}
+></div>
     </main>
   );
 }

@@ -74,11 +74,22 @@ export default function LoginPage() {
     authEmail?: string | null,
     showAlert: boolean = true
   ) => {
+      console.log("UID LOGIN:", uid);
     const userRef =
       doc(db, "users", uid);
 
     const userSnap =
       await getDoc(userRef);
+
+      console.log(
+  "DOC EXISTS:",
+  userSnap.exists()
+);
+
+console.log(
+  "DATA:",
+  userSnap.data()
+);
 
     if (!userSnap.exists()) {
       localStorage.removeItem(

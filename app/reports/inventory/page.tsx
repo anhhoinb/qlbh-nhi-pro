@@ -94,6 +94,14 @@ export default function InventoryReportPage() {
     );
   };
 
+  const getProductCapitalPrice = (product: any) => {
+  return Number(
+    product.capital_price ||
+    product.capitalPrice ||
+    0
+  );
+};
+
   const exportInventoryReport = () => {
 
   const exportData =
@@ -103,11 +111,11 @@ export default function InventoryReportPage() {
         const stock =
           getProductStock(product);
 
-        const price =
-          getProductPrice(product);
+        const capitalPrice =
+  getProductCapitalPrice(product);
 
-        const total =
-          stock * price;
+const total =
+  stock * capitalPrice;
 
         return {
           STT: index + 1,
@@ -118,7 +126,9 @@ export default function InventoryReportPage() {
           "Vị trí":
             getProductLocation(product),
           "Giá bán":
-            price,
+            getProductPrice(product),
+          "Giá vốn":
+            capitalPrice,
           "Tồn kho":
             stock,
           "Giá trị tồn":
@@ -210,11 +220,11 @@ export default function InventoryReportPage() {
       const stock =
         getProductStock(product);
 
-      const price =
-        getProductPrice(product);
+      const capitalPrice =
+  getProductCapitalPrice(product);
 
-      totalInventoryValue +=
-        stock * price;
+totalInventoryValue +=
+  stock * capitalPrice;
 
       if (stock === 0) {
         outStockList.push(product);
@@ -291,10 +301,12 @@ export default function InventoryReportPage() {
         getProductStock(b);
 
       const valueA =
-        stockA * getProductPrice(a);
+  stockA *
+  getProductCapitalPrice(a);
 
-      const valueB =
-        stockB * getProductPrice(b);
+const valueB =
+  stockB *
+  getProductCapitalPrice(b);
 
       const compareValue =
         sortConfig.key === "stock"
@@ -560,7 +572,7 @@ export default function InventoryReportPage() {
                   </th>
 
                   <th className="text-right p-3">
-                    Giá bán
+                    Giá vốn
                   </th>
 
                   <th className="text-right p-3">
@@ -601,11 +613,11 @@ export default function InventoryReportPage() {
                     const stock =
                       getProductStock(product);
 
-                    const price =
-                      getProductPrice(product);
+                    const capitalPrice =
+  getProductCapitalPrice(product);
 
-                    const total =
-                      stock * price;
+const total =
+  stock * capitalPrice;
 
                     const isOut =
                       stock === 0;
@@ -638,7 +650,7 @@ export default function InventoryReportPage() {
                         </td>
 
                         <td className="p-3 text-right">
-                          {formatMoney(price)}đ
+                          {formatMoney(capitalPrice)}đ
                         </td>
 
                         <td
