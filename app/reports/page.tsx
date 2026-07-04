@@ -102,10 +102,19 @@ export default function SalesReportPage() {
     if (order.profit !== undefined) {
       return Number(order.profit || 0);
     }
-
     return Math.round(getOrderTotal(order) * 0.35);
   };
+const isCancelledOrder = (order: OrderData) => {
+  const status = String(order.status || "").toLowerCase();
 
+  return [
+    "cancel",
+    "cancelled",
+    "canceled",
+    "huy",
+    "hủy",
+  ].includes(status);
+};
   const isSameDay = (date1: Date, date2: Date) => {
     return (
       date1.getDate() === date2.getDate() &&
@@ -210,11 +219,21 @@ export default function SalesReportPage() {
   }, [orders, filterType]);
 
   const totalRevenue = filteredOrders.reduce(
-    (sum, order) => sum + getOrderTotal(order),
-    0
-  );
+  (sum, order) => {
 
-  const totalOrders = filteredOrders.length;
+    if (isCancelledOrder(order)) {
+      return sum;
+    }
+
+    return sum + getOrderTotal(order);
+
+  },
+  0
+);
+
+  const totalOrders = filteredOrders.filter(
+  (order) => !isCancelledOrder(order)
+).length;
 
   const returnedOrders = filteredOrders.filter(
     (order) =>
@@ -421,9 +440,14 @@ export default function SalesReportPage() {
       }
 
       if (found) {
-        found.revenue += getOrderTotal(order);
-        found.profit += getOrderProfit(order);
-      }
+
+  if (isCancelledOrder(order)) {
+    return;
+  }
+
+  found.revenue += getOrderTotal(order);
+  found.profit += getOrderProfit(order);
+}
     });
 
     return days;

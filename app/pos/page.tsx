@@ -1776,10 +1776,6 @@ console.log(
         orderCode
       );
 
-      alert(
-  "Thanh toán thành công"
-);
-
 resetOrRemoveCurrentOrder();
     };
 

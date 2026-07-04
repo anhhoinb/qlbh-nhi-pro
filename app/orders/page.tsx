@@ -9,6 +9,7 @@ import {
   serverTimestamp,
   doc,
   updateDoc,
+  getDoc,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -861,29 +862,60 @@ export default function OrdersPage() {
 };
 
   const cancelSelectedOrders = async () => {
-    if (selectedOrders.length === 0) {
-      alert("Vui lòng tích chọn đơn hàng cần hủy");
-      return;
-    }
+  if (selectedOrders.length === 0) {
+    alert("Vui lòng tích chọn đơn hàng cần hủy");
+    return;
+  }
 
-    const ok = confirm(
-      `Bạn có chắc muốn hủy ${selectedOrders.length} đơn hàng đã chọn không?`
-    );
+  const ok = confirm(
+    `Bạn có chắc muốn hủy ${selectedOrders.length} đơn hàng đã chọn không?`
+  );
 
-    if (!ok) return;
+  if (!ok) return;
 
-    for (const order of selectedOrders) {
-      await updateDoc(doc(db, "orders", order.id), {
-        status: "cancelled",
-        statusText: "Đã hủy",
-        cancelledAt: serverTimestamp(),
+  for (const order of selectedOrders) {
+
+    // Đã hủy thì bỏ qua
+    if (order.status === "cancelled") continue;
+
+    const items = getItems(order);
+
+    // Trả hàng về kho
+    for (const item of items) {
+
+      if (!item.id) continue;
+
+      const productRef = doc(db, "products", item.id);
+
+      const productSnap = await getDoc(productRef);
+
+      if (!productSnap.exists()) continue;
+
+      const currentStock = Number(
+        productSnap.data().stock || 0
+      );
+
+      await updateDoc(productRef, {
+        stock:
+          currentStock +
+          Number(getProductQuantity(item)),
       });
     }
 
-    alert("Đã hủy đơn hàng đã chọn");
-    setSelectedOrderIds([]);
-    await loadOrders();
-  };
+    // Đổi trạng thái đơn
+    await updateDoc(doc(db, "orders", order.id), {
+      status: "cancelled",
+      statusText: "Đã hủy",
+      cancelledAt: serverTimestamp(),
+    });
+  }
+
+  alert("Đã hủy đơn hàng");
+
+  setSelectedOrderIds([]);
+
+  await loadOrders();
+};
 
   const createShippingForSelectedOrders = () => {
 
@@ -1061,6 +1093,9 @@ export default function OrdersPage() {
               <th className="p-4 text-left">
                 Người tạo
               </th>
+              <th className="p-4 text-left">
+                Trạng thái
+              </th>
             </tr>
           </thead>
 
@@ -1112,6 +1147,14 @@ export default function OrdersPage() {
 
                 <td className="p-4 text-black">
                   {getCreatedBy(item)}
+                </td>
+
+                <td className="p-4">
+                  {item.status === "cancelled" ? (
+                    <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold">Đã hủy</span>
+                  ) : (
+                    <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">Hoàn thành</span>
+                  )}
                 </td>
               </tr>
             ))}

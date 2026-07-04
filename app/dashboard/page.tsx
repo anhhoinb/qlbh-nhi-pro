@@ -542,10 +542,27 @@ export default function DashboardPage() {
       return date ? isSameDay(date, today) : false;
     });
 
-    const revenue = todayOrders.reduce(
-      (sum, order) => sum + getOrderTotal(order),
-      0
-    );
+    const revenue = todayOrders.reduce((sum, order) => {
+
+  const status = String(
+    order.status ||
+    order.orderStatus ||
+    ""
+  ).toLowerCase();
+
+  if ([
+    "cancel",
+    "cancelled",
+    "canceled",
+    "huy",
+    "hủy"
+  ].includes(status)) {
+    return sum;
+  }
+
+  return sum + getOrderTotal(order);
+
+}, 0);
 
     const canceled = todayOrders.filter((order) => {
       const status =
@@ -578,7 +595,21 @@ export default function DashboardPage() {
 
     return {
       revenue,
-      newOrders: todayOrders.length,
+      newOrders: todayOrders.filter((order) => {
+  const status = String(
+    order.status ||
+    order.orderStatus ||
+    ""
+  ).toLowerCase();
+
+  return ![
+    "cancel",
+    "cancelled",
+    "canceled",
+    "huy",
+    "hủy",
+  ].includes(status);
+}).length,
       returned,
       canceled,
     };
@@ -636,16 +667,35 @@ export default function DashboardPage() {
       while (current <= end) {
         const date = new Date(current);
 
-        const revenue = orders.reduce(
-          (sum, order) => {
-            const orderDate = getOrderDate(order);
+          const revenue = orders.reduce(
+  (sum, order) => {
 
-            if (
-              orderDate &&
-              isSameDay(orderDate, date)
-            ) {
-              return sum + getOrderTotal(order);
-            }
+    const orderDate = getOrderDate(order);
+
+    const status = String(
+      order.status ||
+      order.orderStatus ||
+      ""
+    ).toLowerCase();
+
+    if (
+      [
+        "cancel",
+        "cancelled",
+        "canceled",
+        "huy",
+        "hủy"
+      ].includes(status)
+    ) {
+      return sum;
+    }
+
+    if (
+      orderDate &&
+      isSameDay(orderDate, date)
+    ) {
+      return sum + getOrderTotal(order);
+    }
 
             return sum;
           },
@@ -802,23 +852,44 @@ export default function DashboardPage() {
     >();
 
     filteredOrdersForTopProducts.forEach((order) => {
-      getOrderItems(order).forEach((item: any) => {
-        const name = getProductName(item);
-        const sku = getProductSku(item);
-        const key = sku || name;
-        const quantity = getItemQuantity(item);
 
-        if (!map.has(key)) {
-          map.set(key, {
-            name,
-            sku,
-            quantity: 0,
-          });
-        }
+  const status = String(
+    order.status ||
+    order.orderStatus ||
+    ""
+  ).toLowerCase();
 
-        map.get(key)!.quantity += quantity;
+  if (
+    [
+      "cancel",
+      "cancelled",
+      "canceled",
+      "huy",
+      "hủy"
+    ].includes(status)
+  ) {
+    return;
+  }
+
+  getOrderItems(order).forEach((item: any) => {
+
+    const name = getProductName(item);
+    const sku = getProductSku(item);
+    const key = sku || name;
+    const quantity = getItemQuantity(item);
+
+    if (!map.has(key)) {
+      map.set(key, {
+        name,
+        sku,
+        quantity: 0,
       });
-    });
+    }
+
+    map.get(key)!.quantity += quantity;
+  });
+
+});
 
     return Array.from(map.values())
       .sort((a, b) => b.quantity - a.quantity)

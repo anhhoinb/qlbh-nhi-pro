@@ -36,12 +36,21 @@ export default function InventoryPage() {
       });
     });
 
-    data.sort((a, b) =>
-      String(a.name || "").localeCompare(
-        String(b.name || ""),
-        "vi"
-      )
-    );
+    data.sort((a, b) => {
+
+  const timeA =
+    a.createdAt?.seconds
+      ? a.createdAt.seconds
+      : new Date(a.createdAt || 0).getTime();
+
+  const timeB =
+    b.createdAt?.seconds
+      ? b.createdAt.seconds
+      : new Date(b.createdAt || 0).getTime();
+
+  return timeB - timeA;
+
+});
 
     setProducts(data);
 

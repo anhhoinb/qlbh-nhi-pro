@@ -302,25 +302,30 @@ export default function InvoicePage() {
   }, []);
 
   useEffect(() => {
-    if (
-      !loading &&
-      order
-    ) {
-      document.body.style.background =
-        "white";
+  if (loading || !order) return;
 
-      document.body.style.margin =
-        "0";
+  const handleAfterPrint = () => {
+  try {
+    window.close();
+  } catch (e) {}
 
-      const timer =
-        setTimeout(() => {
-          window.print();
-        }, 700);
+  // Nếu trình duyệt không cho đóng thì quay lại
+  if (!window.closed) {
+    history.back();
+  }
+};
 
-      return () =>
-        clearTimeout(timer);
-    }
-  }, [loading, order]);
+  window.addEventListener("afterprint", handleAfterPrint);
+
+  const timer = setTimeout(() => {
+    window.print();
+  }, 500);
+
+  return () => {
+    clearTimeout(timer);
+    window.removeEventListener("afterprint", handleAfterPrint);
+  };
+}, [loading, order]);
 
   if (loading) {
     return (
@@ -342,26 +347,13 @@ export default function InvoicePage() {
     getItems(order);
 
   return (
-    <main className="fixed inset-0 z-[999999] bg-white overflow-auto">
+    <main className="min-h-screen bg-white">
 
       <style jsx global>{`
         html,
         body {
           background: white !important;
           overflow: auto !important;
-        }
-
-        #__next,
-        main {
-          background: white !important;
-        }
-
-        aside,
-        nav,
-        header,
-        .sidebar,
-        .dashboard-sidebar {
-          display: none !important;
         }
 
         @page {

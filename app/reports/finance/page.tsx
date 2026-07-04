@@ -239,6 +239,27 @@ export default function FinanceReportPage() {
     );
   };
 
+  const isCancelledOrder = (
+  order: any
+) => {
+
+  const status = String(
+    order.status ||
+    order.orderStatus ||
+    ""
+  ).toLowerCase();
+
+  return [
+    "cancel",
+    "cancelled",
+    "canceled",
+    "huy",
+    "hủy",
+    "đã hủy"
+  ].includes(status);
+
+};
+
   const getPaymentMethodText = (
     order: OrderData
   ) => {
@@ -477,7 +498,9 @@ export default function FinanceReportPage() {
         );
       }
 
-      return sorted;
+      return sorted.filter(
+  (order) => !isCancelledOrder(order)
+);
     }, [
       orders,
       filterType,
@@ -566,6 +589,10 @@ export default function FinanceReportPage() {
   filteredOrders.reduce(
     (sum, order) => {
 
+      if (isCancelledOrder(order)) {
+        return sum;
+      }
+
       const revenue =
         getOrderTotal(order);
 
@@ -579,7 +606,6 @@ export default function FinanceReportPage() {
         (revenue - discount - vat) * 0.35;
 
       return sum + profit;
-
     },
     0
   );
@@ -766,7 +792,9 @@ export default function FinanceReportPage() {
   </p>
 
   <p className="text-2xl font-bold text-orange-600 mt-2">
-    {filteredOrders.length}
+    {filteredOrders.filter(
+  (order) => !isCancelledOrder(order)
+).length}
   </p>
 
   <div className="mt-3 pt-3 border-t">
@@ -1366,7 +1394,9 @@ export default function FinanceReportPage() {
             <p className="text-gray-500">
               Tổng đơn phù hợp:{" "}
               <strong className="text-black">
-                {filteredOrders.length}
+                {filteredOrders.filter(
+  (order) => !isCancelledOrder(order)
+).length}
               </strong>
             </p>
 
