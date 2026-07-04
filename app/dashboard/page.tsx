@@ -721,21 +721,40 @@ export default function DashboardPage() {
         const year = current.getFullYear();
 
         const revenue = orders.reduce(
-          (sum, order) => {
-            const orderDate = getOrderDate(order);
+  (sum, order) => {
+    const orderDate = getOrderDate(order);
 
-            if (
-              orderDate &&
-              orderDate.getMonth() === month &&
-              orderDate.getFullYear() === year
-            ) {
-              return sum + getOrderTotal(order);
-            }
+    const status = String(
+      order.status ||
+      order.orderStatus ||
+      ""
+    ).toLowerCase();
 
-            return sum;
-          },
-          0
-        );
+    // Không tính đơn đã hủy
+    if (
+      [
+        "cancel",
+        "cancelled",
+        "canceled",
+        "huy",
+        "hủy",
+      ].includes(status)
+    ) {
+      return sum;
+    }
+
+    if (
+      orderDate &&
+      orderDate.getMonth() === month &&
+      orderDate.getFullYear() === year
+    ) {
+      return sum + getOrderTotal(order);
+    }
+
+    return sum;
+  },
+  0
+);
 
         result.push({
           label: formatChartLabel(current),
