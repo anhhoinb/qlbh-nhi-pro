@@ -349,11 +349,17 @@ export default function InvoicePage() {
   return (
     <main className="min-h-screen bg-white">
 
-      <style jsx global>{`
-        html,
-        body {
-          background: white !important;
-          overflow: auto !important;
+      <style jsx>{`
+        @media print {
+          html,
+          body {
+            background: white !important;
+            overflow: visible !important;
+          }
+
+          .print-box {
+            box-shadow: none !important;
+          }
         }
 
         @page {
@@ -365,15 +371,7 @@ export default function InvoicePage() {
           margin: 6mm;
         }
 
-        @media print {
-          body {
-            background: white !important;
-          }
-
-          .print-box {
-            box-shadow: none !important;
-          }
-        }
+        
       `}</style>
 
       <div

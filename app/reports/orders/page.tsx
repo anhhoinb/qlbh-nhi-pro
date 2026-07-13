@@ -846,29 +846,37 @@ export default function OrdersReportPage() {
   }, [currentPage, totalPages]);
 
   const summary = useMemo(() => {
-    return sortedOrders.reduce(
-      (result, order) => {
-        result.total += getOrderTotal(order);
-        result.cash += getCashAmount(order);
-        result.transfer += getTransferAmount(order);
-        result.cod += getCodAmount(order);
-        result.remaining += getRemainingAmount(order);
-        result.capital += getCapitalMoney(order);
-        result.items += getItemsCount(order);
+  return sortedOrders.reduce(
+    (result, order) => {
 
+      if (
+        order.status === "cancelled" ||
+        order.status === "returned"
+      ) {
         return result;
-      },
-      {
-        total: 0,
-        cash: 0,
-        transfer: 0,
-        cod: 0,
-        remaining: 0,
-        capital: 0,
-        items: 0,
       }
-    );
-  }, [sortedOrders]);
+
+      result.total += getOrderTotal(order);
+      result.cash += getCashAmount(order);
+      result.transfer += getTransferAmount(order);
+      result.cod += getCodAmount(order);
+      result.remaining += getRemainingAmount(order);
+      result.capital += getCapitalMoney(order);
+      result.items += getItemsCount(order);
+
+      return result;
+    },
+    {
+      total: 0,
+      cash: 0,
+      transfer: 0,
+      cod: 0,
+      remaining: 0,
+      capital: 0,
+      items: 0,
+    }
+  );
+}, [sortedOrders]);
 
   const loadOrders = async () => {
     const querySnapshot = await getDocs(
@@ -973,7 +981,13 @@ export default function OrdersReportPage() {
             </p>
 
             <p className="text-2xl font-bold text-blue-700 mt-2">
-              {sortedOrders.length}
+              {
+  sortedOrders.filter(
+    (order) =>
+      order.status !== "cancelled" &&
+      order.status !== "returned"
+  ).length
+}
             </p>
           </div>
 
