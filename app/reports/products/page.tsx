@@ -26,6 +26,7 @@ type OrderItem = {
 type OrderData = {
   id: string;
   order_code?: string;
+  status?: string;
   createdAt?: any;
   items?: OrderItem[];
 };
@@ -144,10 +145,27 @@ export default function ProductsReportPage() {
     );
   };
 
+  const isValidOrder = (order: OrderData) => {
+    const status = String(order.status || "").trim().toLowerCase();
+
+    return ![
+      "cancelled",
+      "đã hủy",
+      "da huy",
+      "returned",
+      "trả hàng",
+      "tra hang",
+    ].includes(status);
+  };
+
   const filteredOrders = useMemo(() => {
     const now = new Date();
 
     return orders.filter((order) => {
+      if (!isValidOrder(order)) {
+        return false;
+      }
+
       const orderDate = getDate(order.createdAt);
 
       if (!orderDate) return false;
