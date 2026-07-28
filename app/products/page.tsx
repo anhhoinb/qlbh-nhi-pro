@@ -133,6 +133,25 @@ reader.readAsDataURL(file);
   const formatMoney = (value: any) => {
     return Number(value || 0).toLocaleString("vi-VN") + "đ";
   };
+  const generateProductCode = () => {
+  let max = 0;
+
+  products.forEach((item: any) => {
+    const code = String(item.product_code || "");
+
+    const match = code.match(/^A(\d+)$/i);
+
+    if (match) {
+      const number = Number(match[1]);
+
+      if (number > max) {
+        max = number;
+      }
+    }
+  });
+
+  return `A${max + 1}`;
+};
 
   // LOAD PRODUCTS
   const loadProducts = async () => {
@@ -673,7 +692,13 @@ successCount++;
 
             <button
               type="button"
-              onClick={() => setShowAddForm((prev) => !prev)}
+              onClick={() => {
+  if (!showAddForm) {
+    setProductCode(generateProductCode());
+  }
+
+  setShowAddForm((prev) => !prev);
+}}
               className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-2xl font-semibold"
             >
               {showAddForm ? "Ẩn form" : "+ Thêm sản phẩm"}
