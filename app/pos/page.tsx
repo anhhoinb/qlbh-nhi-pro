@@ -1776,7 +1776,7 @@ console.log(
 setTimeout(() => {
   resetOrRemoveCurrentOrder();
 }, 800);
-
+};
   const openDiscountModal = () => {
     setTempDiscountType(discountType);
     setTempDiscountValue(discountValue);
@@ -3579,4 +3579,4 @@ setTimeout(() => {
 ></div>
     </main>
   );
-}}
+}
