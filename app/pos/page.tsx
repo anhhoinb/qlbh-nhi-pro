@@ -1771,13 +1771,11 @@ console.log(
         );
       }
 
-      printBill(
-        "invoice",
-        orderCode
-      );
+      printBill("invoice", orderCode);
 
-resetOrRemoveCurrentOrder();
-    };
+setTimeout(() => {
+  resetOrRemoveCurrentOrder();
+}, 800);
 
   const openDiscountModal = () => {
     setTempDiscountType(discountType);
@@ -3581,4 +3579,4 @@ resetOrRemoveCurrentOrder();
 ></div>
     </main>
   );
-}
+}}
