@@ -95,11 +95,14 @@ export default function InventoryReportPage() {
   };
 
   const getProductCapitalPrice = (product: any) => {
-  return Number(
-    product.capital_price ||
-    product.capitalPrice ||
-    0
-  );
+  const value =
+    product.capital_price ??
+    product.capitalPrice ??
+    product.import_price ??
+    product.importPrice ??
+    0;
+
+  return Number(value) || 0;
 };
 
   const exportInventoryReport = () => {
@@ -217,14 +220,17 @@ const total =
         ...docItem.data(),
       };
 
-      const stock =
-        getProductStock(product);
+      const stock = Math.max(
+  0,
+  Number(getProductStock(product))
+);
 
-      const capitalPrice =
-  getProductCapitalPrice(product);
+const capitalPrice = Math.max(
+  0,
+  Number(getProductCapitalPrice(product))
+);
 
-totalInventoryValue +=
-  stock * capitalPrice;
+totalInventoryValue += stock * capitalPrice;
 
       if (stock === 0) {
         outStockList.push(product);
