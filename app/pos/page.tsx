@@ -107,6 +107,22 @@ const parseInputMoney = (value: string) => {
     const [currentUserInfo, setCurrentUserInfo] =
   useState<any>(null);
 
+  const [showMainName, setShowMainName] = useState(false);
+  useEffect(() => {
+  const saved = localStorage.getItem("pos_show_main_name");
+
+  if (saved !== null) {
+    setShowMainName(saved === "true");
+  }
+}, []);
+
+useEffect(() => {
+  localStorage.setItem(
+    "pos_show_main_name",
+    String(showMainName)
+  );
+}, [showMainName]);
+
   const [products, setProducts] =
     useState<any[]>([]);
 
@@ -616,6 +632,38 @@ useEffect(() => {
       );
     };
 
+    const getProductDisplayName = (product: any) => {
+  return showMainName
+    ? (
+        product.main_name ||
+        product.name ||
+        ""
+      )
+    : (
+        product.short_name ||
+        product.main_name ||
+        product.name ||
+        ""
+      );
+};
+
+const getProductMainName = (product: any) => {
+  return (
+    product.main_name ||
+    product.name ||
+    ""
+  );
+};
+
+const getProductShortName = (product: any) => {
+  return (
+    product.short_name ||
+    product.main_name ||
+    product.name ||
+    ""
+  );
+};
+
   const addToCart =
     (product: any) => {
       const currentStock =
@@ -632,16 +680,20 @@ useEffect(() => {
 
       if (currentStock <= 0) {
         alert(
-          "Sản phẩm đã hết hàng"
-        );
+  `${
+    getProductShortName(product)
+  } đã hết hàng`
+);
 
         return;
       }
 
       if (currentQty >= currentStock) {
         alert(
-          "Không đủ tồn kho, không thể bán thêm"
-        );
+  `${
+    getProductShortName(product)
+  } không đủ tồn kho`
+);
 
         return;
       }
@@ -666,7 +718,19 @@ useEffect(() => {
   {
     id: product.id,
 
-    name: product.name || "",
+    name:
+  product.name || "",
+
+main_name:
+  product.main_name ||
+  product.name ||
+  "",
+
+short_name:
+  product.short_name ||
+  product.main_name ||
+  product.name ||
+  "",
 
     imageUrl: product.imageUrl || "",
 
@@ -739,8 +803,12 @@ useEffect(() => {
         stock
       ) {
         alert(
-          "Không đủ tồn kho, không thể tăng số lượng"
-        );
+  `${
+    itemInCart.short_name ||
+    itemInCart.main_name ||
+    itemInCart.name
+  } không đủ tồn kho`
+);
 
         return;
       }
@@ -824,8 +892,12 @@ useEffect(() => {
 
           if (newQty > stock) {
             alert(
-              "Không đủ tồn kho"
-            );
+  `${
+    cartItem.short_name ||
+    cartItem.main_name ||
+    cartItem.name
+  } không đủ tồn kho`
+);
 
             newQty = stock;
           }
@@ -997,7 +1069,6 @@ useEffect(() => {
 
       const now =
         new Date();
-
       const billDate =
         `${String(now.getDate()).padStart(2, "0")}-${String(now.getMonth() + 1).padStart(2, "0")}-${now.getFullYear()}`;
 
@@ -1085,7 +1156,9 @@ useEffect(() => {
                 </td>
 
                 <td>
-                  ${item.name}
+                  ${
+  getProductDisplayName(item)
+}
                   ${
                     item.product_code
                       ? `<br><small>Mã: ${item.product_code}</small>`
@@ -1394,7 +1467,11 @@ setTimeout(() => {
 
         if (quantity > stock) {
           alert(
-            `Sản phẩm "${item.name}" không đủ tồn kho`
+            `Sản phẩm "${
+  item.short_name ||
+  item.main_name ||
+  item.name
+}" không đủ tồn kho`
           );
 
           return;
@@ -1550,8 +1627,37 @@ await addDoc(
     customerTaxCode:
       selectedCustomer?.taxCode || "",
 
-    items: cart,
-    list: cart,
+    items: cart.map(item => ({
+  ...item,
+
+  name:
+    item.name,
+
+  main_name:
+    item.main_name ||
+    item.name,
+
+  short_name:
+    item.short_name ||
+    item.main_name ||
+    item.name,
+})),
+
+list: cart.map(item => ({
+  ...item,
+
+  name:
+    item.name,
+
+  main_name:
+    item.main_name ||
+    item.name,
+
+  short_name:
+    item.short_name ||
+    item.main_name ||
+    item.name,
+})),
 
     subtotal: subtotal,
     vatAmount: vatAmount,
@@ -1715,11 +1821,20 @@ try {
       "Tự tạo từ POS",
 
     products:
-      cart.map(
-        (item) => ({
+  cart.map(
+    (item) => ({
 
-          name:
-            item.name,
+      name:
+        item.name,
+
+      main_name:
+        item.main_name ||
+        item.name,
+
+      short_name:
+        item.short_name ||
+        item.main_name ||
+        item.name,
 
           qty:
             Number(
@@ -1997,7 +2112,7 @@ setTimeout(() => {
           const phone =
             String(customer.phone || "")
               .toLowerCase();
-
+              
           const code =
             String(customer.code || "")
               .toLowerCase();
@@ -2090,8 +2205,16 @@ setTimeout(() => {
             search.toLowerCase().trim();
 
           const itemName =
-            String(item.name || "")
-              .toLowerCase();
+  String(item.name || "")
+    .toLowerCase();
+
+const itemMainName =
+  String(item.main_name || "")
+    .toLowerCase();
+
+const itemShortName =
+  String(item.short_name || "")
+    .toLowerCase();
 
           const itemCode =
             String(getProductCode(item) || "")
@@ -2106,11 +2229,13 @@ setTimeout(() => {
               .toLowerCase();
 
           return (
-            itemName.includes(keyword) ||
-            itemCode.includes(keyword) ||
-            itemLocation.includes(keyword) ||
-            itemBarcode.includes(keyword)
-          );
+  itemShortName.includes(keyword) ||
+  itemMainName.includes(keyword) ||
+  itemName.includes(keyword) ||
+  itemCode.includes(keyword) ||
+  itemLocation.includes(keyword) ||
+  itemBarcode.includes(keyword)
+);
         });
 
   return (
@@ -2205,8 +2330,12 @@ setTimeout(() => {
   <div className="text-left flex-1 min-w-0">
 
     <div className="font-semibold text-black truncate">
-      {product.name}
-    </div>
+  {getProductShortName(product)}
+</div>
+
+<div className="text-xs text-gray-500 truncate">
+  {getProductMainName(product)}
+</div>
 
     <div className="text-xs text-gray-500 mt-1">
       Mã: {getProductCode(product) || "-"}
@@ -2295,6 +2424,34 @@ setTimeout(() => {
             </button>
 
           </div>
+
+          <div className="flex rounded-lg overflow-hidden border border-white/40 ml-2">
+
+  <button
+    type="button"
+    onClick={() => setShowMainName(false)}
+    className={`px-3 py-2 text-sm ${
+      !showMainName
+        ? "bg-white text-blue-700 font-semibold"
+        : "bg-blue-600 text-white"
+    }`}
+  >
+    Tên bán
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setShowMainName(true)}
+    className={`px-3 py-2 text-sm ${
+      showMainName
+        ? "bg-white text-blue-700 font-semibold"
+        : "bg-blue-600 text-white"
+    }`}
+  >
+    Tên đầy đủ
+  </button>
+
+</div>
 
           <div className="flex items-center gap-1 ml-2">
 
@@ -2447,41 +2604,39 @@ setTimeout(() => {
 
     </div>
   ) : (
-    <table className="w-full border-collapse text-sm">
+    <table className="w-full table-fixed border-collapse text-sm">
 
       <thead className="bg-gray-100 sticky top-0 z-10">
         <tr className="border-b">
-          <th className="p-3 text-left w-12">
-            STT
-          </th>
+          <th className="p-3 text-left w-[60px] whitespace-nowrap">
+  STT
+</th>
 
-          <th className="p-3 text-left w-16">
-            Ảnh
-          </th>
+<th className="p-3 text-left w-[90px] whitespace-nowrap">
+  Mã SKU
+</th>
 
-          <th className="p-3 text-left w-32">
-            Mã SKU
-          </th>
+<th className="p-3 text-left">
+  Tên sản phẩm
+</th>
 
-          <th className="p-3 text-left">
-            Tên sản phẩm
-          </th>
+<th className="p-3 text-center w-[80px] whitespace-nowrap">
+  Đơn vị
+</th>
 
-          <th className="p-3 text-left w-24">
-            Đơn vị
-          </th>
+<th className="p-3 text-center w-[150px] whitespace-nowrap">
+  Số lượng
+</th>
 
-          <th className="p-3 text-center w-32">
-            Số lượng
-          </th>
+<th className="p-3 text-right w-[140px] whitespace-nowrap">
+  Đơn giá
+</th>
 
-          <th className="p-3 text-right w-32">
-            Đơn giá
-          </th>
+<th className="p-3 text-right w-[140px] whitespace-nowrap">
+  Thành tiền
+</th>
 
-          <th className="p-3 text-right w-36">
-            Thành tiền
-          </th>
+<th className="p-3 w-[50px]"></th>
 
           <th className="p-3 text-center w-14"></th>
         </tr>
@@ -2510,96 +2665,63 @@ setTimeout(() => {
               key={item.id || index}
               className="border-b hover:bg-blue-50"
             >
-              <td className="p-3">
-                {index + 1}
-              </td>
 
               <td className="p-3">
-                {item.imageUrl ? (
-                  <div className="group relative">
-
-  <div className="relative group">
-
-  <img
-    src={item.imageUrl}
-    alt={item.name}
-    className="
-      w-10
-      h-10
-      object-cover
-      rounded
-      border
-      cursor-pointer
-    "
-  />
-
-  <div
-    className="
-      hidden
-      group-hover:block
-      fixed
-      z-[9999]
-      ml-14
-      -mt-4
-      pointer-events-none
-    "
-  >
-    <img
-      src={item.imageUrl}
-      alt={item.name}
-      className="
-        w-48
-        h-48
-        object-cover
-        rounded-xl
-        border
-        shadow-2xl
-        bg-white
-      "
-    />
-  </div>
-
-</div>
-
-</div>
-                ) : (
-                  <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">
-                    Ảnh
-                  </div>
-                )}
-              </td>
+  {index + 1}
+</td>
+<td className="p-3">
+  {item.product_code || ""}
+</td>
 
               <td className="p-3">
-                {item.product_code || ""}
-              </td>
-
-              <td className="p-3">
-  <div className="flex items-start gap-2">
+  <div className="flex items-start gap-3">
     
     <button
   type="button"
   onClick={() => removeItem(item.id)}
-  className="text-red-600 text-lg hover:scale-110 transition"
+  className="text-red-600 font-bold text-xl hover:text-red-700 hover:scale-110 transition"
   title="Xóa sản phẩm"
 >
-  🗑️
+  ×
 </button>
 
-    <div>
-      <div className="font-medium">
-        {item.name}
-      </div>
+    <div className="leading-5">
 
-      <div className="text-xs text-gray-500">
-        {item.product_location
-          ? `Vị trí: ${item.product_location}`
-          : "Mặc định"}
-      </div>
+  <div className="font-semibold text-[15px]">
+    {getProductDisplayName(item)}
+</div>
 
-      <div className="text-xs text-orange-600">
-        VAT: {useProductVat ? Number(item.tax || 0) : 0}%
-      </div>
+  {getProductMainName(item) !== getProductDisplayName(item) && (
+    <div className="text-xs text-gray-500">
+        {getProductMainName(item)}
     </div>
+)}
+
+  <div className="flex items-center gap-5 text-xs">
+
+  <span className="text-gray-500">
+    Vị trí: {item.product_location || "Mặc định"}
+  </span>
+
+  <span
+    className={`font-medium ${
+      Number(item.stock || 0) <= 0
+        ? "text-red-600"
+        : Number(item.stock || 0) <= 10
+        ? "text-orange-500"
+        : "text-green-600"
+    }`}
+  >
+    Tồn: {item.stock || 0}
+  </span>
+
+  <span className="text-orange-500">
+    VAT: {useProductVat ? Number(item.tax || 0) : 0}%
+  </span>
+
+</div>
+
+</div>
 
   </div>
 </td>
@@ -2997,7 +3119,7 @@ setTimeout(() => {
               type="button"
               onClick={() =>
                 printBill("temporary")
-              }
+                              }
               className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold"
             >
               In tạm tính

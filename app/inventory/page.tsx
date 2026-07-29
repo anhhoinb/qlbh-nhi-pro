@@ -16,6 +16,9 @@ export default function InventoryPage() {
   const [loading, setLoading] =
     useState(true);
 
+  const [canViewCostPrice, setCanViewCostPrice] =
+    useState(false);
+
   const [popupType, setPopupType] =
     useState<"out" | "low" | null>(null);
 
@@ -59,6 +62,16 @@ export default function InventoryPage() {
 
   useEffect(() => {
     loadProducts();
+  }, []);
+
+  useEffect(() => {
+    const user = JSON.parse(
+      localStorage.getItem("currentUserInfo") || "{}"
+    );
+
+    setCanViewCostPrice(
+      user.permissions?.viewCostPrice === true
+    );
   }, []);
 
   const formatMoney = (value: any) => {
@@ -244,17 +257,21 @@ export default function InventoryPage() {
                       Giá bán
                     </th>
 
+                    {canViewCostPrice && (
                     <th className="p-4 text-left">
                       Giá vốn
                     </th>
+)}
 
                     <th className="p-4 text-left">
                       Tồn kho
                     </th>
 
+                    {canViewCostPrice && (
                     <th className="p-4 text-left">
                       Tổng tồn
                     </th>
+)}
 
                     <th className="p-4 text-left">
                       Trạng thái
@@ -289,12 +306,14 @@ export default function InventoryPage() {
                           {formatMoney(item.price)}đ
                         </td>
 
+                        {canViewCostPrice && (
                         <td className="p-4 text-orange-600 font-semibold">
                           {formatMoney(
                             item.capital_price
                           )}
                           đ
                         </td>
+)}
 
                         <td
                           className={`p-4 font-bold ${
@@ -309,12 +328,14 @@ export default function InventoryPage() {
                           {stock <= 5 && " ⚠️"}
                         </td>
 
+                        {canViewCostPrice && (
                         <td className="p-4 font-bold text-purple-700">
                           {formatMoney(
                             inventoryValue
                           )}
                           đ
                         </td>
+)}
 
                         <td className="p-4">
                           <span
@@ -330,7 +351,7 @@ export default function InventoryPage() {
                   {products.length === 0 && (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={canViewCostPrice ? 6 : 4}
                         className="p-8 text-center text-gray-500"
                       >
                         Chưa có dữ liệu tồn kho
@@ -386,17 +407,21 @@ export default function InventoryPage() {
                       Giá bán
                     </th>
 
+                    {canViewCostPrice && (
                     <th className="p-3 text-left">
                       Giá vốn
                     </th>
+)}
 
                     <th className="p-3 text-left">
                       Tồn kho
                     </th>
 
+                    {canViewCostPrice && (
                     <th className="p-3 text-left">
                       Tổng tồn
                     </th>
+)}
                   </tr>
                 </thead>
 
@@ -432,12 +457,14 @@ export default function InventoryPage() {
                             đ
                           </td>
 
+                          {canViewCostPrice && (
                           <td className="p-3 text-orange-600 font-semibold">
                             {formatMoney(
                               item.capital_price
                             )}
                             đ
                           </td>
+)}
 
                           <td
                             className={`p-3 font-bold ${
@@ -450,12 +477,14 @@ export default function InventoryPage() {
                             {stock <= 5 && " ⚠️"}
                           </td>
 
+                          {canViewCostPrice && (
                           <td className="p-3 font-bold text-purple-700">
                             {formatMoney(
                               inventoryValue
                             )}
                             đ
                           </td>
+)}
                         </tr>
                       );
                     }
@@ -464,7 +493,7 @@ export default function InventoryPage() {
                   {popupProducts.length === 0 && (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={canViewCostPrice ? 6 : 4}
                         className="p-8 text-center text-gray-500"
                       >
                         Không có sản phẩm nào

@@ -21,7 +21,9 @@ import {
 
 export default function ProductsPage() {
   // ADD PRODUCT
-  const [name, setName] = useState("");
+  const [name, setName] = useState(""); // tương thích
+  const [mainName, setMainName] = useState("");
+  const [shortName, setShortName] = useState("");
   const [productCode, setProductCode] = useState("");
   const [productLocation, setProductLocation] = useState("");
   const [price, setPrice] = useState("");
@@ -96,6 +98,9 @@ const [visibleColumns, setVisibleColumns] =
     actions: true,
   });
 
+const [canViewCostPrice, setCanViewCostPrice] =
+  useState(false);
+
   const handleImageChange = (
   e: React.ChangeEvent<HTMLInputElement>
 ) => {
@@ -119,7 +124,9 @@ reader.onloadend = () => {
 reader.readAsDataURL(file);
 
 };
-  const [editName, setEditName] = useState("");
+  const [editName, setEditName] = useState(""); // tương thích
+  const [editMainName, setEditMainName] = useState("");
+  const [editShortName, setEditShortName] = useState("");
   const [editProductCode, setEditProductCode] = useState("");
   const [editProductLocation, setEditProductLocation] = useState("");
   const [editPrice, setEditPrice] = useState("");
@@ -190,15 +197,31 @@ reader.readAsDataURL(file);
     loadProducts();
   }, []);
 
+  useEffect(() => {
+  const user = JSON.parse(
+    localStorage.getItem("currentUserInfo") || "{}"
+  );
+
+  console.log("USER =", user);
+  console.log("PERMISSIONS =", user.permissions);
+  console.log("viewCostPrice =", user.permissions?.viewCostPrice);
+
+  const canView =
+    user.permissions?.viewCostPrice === true;
+
+  console.log("canViewCostPrice =", canView);
+
+  setCanViewCostPrice(canView);
+}, []);
   // ADD PRODUCT
   const addProduct = async () => {
     try {
-      if (!name || !productCode || !price) {
+      if (!mainName || !productCode || !price) {
   alert("Nhập đầy đủ thông tin bắt buộc");
   return;
 }
 
-const normalizedName = name.trim().toLowerCase();
+const normalizedName = mainName.trim().toLowerCase();
 const normalizedCode = productCode.trim().toLowerCase();
 
 const duplicateName = products.find(
@@ -222,7 +245,11 @@ if (duplicateCode) {
 }
 
       await addDoc(collection(db, "products"), {
-        name: name.trim(),
+        name: mainName.trim(),
+        main_name: mainName.trim(),
+        short_name:
+  shortName.trim() ||
+  mainName.trim(),
         imageUrl: imagePreview,
         product_code: productCode.trim(),
         product_location: productLocation.trim(),
@@ -243,6 +270,8 @@ if (duplicateCode) {
       alert("Thêm sản phẩm thành công");
 
       setName("");
+      setMainName("");
+      setShortName("");
       setProductCode("");
       setProductLocation("");
       setPrice("");
@@ -268,6 +297,8 @@ if (duplicateCode) {
     setEditingProduct(item);
 
     setEditName(item.name || "");
+    setEditMainName(item.main_name || item.name || "");
+    setEditShortName(item.short_name || "");
     setEditProductCode(item.product_code || "");
     setEditProductLocation(item.product_location || "");
     setEditPrice(String(item.price || 0));
@@ -321,7 +352,11 @@ if (duplicateCode) {
         editingProduct.id
       ),
       {
-        name: editName.trim(),
+        name: editMainName.trim(),
+        main_name: editMainName.trim(),
+        short_name:
+  editShortName.trim() ||
+  editMainName.trim(),
         product_code:
           editProductCode.trim(),
         product_location:
@@ -389,7 +424,7 @@ if (duplicateCode) {
     }
 
     const headers = [
-      "name",
+      "name","main_name","short_name",
       "product_code",
       "product_location",
       "price",
@@ -401,7 +436,7 @@ if (duplicateCode) {
     ];
 
     const rows = products.map((item: any) => [
-      item.name || "",
+      item.name || "", item.main_name || "", item.short_name || "",
       item.product_code || "",
       item.product_location || "",
       Number(item.price || 0),
@@ -568,6 +603,13 @@ if (existingCodes.has(normalizedCode)) {
 
         await addDoc(collection(db, "products"), {
           name: productName,
+          main_name: String(row.main_name||productName).trim(),
+          short_name:
+  String(
+    row.short_name ||
+    row.main_name ||
+    row.name
+  ).trim(),
           product_code: String(row.product_code || "").trim(),
           product_location: String(
             row.product_location || ""
@@ -610,13 +652,17 @@ successCount++;
   const filteredProducts = products.filter((item: any) => {
     const keyword = search.toLowerCase();
 
-    const itemName = item.name?.toLowerCase() || "";
+    const itemName=(item.name||"").toLowerCase();
+    const itemMain=(item.main_name||"").toLowerCase();
+    const itemShort=(item.short_name||"").toLowerCase();
     const itemCode = item.product_code?.toLowerCase() || "";
     const itemLocation =
       item.product_location?.toLowerCase() || "";
 
     return (
       itemName.includes(keyword) ||
+      itemMain.includes(keyword) ||
+      itemShort.includes(keyword) ||
       itemCode.includes(keyword) ||
       itemLocation.includes(keyword)
     );
@@ -726,15 +772,32 @@ successCount++;
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
               <div className="xl:col-span-2">
                 <label className="block mb-2 text-sm font-semibold text-black">
-                  Tên sản phẩm <span className="text-red-500">*</span>
+                  Tên chính <span className="text-red-500">*</span>
                 </label>
 
                 <input
                   type="text"
-                  placeholder="Nhập tên sản phẩm"
+                  placeholder="Nhập tên chính"
                   className="w-full border p-4 rounded-2xl text-black"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={mainName}
+                  onChange={(e) => {
+                    setMainName(e.target.value);
+                    setName(e.target.value);
+                  }}
+                />
+              </div>
+
+              <div className="xl:col-span-2">
+                <label className="block mb-2 text-sm font-semibold text-black">
+                  Tên phụ
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="Ví dụ: NE555"
+                  className="w-full border p-4 rounded-2xl text-black"
+                  value={shortName}
+                  onChange={(e) => setShortName(e.target.value)}
                 />
               </div>
 
@@ -784,6 +847,8 @@ successCount++;
                 />
               </div>
 
+{canViewCostPrice && (
+<>
               <div>
                 <label className="block mb-2 text-sm font-semibold text-black">
                   Giá nhập <span className="text-red-500">*</span>
@@ -810,11 +875,11 @@ successCount++;
                   placeholder="Nhập giá vốn"
                   className="w-full border p-4 rounded-2xl text-black"
                   value={capitalPrice}
-onChange={(e) =>
-  setCapitalPrice(e.target.value)
-}
+                  onChange={(e)=>setCapitalPrice(e.target.value)}
                 />
               </div>
+</>
+)}
 
               <div>
                 <label className="block mb-2 text-sm font-semibold text-black">
@@ -969,36 +1034,37 @@ onChange={(e) =>
 
       <div className="space-y-3 text-sm text-black">
 
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={visibleColumns.importPrice}
-            onChange={() =>
-              setVisibleColumns((prev) => ({
-                ...prev,
-                importPrice:
-                  !prev.importPrice,
-              }))
-            }
-          />
-          <span>Giá nhập</span>
-        </label>
+        {canViewCostPrice && (
+  <label className="flex items-center gap-3 cursor-pointer">
+    <input
+      type="checkbox"
+      checked={visibleColumns.importPrice}
+      onChange={() =>
+        setVisibleColumns((prev) => ({
+          ...prev,
+          importPrice: !prev.importPrice,
+        }))
+      }
+    />
+    <span>Giá nhập</span>
+  </label>
+)}
 
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={visibleColumns.capitalPrice}
-            onChange={() =>
-              setVisibleColumns((prev) => ({
-                ...prev,
-                capitalPrice:
-                  !prev.capitalPrice,
-              }))
-            }
-          />
-          <span>Giá vốn</span>
-        </label>
-
+        {canViewCostPrice && (
+  <label className="flex items-center gap-3 cursor-pointer">
+    <input
+      type="checkbox"
+      checked={visibleColumns.capitalPrice}
+      onChange={() =>
+        setVisibleColumns((prev) => ({
+          ...prev,
+          capitalPrice: !prev.capitalPrice,
+        }))
+      }
+    />
+    <span>Giá vốn</span>
+  </label>
+)}
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -1058,20 +1124,22 @@ onChange={(e) =>
                   Vị trí
                 </th>
 
-                {visibleColumns.importPrice && (
-  <th className="p-4 text-right">
-    Giá nhập
-  </th>
+                {canViewCostPrice &&
+  visibleColumns.importPrice && (
+    <th className="p-4 text-right">
+      Giá nhập
+    </th>
 )}
 
                 <th className="p-4 text-right">
                   Giá bán
                 </th>
 
-                {visibleColumns.capitalPrice && (
-  <th className="p-4 text-right">
-    Giá vốn
-  </th>
+                {canViewCostPrice &&
+  visibleColumns.capitalPrice && (
+    <th className="p-4 text-right">
+      Giá vốn
+    </th>
 )}
 
                 {visibleColumns.stock && (
@@ -1118,9 +1186,14 @@ onChange={(e) =>
 
     )}
 
-    <span className="font-semibold text-black">
-      {item.name}
-    </span>
+    <div className="flex flex-col">
+      <span className="font-semibold text-black">
+  {item.short_name ||
+    item.main_name ||
+    item.name}
+</span>
+      <span className="text-sm text-gray-500">{item.main_name || item.name}</span>
+    </div>
 
   </div>
 
@@ -1134,20 +1207,22 @@ onChange={(e) =>
                     {item.product_location || "---"}
                   </td>
 
-                  {visibleColumns.importPrice && (
-  <td className="p-4 text-right text-black">
-    {formatMoney(item.import_price)}
-  </td>
+                  {canViewCostPrice &&
+  visibleColumns.importPrice && (
+    <td className="p-4 text-right text-black">
+      {formatMoney(item.import_price)}
+    </td>
 )}
 
                   <td className="p-4 text-right text-blue-700 font-semibold">
                     {formatMoney(item.price)}
                   </td>
 
-                  {visibleColumns.capitalPrice && (
-  <td className="p-4 text-right text-black">
-    {formatMoney(item.capital_price)}
-  </td>
+                  {canViewCostPrice &&
+  visibleColumns.capitalPrice && (
+    <td className="p-4 text-right text-black">
+      {formatMoney(item.capital_price)}
+    </td>
 )}
 
                   {visibleColumns.stock && (
@@ -1179,13 +1254,15 @@ onChange={(e) =>
                         Sửa
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={() => deleteProduct(item.id)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-xl text-sm"
-                      >
-                        Xóa
-                      </button>
+                      {canViewCostPrice && (
+  <button
+    type="button"
+    onClick={() => deleteProduct(item.id)}
+    className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-xl text-sm"
+  >
+    Xóa
+  </button>
+)}
                     </div>
                   </td>
                   )}
@@ -1311,16 +1388,28 @@ onChange={(e) =>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
                 <div className="xl:col-span-2">
                   <label className="block mb-2 text-sm font-semibold text-black">
-                    Tên sản phẩm
+                    Tên chính
                   </label>
-
                   <input
                     type="text"
                     className="w-full border p-4 rounded-2xl text-black"
-                    value={editName}
-                    onChange={(e) =>
-                      setEditName(e.target.value)
-                    }
+                    value={editMainName}
+                    onChange={(e) => {
+                      setEditMainName(e.target.value);
+                      setEditName(e.target.value);
+                    }}
+                  />
+                </div>
+
+                <div className="xl:col-span-2">
+                  <label className="block mb-2 text-sm font-semibold text-black">
+                    Tên phụ
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full border p-4 rounded-2xl text-black"
+                    value={editShortName}
+                    onChange={(e)=>setEditShortName(e.target.value)}
                   />
                 </div>
 
@@ -1369,35 +1458,39 @@ onChange={(e) =>
                   />
                 </div>
 
-                <div>
-                  <label className="block mb-2 text-sm font-semibold text-black">
-                    Giá nhập
-                  </label>
+                {canViewCostPrice && (
+  <>
+    <div>
+      <label className="block mb-2 text-sm font-semibold text-black">
+        Giá nhập
+      </label>
 
-                  <input
-                    type="number"
-                    className="w-full border p-4 rounded-2xl text-black"
-                    value={editImportPrice}
-                    onChange={(e) =>
-                      setEditImportPrice(e.target.value)
-                    }
-                  />
-                </div>
+      <input
+        type="number"
+        className="w-full border p-4 rounded-2xl text-black"
+        value={editImportPrice}
+        onChange={(e) =>
+          setEditImportPrice(e.target.value)
+        }
+      />
+    </div>
 
-                <div>
-                  <label className="block mb-2 text-sm font-semibold text-black">
-                    Giá vốn
-                  </label>
+    <div>
+      <label className="block mb-2 text-sm font-semibold text-black">
+        Giá vốn
+      </label>
 
-                  <input
-                    type="number"
-                    className="w-full border p-4 rounded-2xl text-black"
-                    value={editCapitalPrice}
-                    onChange={(e) =>
-                      setEditCapitalPrice(e.target.value)
-                    }
-                  />
-                </div>
+      <input
+        type="number"
+        className="w-full border p-4 rounded-2xl text-black"
+        value={editCapitalPrice}
+        onChange={(e) =>
+          setEditCapitalPrice(e.target.value)
+        }
+      />
+    </div>
+  </>
+)}
 
                 <div>
                   <label className="block mb-2 text-sm font-semibold text-black">
