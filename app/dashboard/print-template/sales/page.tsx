@@ -35,6 +35,45 @@ export default function PrintTemplatePage() {
   const [paperSize, setPaperSize] =
     useState("A5");
 
+  const [showShopName, setShowShopName] =
+    useState(true);
+
+  const [showAddress, setShowAddress] =
+    useState(true);
+
+  const [showPhone, setShowPhone] =
+    useState(true);
+
+  const [showTitle, setShowTitle] =
+    useState(true);
+
+  const [showDate, setShowDate] =
+    useState(true);
+
+  const [showOrderCode, setShowOrderCode] =
+    useState(true);
+
+  const [showProductCode, setShowProductCode] =
+    useState(true);
+
+  const [showVat, setShowVat] =
+    useState(true);
+
+  const [showDiscount, setShowDiscount] =
+    useState(true);
+
+  const [showCustomerPaid, setShowCustomerPaid] =
+    useState(true);
+
+  const [showChange, setShowChange] =
+    useState(true);
+
+  const [showThankYou, setShowThankYou] =
+    useState(true);
+
+  const [showSeeYou, setShowSeeYou] =
+    useState(true);
+
   const [loading, setLoading] =
     useState(true);
 
@@ -91,6 +130,58 @@ export default function PrintTemplatePage() {
             setPaperSize(
               data.paperSize || "A5"
             );
+
+            setShowShopName(
+              data.showShopName ?? true
+            );
+
+            setShowAddress(
+              data.showAddress ?? true
+            );
+
+            setShowPhone(
+              data.showPhone ?? true
+            );
+
+            setShowTitle(
+              data.showTitle ?? true
+            );
+
+            setShowDate(
+              data.showDate ?? true
+            );
+
+            setShowOrderCode(
+              data.showOrderCode ?? true
+            );
+
+            setShowProductCode(
+              data.showProductCode ?? true
+            );
+
+            setShowVat(
+              data.showVat ?? true
+            );
+
+            setShowDiscount(
+              data.showDiscount ?? true
+            );
+
+            setShowCustomerPaid(
+              data.showCustomerPaid ?? true
+            );
+
+            setShowChange(
+              data.showChange ?? true
+            );
+
+            setShowThankYou(
+              data.showThankYou ?? true
+            );
+
+            setShowSeeYou(
+              data.showSeeYou ?? true
+            );
           }
         } catch (error) {
           console.log(error);
@@ -140,6 +231,20 @@ export default function PrintTemplatePage() {
             paperSize:
               paperSize || "A5",
 
+            showShopName,
+            showAddress,
+            showPhone,
+            showTitle,
+            showDate,
+            showOrderCode,
+            showProductCode,
+            showVat,
+            showDiscount,
+            showCustomerPaid,
+            showChange,
+            showThankYou,
+            showSeeYou,
+
             updatedAt:
               new Date(),
           },
@@ -159,6 +264,14 @@ export default function PrintTemplatePage() {
         );
       }
     };
+
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
 
   const printTestTemplate =
     () => {
@@ -255,6 +368,11 @@ export default function PrintTemplatePage() {
                 text-align: center;
                 line-height: 1.8;
               }
+
+              .multiline {
+                white-space: pre-line;
+                overflow-wrap: anywhere;
+              }
             </style>
           </head>
 
@@ -262,43 +380,49 @@ export default function PrintTemplatePage() {
             <div class="page">
 
               <div class="center">
-                <div class="shop-name">
-                  ${shopName}
-                </div>
+                ${
+                  showShopName
+                    ? `<div class="shop-name">${escapeHtml(shopName)}</div>`
+                    : ""
+                }
 
-                <div>
-                  ${address}
-                </div>
+                ${
+                  showAddress
+                    ? `<div>${escapeHtml(address)}</div>`
+                    : ""
+                }
 
-                <div>
-                  Hotline: ${phone}
-                </div>
+                ${
+                  showPhone
+                    ? `<div>Hotline: ${escapeHtml(phone)}</div>`
+                    : ""
+                }
               </div>
 
               <div class="divider"></div>
 
-              <div class="title">
-                ${invoiceTitle}
-              </div>
+              ${
+                showTitle
+                  ? `<div class="title">${escapeHtml(invoiceTitle)}</div>`
+                  : ""
+              }
 
-              <div class="line">
-                <span>Mã đơn:</span>
-                <strong>DH0001</strong>
-              </div>
+              ${
+                showOrderCode
+                  ? `<div class="line"><span>Mã đơn:</span><strong>DH0001</strong></div>`
+                  : ""
+              }
 
               <div class="line">
                 <span>Khách hàng:</span>
                 <strong>Khách lẻ</strong>
               </div>
 
-              <div class="line">
-                <span>Ngày:</span>
-                <strong>
-                  ${new Date().toLocaleString(
-                    "vi-VN"
-                  )}
-                </strong>
-              </div>
+              ${
+                showDate
+                  ? `<div class="line"><span>Ngày:</span><strong>${new Date().toLocaleString("vi-VN")}</strong></div>`
+                  : ""
+              }
 
               <div class="divider"></div>
 
@@ -313,7 +437,14 @@ export default function PrintTemplatePage() {
 
                 <tbody>
                   <tr>
-                    <td>Arduino Uno</td>
+                    <td>
+                      Arduino Uno
+                      ${
+                        showProductCode
+                          ? `<div style="font-size:11px;color:#666;margin-top:2px;">MSP: ARD-UNO</div>`
+                          : ""
+                      }
+                    </td>
                     <td>2</td>
                     <td>250.000đ</td>
                   </tr>
@@ -328,20 +459,51 @@ export default function PrintTemplatePage() {
 
               <div class="divider"></div>
 
+              ${
+                showVat
+                  ? `<div class="line"><span>VAT:</span><strong>0đ</strong></div>`
+                  : ""
+              }
+
+              ${
+                showDiscount
+                  ? `<div class="line"><span>Giảm giá:</span><strong>0đ</strong></div>`
+                  : ""
+              }
+
               <div class="line">
                 <strong>Tổng tiền:</strong>
                 <strong>680.000đ</strong>
               </div>
 
-              <div class="footer">
-                <div>
-                  ${thankYouText}
-                </div>
+              ${
+                showCustomerPaid
+                  ? `<div class="line"><span>Khách trả:</span><strong>680.000đ</strong></div>`
+                  : ""
+              }
 
-                <div>
-                  ${seeYouText}
-                </div>
-              </div>
+              ${
+                showChange
+                  ? `<div class="line"><span>Tiền thừa:</span><strong>0đ</strong></div>`
+                  : ""
+              }
+
+              ${
+                showThankYou || showSeeYou
+                  ? `<div class="footer">
+                      ${
+                        showThankYou
+                          ? `<div class="multiline">${escapeHtml(thankYouText)}</div>`
+                          : ""
+                      }
+                      ${
+                        showSeeYou
+                          ? `<div class="multiline">${escapeHtml(seeYouText)}</div>`
+                          : ""
+                      }
+                    </div>`
+                  : ""
+              }
 
             </div>
 
@@ -416,9 +578,9 @@ export default function PrintTemplatePage() {
                 Địa chỉ
               </label>
 
-              <input
-                type="text"
-                className="w-full border p-4 rounded-2xl text-black"
+              <textarea
+                rows={3}
+                className="w-full border p-4 rounded-2xl text-black resize-y"
                 value={address}
                 onChange={(e) =>
                   setAddress(
@@ -494,9 +656,9 @@ export default function PrintTemplatePage() {
                   Lời cảm ơn
                 </label>
 
-                <input
-                  type="text"
-                  className="w-full border p-4 rounded-2xl text-black"
+                <textarea
+                  rows={4}
+                  className="w-full border p-4 rounded-2xl text-black resize-y"
                   value={thankYouText}
                   onChange={(e) =>
                     setThankYouText(
@@ -511,9 +673,9 @@ export default function PrintTemplatePage() {
                   Dòng hẹn gặp lại
                 </label>
 
-                <input
-                  type="text"
-                  className="w-full border p-4 rounded-2xl text-black"
+                <textarea
+                  rows={4}
+                  className="w-full border p-4 rounded-2xl text-black resize-y"
                   value={seeYouText}
                   onChange={(e) =>
                     setSeeYouText(
@@ -550,6 +712,52 @@ export default function PrintTemplatePage() {
                 K80
               </option>
             </select>
+
+          </div>
+
+          <div className="border-t pt-5">
+
+            <h2 className="text-2xl font-bold text-black mb-4">
+              Hiển thị trên hóa đơn
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+
+              {[
+                ["Hiện tên shop", showShopName, setShowShopName],
+                ["Hiện địa chỉ", showAddress, setShowAddress],
+                ["Hiện Hotline", showPhone, setShowPhone],
+                ["Hiện tiêu đề hóa đơn", showTitle, setShowTitle],
+                ["Hiện ngày giờ", showDate, setShowDate],
+                ["Hiện mã đơn", showOrderCode, setShowOrderCode],
+                ["Hiện mã sản phẩm (MSP)", showProductCode, setShowProductCode],
+                ["Hiện VAT", showVat, setShowVat],
+                ["Hiện giảm giá", showDiscount, setShowDiscount],
+                ["Hiện khách trả", showCustomerPaid, setShowCustomerPaid],
+                ["Hiện tiền thừa", showChange, setShowChange],
+                ["Hiện lời cảm ơn", showThankYou, setShowThankYou],
+                ["Hiện hẹn gặp lại", showSeeYou, setShowSeeYou],
+              ].map(([label, checked, setter]: any) => (
+                <label
+                  key={label}
+                  className="flex items-center justify-between gap-3 rounded-2xl border p-4 text-black cursor-pointer"
+                >
+                  <span className="font-medium">
+                    {label}
+                  </span>
+
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) =>
+                      setter(e.target.checked)
+                    }
+                    className="w-5 h-5"
+                  />
+                </label>
+              ))}
+
+            </div>
 
           </div>
 

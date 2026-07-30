@@ -1448,6 +1448,105 @@ setTimeout(() => {
       return `SON${String(nextNumber).padStart(5, "0")}`;
     };
 
+    const printTemporaryInvoice = () => {
+  if (cart.length === 0) {
+    alert("Chưa có sản phẩm");
+    return;
+  }
+
+  const temporaryOrder = {
+    id: "TAM-TINH",
+
+    orderCode: "TẠM TÍNH",
+    order_code: "TẠM TÍNH",
+
+    createdAt:
+      new Date().toISOString(),
+
+    customer:
+      selectedCustomer,
+
+    customerName:
+      selectedCustomer?.name ||
+      "Khách lẻ",
+
+    customerPhone:
+      selectedCustomer?.phone ||
+      "",
+
+    items: cart.map((item) => ({
+  ...item,
+
+  name: item.name || "",
+
+  main_name:
+    item.main_name ||
+    item.name ||
+    "",
+
+  short_name:
+    item.short_name ||
+    item.main_name ||
+    item.name ||
+    "",
+
+  printName: showMainName
+    ? (
+        item.main_name ||
+        item.name ||
+        ""
+      )
+    : (
+        item.short_name ||
+        item.main_name ||
+        item.name ||
+        ""
+      ),
+
+  productCode:
+    item.product_code ||
+    item.code ||
+    item.sku ||
+    "",
+})),
+
+    subtotal,
+    vatAmount,
+
+    discountType,
+    discountValue,
+    discountAmount,
+
+    total,
+
+    finalTotal:
+      total,
+
+    final_total:
+      total,
+
+    customerPaid:
+      customerPayAmount,
+
+    paidAmount:
+      customerPayAmount,
+
+    changeAmount,
+  };
+
+  sessionStorage.setItem(
+    "temporary_invoice_order",
+    JSON.stringify(
+      temporaryOrder
+    )
+  );
+
+  window.open(
+    "/print-order/invoice?type=temporary&print=1",
+    "_blank"
+  );
+};
+
   const checkout =
     async () => {
       if (cart.length === 0) {
@@ -1597,7 +1696,7 @@ const orderChangeAmount =
     0
   );
 
-await addDoc(
+const orderRef = await addDoc(
   collection(db, "orders"),
   {
     orderCode: orderCode,
@@ -1641,6 +1740,17 @@ await addDoc(
     item.short_name ||
     item.main_name ||
     item.name,
+
+  printName: showMainName
+    ? (
+        item.main_name ||
+        item.name
+      )
+    : (
+        item.short_name ||
+        item.main_name ||
+        item.name
+      ),
 })),
 
 list: cart.map(item => ({
@@ -1657,6 +1767,17 @@ list: cart.map(item => ({
     item.short_name ||
     item.main_name ||
     item.name,
+
+  printName: showMainName
+    ? (
+        item.main_name ||
+        item.name
+      )
+    : (
+        item.short_name ||
+        item.main_name ||
+        item.name
+      ),
 })),
 
     subtotal: subtotal,
@@ -1732,6 +1853,10 @@ list: cart.map(item => ({
         : "completed",
     createdAt: new Date(),
   }
+);
+window.open(
+  `/print-order/invoice?id=${encodeURIComponent(orderRef.id)}&print=1`,
+  "_blank"
 );
 console.log(
   "TOTAL:",
@@ -1886,8 +2011,6 @@ console.log(
         );
       }
 
-      printBill("invoice", orderCode);
-
 setTimeout(() => {
   resetOrRemoveCurrentOrder();
 }, 800);
@@ -2020,9 +2143,9 @@ setTimeout(() => {
         }
 
         if (e.altKey && e.key === "1") {
-          printBill("temporary");
-          return;
-        }
+  printTemporaryInvoice();
+  return;
+}
 
         if (e.altKey && e.key === "2") {
           goToNextOrder();
@@ -3109,6 +3232,16 @@ const itemShortName =
           <div className="p-4 border-t space-y-3">
             <button
               type="button"
+              onClick={() =>
+                router.push("/quotations/create")
+              }
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold"
+            >
+              Tạo báo giá
+            </button>
+
+            <button
+              type="button"
               onClick={() => checkout()}
               className="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-xl text-lg font-bold"
             >
@@ -3117,9 +3250,7 @@ const itemShortName =
 
             <button
               type="button"
-              onClick={() =>
-                printBill("temporary")
-                              }
+              onClick={printTemporaryInvoice}
               className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold"
             >
               In tạm tính

@@ -101,6 +101,9 @@ const [visibleColumns, setVisibleColumns] =
 const [canViewCostPrice, setCanViewCostPrice] =
   useState(false);
 
+  const [canDeleteProduct, setCanDeleteProduct] =
+  useState(false);
+
   const handleImageChange = (
   e: React.ChangeEvent<HTMLInputElement>
 ) => {
@@ -198,21 +201,43 @@ reader.readAsDataURL(file);
   }, []);
 
   useEffect(() => {
-  const user = JSON.parse(
-    localStorage.getItem("currentUserInfo") || "{}"
-  );
+    try {
+      const user = JSON.parse(
+        localStorage.getItem("currentUserInfo") || "{}"
+      );
 
-  console.log("USER =", user);
-  console.log("PERMISSIONS =", user.permissions);
-  console.log("viewCostPrice =", user.permissions?.viewCostPrice);
+      const normalizedRole = String(
+        user.role || ""
+      )
+        .trim()
+        .toLowerCase();
 
-  const canView =
-    user.permissions?.viewCostPrice === true;
+      const isAdmin =
+        normalizedRole === "admin" ||
+        user.permissions?.admin === true;
 
-  console.log("canViewCostPrice =", canView);
+      const canView =
+        isAdmin ||
+        user.viewCostPrice === true ||
+        user.permissions?.viewCostPrice === true;
 
-  setCanViewCostPrice(canView);
-}, []);
+      const canDelete =
+        isAdmin ||
+        user.deleteProduct === true ||
+        user.permissions?.deleteProduct === true;
+
+      setCanViewCostPrice(canView);
+      setCanDeleteProduct(canDelete);
+    } catch (error) {
+      console.log(
+        "Không đọc được quyền người dùng",
+        error
+      );
+
+      setCanViewCostPrice(false);
+      setCanDeleteProduct(false);
+    }
+  }, []);
   // ADD PRODUCT
   const addProduct = async () => {
     try {
@@ -1254,7 +1279,7 @@ successCount++;
                         Sửa
                       </button>
 
-                      {canViewCostPrice && (
+                      {canDeleteProduct && (
   <button
     type="button"
     onClick={() => deleteProduct(item.id)}

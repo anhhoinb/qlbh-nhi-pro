@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   doc,
@@ -10,6 +10,9 @@ import {
 import { db } from "@/lib/firebase";
 
 export default function InvoicePage() {
+  const hasPrintedRef =
+    useRef(false);
+
   const [loading, setLoading] =
     useState(true);
 
@@ -28,6 +31,12 @@ export default function InvoicePage() {
   const [invoiceTitle, setInvoiceTitle] =
     useState("HÓA ĐƠN BÁN HÀNG");
 
+    const [temporaryTitle, setTemporaryTitle] =
+  useState("PHIẾU TẠM TÍNH");
+
+const [isTemporary, setIsTemporary] =
+  useState(false);
+
   const [thankYouText, setThankYouText] =
     useState("Cảm ơn quý khách!");
 
@@ -36,6 +45,45 @@ export default function InvoicePage() {
 
   const [paperSize, setPaperSize] =
     useState("A5");
+
+  const [showShopName, setShowShopName] =
+    useState(true);
+
+  const [showAddress, setShowAddress] =
+    useState(true);
+
+  const [showPhone, setShowPhone] =
+    useState(true);
+
+  const [showTitle, setShowTitle] =
+    useState(true);
+
+  const [showDate, setShowDate] =
+    useState(true);
+
+  const [showOrderCode, setShowOrderCode] =
+    useState(true);
+
+  const [showProductCode, setShowProductCode] =
+    useState(true);
+
+  const [showVat, setShowVat] =
+    useState(true);
+
+  const [showDiscount, setShowDiscount] =
+    useState(true);
+
+  const [showCustomerPaid, setShowCustomerPaid] =
+    useState(true);
+
+  const [showChange, setShowChange] =
+    useState(true);
+
+  const [showThankYou, setShowThankYou] =
+    useState(true);
+
+  const [showSeeYou, setShowSeeYou] =
+    useState(true);
 
   const formatMoney = (
     value: any
@@ -90,15 +138,19 @@ export default function InvoicePage() {
   };
 
   const getProductName = (
-    product: any
-  ) => {
-    return (
-      product.name ||
-      product.productName ||
-      product.product_name ||
-      "---"
-    );
-  };
+  product: any
+) => {
+  return (
+    product.printName ||
+    product.print_name ||
+    product.short_name ||
+    product.main_name ||
+    product.name ||
+    product.productName ||
+    product.product_name ||
+    "---"
+  );
+};
 
   const getProductQuantity = (
     product: any
@@ -200,12 +252,20 @@ export default function InvoicePage() {
       async () => {
         try {
           const params =
-            new URLSearchParams(
-              window.location.search
-            );
+  new URLSearchParams(
+    window.location.search
+  );
 
-          const id =
-            params.get("id") || "";
+const id =
+  params.get("id") || "";
+
+const type =
+  params.get("type") || "";
+
+const temporary =
+  type === "temporary";
+
+setIsTemporary(temporary);
 
           const templateRef =
             doc(
@@ -245,6 +305,11 @@ export default function InvoicePage() {
                 "HÓA ĐƠN BÁN HÀNG"
             );
 
+            setTemporaryTitle(
+  data.temporaryTitle ||
+    "PHIẾU TẠM TÍNH"
+);
+
             setThankYouText(
               data.thankYouText ||
                 "Cảm ơn quý khách!"
@@ -259,12 +324,50 @@ export default function InvoicePage() {
               data.paperSize ||
                 "A5"
             );
+
+            setShowShopName(data.showShopName ?? true);
+            setShowAddress(data.showAddress ?? true);
+            setShowPhone(data.showPhone ?? true);
+            setShowTitle(data.showTitle ?? true);
+            setShowDate(data.showDate ?? true);
+            setShowOrderCode(data.showOrderCode ?? true);
+            setShowProductCode(data.showProductCode ?? true);
+            setShowVat(data.showVat ?? true);
+            setShowDiscount(data.showDiscount ?? true);
+            setShowCustomerPaid(data.showCustomerPaid ?? true);
+            setShowChange(data.showChange ?? true);
+            setShowThankYou(data.showThankYou ?? true);
+            setShowSeeYou(data.showSeeYou ?? true);
           }
 
-          if (!id) {
-            setLoading(false);
-            return;
-          }
+          if (temporary) {
+  const savedTemporaryOrder =
+    sessionStorage.getItem(
+      "temporary_invoice_order"
+    );
+
+  if (savedTemporaryOrder) {
+    try {
+      setOrder(
+        JSON.parse(
+          savedTemporaryOrder
+        )
+      );
+    } catch {
+      setOrder(null);
+    }
+  } else {
+    setOrder(null);
+  }
+
+  setLoading(false);
+  return;
+}
+
+if (!id) {
+  setLoading(false);
+  return;
+}
 
           const orderRef =
             doc(
@@ -302,30 +405,69 @@ export default function InvoicePage() {
   }, []);
 
   useEffect(() => {
-  if (loading || !order) return;
+    if (loading || !order) return;
 
-  const handleAfterPrint = () => {
-  try {
-    window.close();
-  } catch (e) {}
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
 
-  // Nếu trình duyệt không cho đóng thì quay lại
-  if (!window.closed) {
-    history.back();
-  }
-};
+    const shouldPrint =
+      params.get("print") === "1";
 
-  window.addEventListener("afterprint", handleAfterPrint);
+    if (!shouldPrint) return;
 
-  const timer = setTimeout(() => {
-    window.print();
-  }, 500);
+    const printWindow =
+      window as typeof window & {
+        __invoicePrintStarted?: boolean;
+      };
 
-  return () => {
-    clearTimeout(timer);
-    window.removeEventListener("afterprint", handleAfterPrint);
-  };
-}, [loading, order]);
+    if (
+      hasPrintedRef.current ||
+      printWindow.__invoicePrintStarted
+    ) {
+      return;
+    }
+
+    hasPrintedRef.current = true;
+    printWindow.__invoicePrintStarted = true;
+
+    const handleAfterPrint = () => {
+      window.removeEventListener(
+        "afterprint",
+        handleAfterPrint
+      );
+
+      setTimeout(() => {
+        try {
+          window.close();
+        } catch {
+          // Trình duyệt có thể chặn đóng tab.
+        }
+
+        if (!window.closed) {
+          window.history.back();
+        }
+      }, 100);
+    };
+
+    window.addEventListener(
+      "afterprint",
+      handleAfterPrint
+    );
+
+    const timer = window.setTimeout(() => {
+      window.print();
+    }, 700);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener(
+        "afterprint",
+        handleAfterPrint
+      );
+    };
+  }, [loading, order]);
 
   if (loading) {
     return (
@@ -385,75 +527,89 @@ export default function InvoicePage() {
         }
       >
 
-        <div className="text-center">
+        {(showShopName || showAddress || showPhone) && (
+          <div className="text-center">
 
-          <div className="text-[22px] font-bold leading-none">
-            {shopName}
+            {showShopName && (
+              <div className="text-[22px] font-bold leading-none">
+                {shopName}
+              </div>
+            )}
+
+            {(showAddress || showPhone) && (
+              <div className="mt-1 text-[11px] flex items-center justify-center gap-1">
+                {showAddress && <span className="whitespace-pre-line">{address}</span>}
+                {showAddress && showPhone && <span>|</span>}
+                {showPhone && <span>Hotline: {phone}</span>}
+              </div>
+            )}
+
           </div>
+        )}
 
-          <div className="mt-1 text-[11px] flex items-center justify-center gap-1">
-            <span>{address}</span>
+        {(showTitle || showDate || showOrderCode) && (
+          <div className="mt-1 pt-1 text-center">
 
-            <span>|</span>
+            {showTitle && (
+              <div className="text-[16px] font-bold">
+                {isTemporary
+  ? temporaryTitle
+  : invoiceTitle}
+              </div>
+            )}
 
-            <span>
-              Hotline: {phone}
-            </span>
-          </div>
-
-        </div>
-
-        <div className="border-t border border-dashed border-gray-300 mt-1 pt-1 text-center">
-
-          <div className="text-[16px] font-bold">
-            {invoiceTitle}
-          </div>
-
-          <div className="mt-1 text-[11px] flex items-center justify-center gap-1">
-            <span>
-              {formatDate(
-                order.createdAt
-              )}
-            </span>
-
-            <span>|</span>
-
-            <span>
-              Mã đơn:
-              {" "}
-              <strong>
-                {getOrderCode(
-                  order
+            {(showDate || showOrderCode) && (
+              <div className="mt-1 text-[11px] flex items-center justify-center gap-1">
+                {showDate && (
+                  <span>
+                    {formatDate(
+                      order.createdAt
+                    )}
+                  </span>
                 )}
-              </strong>
-            </span>
+
+                {showDate && showOrderCode && <span>|</span>}
+
+                {showOrderCode && (
+                  <span>
+                    Mã đơn:
+                    {" "}
+                    <strong>
+                      {getOrderCode(
+                        order
+                      )}
+                    </strong>
+                  </span>
+                )}
+              </div>
+            )}
+
           </div>
+        )}
 
-        </div>
+        <table className="w-full border-collapse mt-3 text-[10px]">
 
-        <table className="w-full border-collapse border border border-dashed border-gray-300 mt-3 text-[10px]">
+         <thead className="border-y border-dashed border-black">
 
-          <thead>
+            <tr className="border-b border-dashed border-black">
 
-            <tr>
-
-              <th className="border border border-dashed border-gray-300 px-1 py-2 w-[30px]">
+              <th className="py-1 text-left">
                 STT
               </th>
 
-              <th className="border border border-dashed border-gray-300 px-2 py-2">
+              <th className="py-1 text-left">
                 Sản phẩm
               </th>
 
-              <th className="border border border-dashed border-gray-300 px-1 py-2 w-[40px]">
+              <th className="py-1 text-left">
                 SL
               </th>
 
-              <th className="border border border-dashed border-gray-300 px-2 py-2 w-[70px]">
+              <th className="py-1 text-left">
                 Giá
               </th>
 
-              <th className="border border border-dashed border-gray-300 px-2 py-2 w-[80px]">
+              <th className="py-1 text-left">
                 Thành tiền
               </th>
 
@@ -484,14 +640,17 @@ export default function InvoicePage() {
     )}
   </div>
 
-  <div className="text-[8px] text-gray-600 mt-[2px]">
-    MSP:
-    {" "}
-    {product.code ||
-      product.productCode ||
-      product.sku ||
-      "---"}
-  </div>
+  {showProductCode && (
+    <div className="text-[8px] text-gray-600 mt-[2px]">
+      MSP:
+      {" "}
+      {product.product_code ||
+  product.productCode ||
+  product.code ||
+  product.sku ||
+  "---"}
+    </div>
+  )}
 
 </td>
 
@@ -546,35 +705,39 @@ export default function InvoicePage() {
               </strong>
             </div>
 
-            <div className="flex justify-between gap-2">
-              <span className="pl-2">
-                VAT:
-              </span>
+            {showVat && (
+              <div className="flex justify-between gap-2">
+                <span className="pl-2">
+                  VAT:
+                </span>
 
-              <strong>
-                {formatMoney(
-                  getVatAmount(
-                    order
-                  )
-                )}
-                đ
-              </strong>
-            </div>
+                <strong>
+                  {formatMoney(
+                    getVatAmount(
+                      order
+                    )
+                  )}
+                  đ
+                </strong>
+              </div>
+            )}
 
-            <div className="flex justify-between gap-2">
-              <span className="pl-2">
-                Giảm giá:
-              </span>
+            {showDiscount && (
+              <div className="flex justify-between gap-2">
+                <span className="pl-2">
+                  Giảm giá:
+                </span>
 
-              <strong>
-                {formatMoney(
-                  getDiscountAmount(
-                    order
-                  )
-                )}
-                đ
-              </strong>
-            </div>
+                <strong>
+                  {formatMoney(
+                    getDiscountAmount(
+                      order
+                    )
+                  )}
+                  đ
+                </strong>
+              </div>
+            )}
 
             <div className="flex justify-between text-[14px] font-bold border-t border-gray-300 pt-1 mt-1">
               <span className="pl-2">
@@ -591,49 +754,61 @@ export default function InvoicePage() {
               </span>
             </div>
 
-            <div className="flex justify-between gap-2 mt-1">
-              <span className="pl-2">
-                Khách trả:
-              </span>
+            {!isTemporary &&
+  showCustomerPaid && (
+              <div className="flex justify-between gap-2 mt-1">
+                <span className="pl-2">
+                  Khách trả:
+                </span>
 
-              <strong>
-                {formatMoney(
-                  getCustomerPaid(
-                    order
-                  )
-                )}
-                đ
-              </strong>
-            </div>
+                <strong>
+                  {formatMoney(
+                    getCustomerPaid(
+                      order
+                    )
+                  )}
+                  đ
+                </strong>
+              </div>
+            )}
 
-            <div className="flex justify-between gap-2">
-              <span className="pl-2">
-                Tiền thừa:
-              </span>
+            {!isTemporary &&
+  showChange && (
+              <div className="flex justify-between gap-2">
+                <span className="pl-2">
+                  Tiền thừa:
+                </span>
 
-              <strong>
-                {formatMoney(
-                  getChange(order)
-                )}
-                đ
-              </strong>
-            </div>
+                <strong>
+                  {formatMoney(
+                    getChange(order)
+                  )}
+                  đ
+                </strong>
+              </div>
+            )}
 
           </div>
 
         </div>
 
-        <div className="text-center mt-6 space-y-1 text-[11px]">
+        {(showThankYou || showSeeYou) && (
+          <div className="text-center mt-6 space-y-1 text-[11px]">
 
-          <div>
-            {thankYouText}
+            {showThankYou && (
+              <div className="whitespace-pre-line">
+                {thankYouText}
+              </div>
+            )}
+
+            {showSeeYou && (
+              <div className="whitespace-pre-line">
+                {seeYouText}
+              </div>
+            )}
+
           </div>
-
-          <div>
-            {seeYouText}
-          </div>
-
-        </div>
+        )}
 
       </div>
 
