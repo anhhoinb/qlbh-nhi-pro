@@ -12,6 +12,7 @@ export default function AppShell({
 
   const hideSidebar =
     pathname.startsWith("/print-order") ||
+    pathname.startsWith("/quotations/print") || // <-- thêm dòng này
     pathname.startsWith("/pos") ||
     pathname.startsWith("/login");
 
