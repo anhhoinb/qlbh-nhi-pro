@@ -56,6 +56,12 @@ type QuotationData = {
   subtotal?: number;
   vatAmount?: number;
   total?: number;
+  terms?: {
+    deliveryTime?: string;
+    warrantyTime?: string;
+    shippingIncluded?: boolean;
+    shippingNote?: string;
+  };
 };
 
 const DEFAULT_SELLER = {
@@ -668,33 +674,19 @@ function QuotationPrintContent() {
         <section className="terms">
           <h3>Ghi Chú:</h3>
 
-          <p>
-            * Báo giá trên có giá trị
-            trong vòng {validDays} ngày
-            kể từ ngày báo.
-          </p>
+          <p>* Báo giá trên có giá trị trong vòng {validDays} ngày kể từ ngày báo.</p>
 
-          <h3>
-            Thời gian giao hàng và bảo
-            hành sản phẩm:
-          </h3>
+          <h3>Thời gian giao hàng và bảo hành sản phẩm:</h3>
 
-          <p>
-            * Giá trên chưa bao gồm chi
-            phí vận chuyển.
-          </p>
+          <p>* {quotation.terms?.shippingIncluded ? "Giá trên đã bao gồm chi phí vận chuyển." : "Giá trên chưa bao gồm chi phí vận chuyển."}</p>
 
-          <p>
-            * Hàng được thực hiện trong
-            vòng 25 đến 30 ngày kể từ
-            ngày thực hiện hợp đồng.
-          </p>
+          {quotation.terms?.shippingNote && (
+            <p>* {quotation.terms.shippingNote}</p>
+          )}
 
-          <p>
-            * Thiết bị được bảo hành 12
-            tháng đối với lỗi kỹ thuật
-            do nhà sản xuất.
-          </p>
+          <p>* {quotation.terms?.deliveryTime || "Hàng được thực hiện trong vòng 25 đến 30 ngày kể từ ngày thực hiện hợp đồng."}</p>
+
+          <p>* {quotation.terms?.warrantyTime || "Thiết bị được bảo hành 12 tháng đối với lỗi kỹ thuật do nhà sản xuất."}</p>
 
           <h3>Thanh toán:</h3>
 
@@ -834,17 +826,15 @@ function QuotationPrintContent() {
         }
 
         .quotation-page {
-          width: 210mm;
-          min-height: 297mm;
-          margin: 18px auto;
-          background: #fff;
-          padding: 20mm;
-          box-shadow:
-            0 4px 20px
-            rgba(0, 0, 0, 0.18);
-          font-size: 13.5px;
-          line-height: 1.25;
-        }
+  width: 210mm;
+  min-height: 297mm;
+  margin: 8px auto;
+  background: #fff;
+  padding: 10mm 20mm 20mm;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+  font-size: 13.5px;
+  line-height: 1.25;
+}
 
         .print-layout {
           width: 100%;
@@ -1006,11 +996,13 @@ function QuotationPrintContent() {
 
         .product-table th {
           background: #fff;
-          padding: 2.5mm 1.5mm;
+          padding: 1mm 1.5mm;
           color: #000;
           text-align: center;
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 700;
+          line-height: 1.1;
+          vertical-align: middle;
         }
 
         .product-table td {
@@ -1157,9 +1149,9 @@ function QuotationPrintContent() {
         }
 
         @page {
-          size: A4 portrait;
-          margin: 20mm;
-        }
+  size: A4 portrait;
+  margin: 10mm 20mm 20mm;
+}
 
         @media print {
           html,

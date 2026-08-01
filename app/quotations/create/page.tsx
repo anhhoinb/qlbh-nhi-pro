@@ -95,6 +95,19 @@ export default function CreateQuotationPage() {
   );
   const [validDays, setValidDays] = useState("3");
 
+  const [deliveryTime, setDeliveryTime] = useState(
+    "Hàng được giao trong vòng 25 đến 30 ngày kể từ ngày thực hiện hợp đồng."
+  );
+
+  const [warrantyTime, setWarrantyTime] = useState(
+    "Bảo hành 12 tháng đối với lỗi kỹ thuật do nhà sản xuất."
+  );
+
+  const [shippingIncluded, setShippingIncluded] =
+    useState(false);
+
+  const [shippingNote, setShippingNote] = useState("");
+
   const [buyer, setBuyer] = useState<BuyerInfo>({
     companyName: "",
     address: "",
@@ -350,6 +363,13 @@ export default function CreateQuotationPage() {
           email: buyer.email.trim(),
         },
 
+        terms: {
+          deliveryTime: deliveryTime.trim(),
+          warrantyTime: warrantyTime.trim(),
+          shippingIncluded,
+          shippingNote: shippingNote.trim(),
+        },
+
         items: items.map((item) => {
           const lineSubtotal =
             Number(item.quantity || 0) *
@@ -603,6 +623,90 @@ export default function CreateQuotationPage() {
                       placeholder="Email"
                     />
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-white p-5 shadow-sm">
+              <h2 className="mb-4 text-lg font-bold">
+                Điều kiện báo giá
+              </h2>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm font-semibold">
+                    Thời gian giao hàng
+                  </label>
+
+                  <textarea
+                    rows={3}
+                    value={deliveryTime}
+                    onChange={(event) =>
+                      setDeliveryTime(event.target.value)
+                    }
+                    className="w-full resize-y rounded-xl border p-3 outline-none focus:border-blue-500"
+                    placeholder="Nhập thời gian giao hàng"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-semibold">
+                    Thời gian bảo hành
+                  </label>
+
+                  <textarea
+                    rows={3}
+                    value={warrantyTime}
+                    onChange={(event) =>
+                      setWarrantyTime(event.target.value)
+                    }
+                    className="w-full resize-y rounded-xl border p-3 outline-none focus:border-blue-500"
+                    placeholder="Nhập thời gian bảo hành"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold">
+                    Chi phí vận chuyển
+                  </label>
+
+                  <div className="flex flex-wrap gap-5">
+                    <label className="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="radio"
+                        name="shippingIncluded"
+                        checked={!shippingIncluded}
+                        onChange={() => setShippingIncluded(false)}
+                      />
+                      <span>Chưa bao gồm</span>
+                    </label>
+
+                    <label className="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="radio"
+                        name="shippingIncluded"
+                        checked={shippingIncluded}
+                        onChange={() => setShippingIncluded(true)}
+                      />
+                      <span>Đã bao gồm</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-semibold">
+                    Ghi chú vận chuyển
+                  </label>
+
+                  <textarea
+                    rows={3}
+                    value={shippingNote}
+                    onChange={(event) =>
+                      setShippingNote(event.target.value)
+                    }
+                    className="w-full resize-y rounded-xl border p-3 outline-none focus:border-blue-500"
+                    placeholder="Ví dụ: Miễn phí giao hàng nội thành..."
+                  />
                 </div>
               </div>
             </div>
