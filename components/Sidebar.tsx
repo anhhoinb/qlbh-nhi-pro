@@ -166,6 +166,13 @@ export default function Sidebar() {
             },
 
             {
+              label: "Báo giá",
+              href: "/quotations",
+              permissionKey:
+                "orders",
+            },
+
+            {
               label: "Mẫu in",
               href: "/print-template",
               permissionKey:
