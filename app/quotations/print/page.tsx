@@ -361,6 +361,11 @@ function QuotationPrintContent() {
       </div>
 
       <main className="quotation-page">
+        <table className="print-layout">
+          <thead>
+            <tr>
+              <td>
+                <div className="print-header">
         <header className="seller-header">
           <div className="logo-box">
   <img
@@ -402,7 +407,15 @@ function QuotationPrintContent() {
         </header>
 
         <div className="double-rule" />
+                </div>
+              </td>
+            </tr>
+          </thead>
 
+          <tbody>
+            <tr>
+              <td>
+                <div className="print-content">
         <div className="document-date">
           TP. HCM, ngày{" "}
           {String(
@@ -587,7 +600,7 @@ function QuotationPrintContent() {
                       )}
                     </td>
 
-                    <td>
+                    <td className="note-cell">
                       {item.note || ""}
                     </td>
                   </tr>
@@ -719,7 +732,15 @@ function QuotationPrintContent() {
             </p>
           </div>
         </section>
+                </div>
+              </td>
+            </tr>
+          </tbody>
 
+          <tfoot>
+            <tr>
+              <td>
+                <div className="print-footer">
         <section className="signatures">
           <div>
             <h3>
@@ -742,6 +763,11 @@ function QuotationPrintContent() {
             </p>
           </div>
         </section>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
       </main>
 
       <style jsx global>{`
@@ -812,7 +838,7 @@ function QuotationPrintContent() {
           min-height: 297mm;
           margin: 18px auto;
           background: #fff;
-          padding: 10mm 10mm 12mm;
+          padding: 20mm;
           box-shadow:
             0 4px 20px
             rgba(0, 0, 0, 0.18);
@@ -820,70 +846,100 @@ function QuotationPrintContent() {
           line-height: 1.25;
         }
 
+        .print-layout {
+          width: 100%;
+          border-collapse: collapse;
+          table-layout: fixed;
+        }
+
+        .print-layout > thead > tr > td,
+        .print-layout > tbody > tr > td,
+        .print-layout > tfoot > tr > td {
+          border: 0;
+          padding: 0;
+          vertical-align: top;
+        }
+
+        .print-header {
+          padding-bottom: 1mm;
+        }
+
+        .print-content {
+          width: 100%;
+        }
+
+        .print-footer {
+          padding-top: 0;
+        }
+
         .seller-header {
-  display: grid;
-  grid-template-columns: 50mm 1fr;
-  column-gap: 4mm;
-  align-items: center;
-}
+          display: grid;
+          grid-template-columns: 44mm 1fr;
+          column-gap: 3mm;
+          align-items: center;
+        }
 
 .logo-box {
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-start;
-}
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+        }
 
 .company-logo {
-  display: block;
-  width: 48mm;
-  height: auto;
-  object-fit: contain;
-}
+          display: block;
+          width: 42mm;
+          height: auto;
+          object-fit: contain;
+        }
 
         .seller-information {
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.4;
-}
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          min-width: 0;
+          font-size: 14px;
+          font-weight: 700;
+          line-height: 1.3;
+        }
 
         .seller-information h1 {
-  margin: 0 0 3px;
-  font-size: 22px;
-  line-height: 1.15;
-  font-weight: 800;
-}
+          margin: 0 0 2px;
+          font-size: 20px;
+          line-height: 1.1;
+          font-weight: 800;
+          white-space: nowrap;
+        }
 
         .seller-contact-row {
           display: flex;
-          gap: 32px;
+          gap: 20px;
+          white-space: nowrap;
         }
 
         .double-rule {
-          height: 5px;
-          margin-top: 0mm;
+          height: 3px;
+          margin-top: 0;
           border-top: 3px double #111;
         }
 
         .document-date {
-          margin-top: 5mm;
-          padding-right: 13mm;
+          margin-top: 2mm;
+          padding-right: 8mm;
           text-align: right;
           font-size: 15px;
           font-style: italic;
         }
 
         .document-title {
-          margin-top: 2mm;
-          background: #fffec5;
-          padding: 3mm 2mm;
-          color: #ed1717;
-          text-align: center;
-          font-size: 21px;
-          font-weight: 800;
-        }
+  margin-top: 2mm;
+  background: transparent;
+  padding: 3mm 2mm;
+  color: #000;
+  text-align: center;
+  font-size: 21px;
+  font-weight: 800;
+  border: none;
+}
 
         .buyer-section {
           margin-top: 4mm;
@@ -938,6 +994,7 @@ function QuotationPrintContent() {
 
         .product-table {
           width: 100%;
+          max-width: 100%;
           border-collapse: collapse;
           table-layout: fixed;
         }
@@ -948,54 +1005,70 @@ function QuotationPrintContent() {
         }
 
         .product-table th {
-          background: #0877be;
-          padding: 3.2mm 1.5mm;
-          color: #fff;
+          background: #fff;
+          padding: 2.5mm 1.5mm;
+          color: #000;
           text-align: center;
           font-size: 14px;
-          font-weight: 800;
+          font-weight: 700;
         }
 
         .product-table td {
-          min-height: 10mm;
-          padding: 2.3mm 1.5mm;
+          padding: 1.4mm 1.5mm;
+          line-height: 1.2;
           vertical-align: middle;
+          white-space: pre-wrap;
+          word-break: break-word;
+          overflow-wrap: anywhere;
         }
 
-        .product-table tbody tr:not(.summary-row) td {
-          height: 15mm;
+        .product-table tbody tr {
+          height: auto;
+        }
+
+        .product-table tbody tr td {
+          min-height: 0;
         }
 
         .col-index {
           width: 9mm;
+          text-align: center;
         }
 
         .col-product {
-          width: 83mm;
+          width: 77mm;
         }
 
         .col-unit {
-          width: 14mm;
+          width: 12mm;
         }
 
         .col-quantity {
-          width: 14mm;
+          width: 12mm;
         }
 
         .col-price {
-          width: 23mm;
+          width: 19mm;
         }
 
         .col-total {
-          width: 27mm;
+          width: 21mm;
         }
 
         .col-note {
-          width: 25mm;
+          width: 20mm;
         }
 
         .center {
           text-align: center;
+          vertical-align: middle !important;
+        }
+
+        .product-table th.col-index {
+          padding-left: 0;
+          padding-right: 0;
+          text-align: center;
+          vertical-align: middle;
         }
 
         .money {
@@ -1004,7 +1077,13 @@ function QuotationPrintContent() {
         }
 
         .product-name {
-          font-weight: 600;
+          font-weight: 400;
+          line-height: 1.4;
+        }
+
+        .note-cell {
+          white-space: pre-wrap;
+          line-height: 1.4;
         }
 
         .product-code {
@@ -1059,8 +1138,8 @@ function QuotationPrintContent() {
           grid-template-columns:
             1fr 1fr;
           gap: 15mm;
-          min-height: 35mm;
-          margin-top: 7mm;
+          min-height: 0;
+          margin-top: 2mm;
           text-align: center;
           page-break-inside: avoid;
         }
@@ -1079,7 +1158,7 @@ function QuotationPrintContent() {
 
         @page {
           size: A4 portrait;
-          margin: 8mm;
+          margin: 20mm;
         }
 
         @media print {
@@ -1100,8 +1179,34 @@ function QuotationPrintContent() {
             box-shadow: none;
           }
 
+          .print-layout > thead {
+            display: table-header-group;
+          }
+
+          .print-layout > tbody {
+            display: table-row-group;
+          }
+
+          .print-layout > tfoot {
+            display: table-footer-group;
+          }
+
+          .print-header,
+          .print-footer {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+
+          .product-table {
+            page-break-inside: auto;
+          }
+
           .product-table thead {
             display: table-header-group;
+          }
+
+          .product-table tbody {
+            display: table-row-group;
           }
 
           .product-table tr,
@@ -1109,6 +1214,11 @@ function QuotationPrintContent() {
           .terms p {
             break-inside: avoid;
             page-break-inside: avoid;
+          }
+
+          .signatures {
+            min-height: 0;
+            margin-top: 2mm;
           }
         }
 

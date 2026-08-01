@@ -60,6 +60,11 @@ type ProductData = {
   sellPrice?: number;
   salePrice?: number;
   costPrice?: number;
+  cost_price?: number;
+  capital_price?: number;
+  import_price?: number;
+  importPrice?: number;
+  purchasePrice?: number;
   minStock?: number;
   min_stock?: number;
 };
@@ -159,12 +164,14 @@ export default function DashboardPage() {
     );
   };
 
-  const getProductPrice = (product: any) => {
+  const getProductCost = (product: any) => {
     return Number(
-      product.price ||
-      product.sellPrice ||
-      product.salePrice ||
-      product.costPrice ||
+      product.capital_price ??
+      product.import_price ??
+      product.costPrice ??
+      product.cost_price ??
+      product.importPrice ??
+      product.purchasePrice ??
       0
     );
   };
@@ -936,7 +943,7 @@ export default function DashboardPage() {
       (sum, product) =>
         sum +
         getProductStock(product) *
-          getProductPrice(product),
+          getProductCost(product),
       0
     );
 

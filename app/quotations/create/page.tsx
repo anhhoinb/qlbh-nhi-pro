@@ -739,7 +739,7 @@ export default function CreateQuotationPage() {
                             {item.product_code || "---"}
                           </td>
 
-                          <td className="p-3 font-semibold">
+                          <td className="p-3 align-top font-normal whitespace-normal break-words">
                             {item.printName}
                           </td>
 
@@ -799,16 +799,17 @@ export default function CreateQuotationPage() {
                             {formatMoney(lineTotal)}đ
                           </td>
 
-                          <td className="p-3">
-                            <input
+                          <td className="p-3 align-top">
+                            <textarea
+                              rows={3}
                               value={item.note}
                               onChange={(event) =>
                                 updateItem(item.id, {
                                   note: event.target.value,
                                 })
                               }
-                              className="w-full rounded-lg border p-2"
-                              placeholder="Ghi chú"
+                              className="min-h-[76px] w-full resize-y rounded-lg border p-2 leading-5 outline-none focus:border-blue-500"
+                              placeholder="Nhập ghi chú, có thể Enter xuống dòng"
                             />
                           </td>
 
