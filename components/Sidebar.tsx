@@ -201,6 +201,13 @@ export default function Sidebar() {
             },
 
             {
+              label: "Kiểm hàng",
+              href: "/inventory-check",
+              permissionKey:
+                "products",
+            },
+
+            {
               label:
                 "Lịch sử nhập",
               href: "/restock-history",
