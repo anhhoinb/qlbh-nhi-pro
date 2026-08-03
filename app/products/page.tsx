@@ -13,11 +13,34 @@ import {
   doc,
   getDocs,
   updateDoc,
+  query,
+  where,
+  orderBy,
 } from "firebase/firestore";
 
 import {
   db
 } from "@/lib/firebase";
+
+type InventoryMovement = {
+  id: string;
+  productId?: string;
+  productName?: string;
+  productCode?: string;
+  type?: string;
+  direction?: "in" | "out";
+  quantity?: number;
+  stockBefore?: number;
+  stockAfter?: number;
+  orderId?: string;
+  orderCode?: string;
+  reason?: string;
+  note?: string;
+  customerName?: string;
+  createdBy?: string;
+  createdByName?: string;
+  createdAt?: any;
+};
 
 export default function ProductsPage() {
   // ADD PRODUCT
@@ -56,6 +79,11 @@ export default function ProductsPage() {
 
   // EDIT MODAL
   const [editingProduct, setEditingProduct] = useState<any>(null);
+
+  const [showStockHistory, setShowStockHistory] = useState(false);
+  const [stockHistory, setStockHistory] = useState<InventoryMovement[]>([]);
+  const [loadingStockHistory, setLoadingStockHistory] = useState(false);
+
   const [showColumnSettings, setShowColumnSettings] =
   useState(false);
 
@@ -317,9 +345,108 @@ if (duplicateCode) {
     }
   };
 
+  const formatHistoryDate = (value: any) => {
+    if (!value) return "---";
+
+    const date =
+      typeof value?.toDate === "function"
+        ? value.toDate()
+        : value?.seconds
+        ? new Date(value.seconds * 1000)
+        : new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "---";
+    }
+
+    return date.toLocaleString("vi-VN");
+  };
+
+  const getMovementLabel = (movement: InventoryMovement) => {
+    if (movement.type === "sale") return "Bán hàng";
+    if (movement.type === "return") return "Hoàn kho";
+    if (movement.type === "import") return "Nhập kho";
+    if (movement.type === "adjustment") return "Điều chỉnh kho";
+    if (movement.type === "inventory_check") return "Kiểm kho";
+
+    return movement.reason || "Biến động kho";
+  };
+
+  const loadStockHistory = async (productId: string) => {
+    try {
+      setLoadingStockHistory(true);
+      setStockHistory([]);
+
+      let snapshot;
+
+      try {
+        snapshot = await getDocs(
+          query(
+            collection(db, "inventory_movements"),
+            where("productId", "==", productId),
+            orderBy("createdAt", "desc")
+          )
+        );
+      } catch (error) {
+        console.warn(
+          "Không thể sắp xếp lịch sử theo createdAt, đang tải theo truy vấn cơ bản:",
+          error
+        );
+
+        snapshot = await getDocs(
+          query(
+            collection(db, "inventory_movements"),
+            where("productId", "==", productId)
+          )
+        );
+      }
+
+      const data = snapshot.docs.map((item) => ({
+        id: item.id,
+        ...item.data(),
+      })) as InventoryMovement[];
+
+      data.sort((a, b) => {
+        const getTime = (value: any) => {
+          if (!value) return 0;
+
+          if (typeof value?.toDate === "function") {
+            return value.toDate().getTime();
+          }
+
+          if (value?.seconds) {
+            return value.seconds * 1000;
+          }
+
+          const date = new Date(value);
+          return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+        };
+
+        return getTime(b.createdAt) - getTime(a.createdAt);
+      });
+
+      setStockHistory(data);
+    } catch (error) {
+      console.error(error);
+      alert("Không tải được lịch sử kho của sản phẩm");
+    } finally {
+      setLoadingStockHistory(false);
+    }
+  };
+
+  const openStockHistory = async () => {
+    if (!editingProduct?.id) return;
+
+    setShowStockHistory(true);
+    await loadStockHistory(editingProduct.id);
+  };
+
   // OPEN EDIT MODAL
   const openEditModal = (item: any) => {
     setEditingProduct(item);
+    setShowStockHistory(false);
+    setStockHistory([]);
+    setImagePreview(item.imageUrl || "");
 
     setEditName(item.name || "");
     setEditMainName(item.main_name || item.name || "");
@@ -1593,13 +1720,25 @@ successCount++;
     />
   )}
 </div>
-              <div className="flex justify-end gap-3 mt-7">
+              <div className="flex flex-wrap justify-end gap-3 mt-7">
                 <button
                   type="button"
-                  onClick={() => setEditingProduct(null)}
+                  onClick={() => {
+                    setEditingProduct(null);
+                    setShowStockHistory(false);
+                    setStockHistory([]);
+                  }}
                   className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-2xl font-semibold"
                 >
                   Hủy
+                </button>
+
+                <button
+                  type="button"
+                  onClick={openStockHistory}
+                  className="border border-amber-500 bg-white px-6 py-3 rounded-2xl font-semibold text-amber-700 hover:bg-amber-50"
+                >
+                  Lịch sử kho
                 </button>
 
                 <button
@@ -1613,6 +1752,140 @@ successCount++;
             </div>
           </div>
         )}
+        {showStockHistory && editingProduct && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+            <div className="max-h-[88vh] w-full max-w-6xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b p-5">
+                <div>
+                  <h2 className="text-2xl font-bold text-blue-700">
+                    Lịch sử kho
+                  </h2>
+
+                  <p className="mt-1 text-sm text-gray-500">
+                    {editingProduct.short_name ||
+                      editingProduct.main_name ||
+                      editingProduct.name}
+                    {editingProduct.product_code
+                      ? ` • ${editingProduct.product_code}`
+                      : ""}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowStockHistory(false)}
+                  className="h-10 w-10 rounded-full bg-gray-100 text-xl hover:bg-gray-200"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="max-h-[calc(88vh-90px)] overflow-auto">
+                {loadingStockHistory ? (
+                  <div className="p-10 text-center text-gray-500">
+                    Đang tải lịch sử kho...
+                  </div>
+                ) : stockHistory.length === 0 ? (
+                  <div className="p-10 text-center">
+                    <div className="text-lg font-semibold text-gray-700">
+                      Chưa có lịch sử kho
+                    </div>
+
+                    <p className="mt-2 text-sm text-gray-500">
+                      Lịch sử sẽ xuất hiện sau khi POS bắt đầu ghi dữ liệu vào
+                      collection inventory_movements.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[1050px] border-collapse">
+                      <thead className="sticky top-0 bg-blue-700 text-white">
+                        <tr>
+                          <th className="p-3 text-left">Thời gian</th>
+                          <th className="p-3 text-left">Loại</th>
+                          <th className="p-3 text-left">Chứng từ</th>
+                          <th className="p-3 text-left">Khách hàng</th>
+                          <th className="p-3 text-right">Tồn trước</th>
+                          <th className="p-3 text-right">Thay đổi</th>
+                          <th className="p-3 text-right">Tồn sau</th>
+                          <th className="p-3 text-left">Người thao tác</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {stockHistory.map((movement) => {
+                          const quantity = Number(movement.quantity || 0);
+                          const isOut = movement.direction === "out";
+
+                          return (
+                            <tr
+                              key={movement.id}
+                              className="border-b hover:bg-gray-50"
+                            >
+                              <td className="p-3 whitespace-nowrap">
+                                {formatHistoryDate(movement.createdAt)}
+                              </td>
+
+                              <td className="p-3">
+                                <span
+                                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                    isOut
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-green-100 text-green-700"
+                                  }`}
+                                >
+                                  {getMovementLabel(movement)}
+                                </span>
+                              </td>
+
+                              <td className="p-3 font-semibold text-blue-700">
+                                {movement.orderCode || "---"}
+                              </td>
+
+                              <td className="p-3">
+                                {movement.customerName || "---"}
+                              </td>
+
+                              <td className="p-3 text-right">
+                                {Number(
+                                  movement.stockBefore || 0
+                                ).toLocaleString("vi-VN")}
+                              </td>
+
+                              <td
+                                className={`p-3 text-right font-bold ${
+                                  isOut
+                                    ? "text-red-600"
+                                    : "text-green-600"
+                                }`}
+                              >
+                                {isOut ? "-" : "+"}
+                                {quantity.toLocaleString("vi-VN")}
+                              </td>
+
+                              <td className="p-3 text-right font-semibold">
+                                {Number(
+                                  movement.stockAfter || 0
+                                ).toLocaleString("vi-VN")}
+                              </td>
+
+                              <td className="p-3">
+                                {movement.createdByName ||
+                                  movement.createdBy ||
+                                  "---"}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </main>
   );

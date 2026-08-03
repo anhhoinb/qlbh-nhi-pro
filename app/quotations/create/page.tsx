@@ -103,9 +103,7 @@ export default function CreateQuotationPage() {
     "Bảo hành 12 tháng đối với lỗi kỹ thuật do nhà sản xuất."
   );
 
-  const [shippingIncluded, setShippingIncluded] =
-    useState(false);
-
+  const [shippingIncluded, setShippingIncluded] = useState(false);
   const [shippingNote, setShippingNote] = useState("");
 
   const [buyer, setBuyer] = useState<BuyerInfo>({
@@ -130,17 +128,11 @@ export default function CreateQuotationPage() {
         ...item,
         printName: showMainName
           ? item.main_name || item.name || ""
-          : item.short_name ||
-            item.main_name ||
-            item.name ||
-            "",
+          : item.short_name || item.main_name || item.name || "",
       }))
     );
 
-    localStorage.setItem(
-      "pos_show_main_name",
-      String(showMainName)
-    );
+    localStorage.setItem("pos_show_main_name", String(showMainName));
   }, [showMainName]);
 
   useEffect(() => {
@@ -175,10 +167,7 @@ export default function CreateQuotationPage() {
   function getProductDisplayName(product: Product) {
     return showMainName
       ? product.main_name || product.name || ""
-      : product.short_name ||
-          product.main_name ||
-          product.name ||
-          "";
+      : product.short_name || product.main_name || product.name || "";
   }
 
   const filteredProducts = useMemo(() => {
@@ -228,10 +217,7 @@ export default function CreateQuotationPage() {
           name: product.name || "",
           main_name: product.main_name || product.name || "",
           short_name:
-            product.short_name ||
-            product.main_name ||
-            product.name ||
-            "",
+            product.short_name || product.main_name || product.name || "",
           printName: getProductDisplayName(product),
           product_code: product.product_code || "",
           unit: getUnitText(product.unit),
@@ -247,10 +233,7 @@ export default function CreateQuotationPage() {
     setShowDropdown(false);
   };
 
-  const updateItem = (
-    id: string,
-    changes: Partial<QuotationItem>
-  ) => {
+  const updateItem = (id: string, changes: Partial<QuotationItem>) => {
     setItems((prev) =>
       prev.map((item) =>
         item.id === id
@@ -270,9 +253,7 @@ export default function CreateQuotationPage() {
   const subtotal = useMemo(() => {
     return items.reduce(
       (sum, item) =>
-        sum +
-        Number(item.quantity || 0) *
-          Number(item.price || 0),
+        sum + Number(item.quantity || 0) * Number(item.price || 0),
       0
     );
   }, [items]);
@@ -280,32 +261,22 @@ export default function CreateQuotationPage() {
   const vatAmount = useMemo(() => {
     return items.reduce((sum, item) => {
       const lineSubtotal =
-        Number(item.quantity || 0) *
-        Number(item.price || 0);
+        Number(item.quantity || 0) * Number(item.price || 0);
 
-      return (
-        sum +
-        lineSubtotal * (Number(item.tax || 0) / 100)
-      );
+      return sum + lineSubtotal * (Number(item.tax || 0) / 100);
     }, 0);
   }, [items]);
 
   const total = subtotal + vatAmount;
 
   const getNextQuotationCode = async () => {
-    const counterRef = doc(
-      db,
-      "settings",
-      "quotation_counter"
-    );
-
+    const counterRef = doc(db, "settings", "quotation_counter");
     const counterSnap = await getDoc(counterRef);
 
     let nextNumber = 1;
 
     if (counterSnap.exists()) {
-      nextNumber =
-        Number(counterSnap.data()?.current || 0) + 1;
+      nextNumber = Number(counterSnap.data()?.current || 0) + 1;
     }
 
     await setDoc(
@@ -335,12 +306,81 @@ export default function CreateQuotationPage() {
     return true;
   };
 
+  const previewQuotation = () => {
+    if (!validate()) return;
+
+    try {
+      const previewItems = items.map((item) => {
+        const lineSubtotal =
+          Number(item.quantity || 0) * Number(item.price || 0);
+        const lineVat =
+          lineSubtotal * (Number(item.tax || 0) / 100);
+
+        return {
+          ...item,
+          quantity: Number(item.quantity || 0),
+          price: Number(item.price || 0),
+          tax: Number(item.tax || 0),
+          lineSubtotal,
+          lineVat,
+          lineTotal: lineSubtotal + lineVat,
+        };
+      });
+
+      const previewData = {
+        id: "preview",
+        quotationCode: "BẢN XEM TRƯỚC",
+        quotation_code: "BẢN XEM TRƯỚC",
+        quotationDate,
+        validDays: Number(validDays || 0),
+        seller: DEFAULT_SELLER,
+        buyer: {
+          companyName: buyer.companyName.trim(),
+          address: buyer.address.trim(),
+          taxCode: buyer.taxCode.trim(),
+          phone: buyer.phone.trim(),
+          email: buyer.email.trim(),
+        },
+        terms: {
+          deliveryTime: deliveryTime.trim(),
+          warrantyTime: warrantyTime.trim(),
+          shippingIncluded,
+          shippingNote: shippingNote.trim(),
+        },
+        items: previewItems,
+        subtotal,
+        vatAmount,
+        total,
+        status: "draft",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      sessionStorage.setItem(
+        "temporary_quotation",
+        JSON.stringify(previewData)
+      );
+
+      const previewWindow = window.open(
+        "/quotations/print?preview=1",
+        "_blank"
+      );
+
+      if (!previewWindow) {
+        alert(
+          "Trình duyệt đang chặn cửa sổ xem trước. Vui lòng cho phép mở cửa sổ bật lên."
+        );
+      }
+    } catch (error) {
+      console.error("PREVIEW QUOTATION ERROR:", error);
+      alert("Không thể xem trước báo giá");
+    }
+  };
+
   const saveQuotation = async (openPrint: boolean) => {
     if (!validate()) return;
 
-    const printWindow = openPrint
-      ? window.open("", "_blank")
-      : null;
+    const printWindow = openPrint ? window.open("", "_blank") : null;
 
     try {
       setSaving(true);
@@ -352,9 +392,7 @@ export default function CreateQuotationPage() {
         quotation_code: quotationCode,
         quotationDate,
         validDays: Number(validDays || 0),
-
         seller: DEFAULT_SELLER,
-
         buyer: {
           companyName: buyer.companyName.trim(),
           address: buyer.address.trim(),
@@ -362,19 +400,15 @@ export default function CreateQuotationPage() {
           phone: buyer.phone.trim(),
           email: buyer.email.trim(),
         },
-
         terms: {
           deliveryTime: deliveryTime.trim(),
           warrantyTime: warrantyTime.trim(),
           shippingIncluded,
           shippingNote: shippingNote.trim(),
         },
-
         items: items.map((item) => {
           const lineSubtotal =
-            Number(item.quantity || 0) *
-            Number(item.price || 0);
-
+            Number(item.quantity || 0) * Number(item.price || 0);
           const lineVat =
             lineSubtotal * (Number(item.tax || 0) / 100);
 
@@ -388,11 +422,9 @@ export default function CreateQuotationPage() {
             lineTotal: lineSubtotal + lineVat,
           };
         }),
-
         subtotal,
         vatAmount,
         total,
-
         status: "draft",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -404,10 +436,9 @@ export default function CreateQuotationPage() {
       );
 
       if (openPrint) {
-        const printUrl =
-          `/quotations/print?id=${encodeURIComponent(
-            docRef.id
-          )}&print=1`;
+        const printUrl = `/quotations/print?id=${encodeURIComponent(
+          docRef.id
+        )}&print=1`;
 
         if (printWindow) {
           printWindow.location.href = printUrl;
@@ -426,9 +457,9 @@ export default function CreateQuotationPage() {
       console.error("SAVE QUOTATION ERROR:", error);
 
       alert(
-        `Không lưu được báo giá.\n\n${
-          error?.code || ""
-        }\n${error?.message || "Lỗi không xác định"}`
+        `Không lưu được báo giá.\n\n${error?.code || ""}\n${
+          error?.message || "Lỗi không xác định"
+        }`
       );
     } finally {
       setSaving(false);
@@ -461,6 +492,15 @@ export default function CreateQuotationPage() {
             <button
               type="button"
               disabled={saving}
+              onClick={previewQuotation}
+              className="rounded-xl border border-orange-500 bg-white px-5 py-2 font-semibold text-orange-600 hover:bg-orange-50 disabled:opacity-50"
+            >
+              Xem trước
+            </button>
+
+            <button
+              type="button"
+              disabled={saving}
               onClick={() => saveQuotation(false)}
               className="rounded-xl bg-blue-700 px-5 py-2 font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
             >
@@ -481,22 +521,17 @@ export default function CreateQuotationPage() {
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[420px_1fr]">
           <section className="space-y-5">
             <div className="rounded-2xl bg-white p-5 shadow-sm">
-              <h2 className="mb-4 text-lg font-bold">
-                Thông tin báo giá
-              </h2>
+              <h2 className="mb-4 text-lg font-bold">Thông tin báo giá</h2>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1 block text-sm font-semibold">
                     Ngày báo giá
                   </label>
-
                   <input
                     type="date"
                     value={quotationDate}
-                    onChange={(event) =>
-                      setQuotationDate(event.target.value)
-                    }
+                    onChange={(event) => setQuotationDate(event.target.value)}
                     className="w-full rounded-xl border p-3"
                   />
                 </div>
@@ -505,37 +540,27 @@ export default function CreateQuotationPage() {
                   <label className="mb-1 block text-sm font-semibold">
                     Hiệu lực
                   </label>
-
                   <div className="flex items-center gap-2">
                     <input
                       type="number"
                       min="1"
                       value={validDays}
-                      onChange={(event) =>
-                        setValidDays(event.target.value)
-                      }
+                      onChange={(event) => setValidDays(event.target.value)}
                       className="w-full rounded-xl border p-3"
                     />
-
-                    <span className="text-sm text-gray-500">
-                      ngày
-                    </span>
+                    <span className="text-sm text-gray-500">ngày</span>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="rounded-2xl bg-white p-5 shadow-sm">
-              <h2 className="mb-4 text-lg font-bold">
-                Công ty mua hàng
-              </h2>
-
+              <h2 className="mb-4 text-lg font-bold">Công ty mua hàng</h2>
               <div className="space-y-3">
                 <div>
                   <label className="mb-1 block text-sm font-semibold">
                     Tên công ty *
                   </label>
-
                   <input
                     value={buyer.companyName}
                     onChange={(event) =>
@@ -553,7 +578,6 @@ export default function CreateQuotationPage() {
                   <label className="mb-1 block text-sm font-semibold">
                     Địa chỉ
                   </label>
-
                   <textarea
                     rows={3}
                     value={buyer.address}
@@ -572,7 +596,6 @@ export default function CreateQuotationPage() {
                   <label className="mb-1 block text-sm font-semibold">
                     Mã số thuế
                   </label>
-
                   <input
                     value={buyer.taxCode}
                     onChange={(event) =>
@@ -591,7 +614,6 @@ export default function CreateQuotationPage() {
                     <label className="mb-1 block text-sm font-semibold">
                       Số điện thoại
                     </label>
-
                     <input
                       value={buyer.phone}
                       onChange={(event) =>
@@ -609,7 +631,6 @@ export default function CreateQuotationPage() {
                     <label className="mb-1 block text-sm font-semibold">
                       Email
                     </label>
-
                     <input
                       type="email"
                       value={buyer.email}
@@ -628,22 +649,16 @@ export default function CreateQuotationPage() {
             </div>
 
             <div className="rounded-2xl bg-white p-5 shadow-sm">
-              <h2 className="mb-4 text-lg font-bold">
-                Điều kiện báo giá
-              </h2>
-
+              <h2 className="mb-4 text-lg font-bold">Điều kiện báo giá</h2>
               <div className="space-y-4">
                 <div>
                   <label className="mb-1 block text-sm font-semibold">
                     Thời gian giao hàng
                   </label>
-
                   <textarea
                     rows={3}
                     value={deliveryTime}
-                    onChange={(event) =>
-                      setDeliveryTime(event.target.value)
-                    }
+                    onChange={(event) => setDeliveryTime(event.target.value)}
                     className="w-full resize-y rounded-xl border p-3 outline-none focus:border-blue-500"
                     placeholder="Nhập thời gian giao hàng"
                   />
@@ -653,13 +668,10 @@ export default function CreateQuotationPage() {
                   <label className="mb-1 block text-sm font-semibold">
                     Thời gian bảo hành
                   </label>
-
                   <textarea
                     rows={3}
                     value={warrantyTime}
-                    onChange={(event) =>
-                      setWarrantyTime(event.target.value)
-                    }
+                    onChange={(event) => setWarrantyTime(event.target.value)}
                     className="w-full resize-y rounded-xl border p-3 outline-none focus:border-blue-500"
                     placeholder="Nhập thời gian bảo hành"
                   />
@@ -669,7 +681,6 @@ export default function CreateQuotationPage() {
                   <label className="mb-2 block text-sm font-semibold">
                     Chi phí vận chuyển
                   </label>
-
                   <div className="flex flex-wrap gap-5">
                     <label className="flex cursor-pointer items-center gap-2">
                       <input
@@ -697,13 +708,10 @@ export default function CreateQuotationPage() {
                   <label className="mb-1 block text-sm font-semibold">
                     Ghi chú vận chuyển
                   </label>
-
                   <textarea
                     rows={3}
                     value={shippingNote}
-                    onChange={(event) =>
-                      setShippingNote(event.target.value)
-                    }
+                    onChange={(event) => setShippingNote(event.target.value)}
                     className="w-full resize-y rounded-xl border p-3 outline-none focus:border-blue-500"
                     placeholder="Ví dụ: Miễn phí giao hàng nội thành..."
                   />
@@ -716,10 +724,7 @@ export default function CreateQuotationPage() {
             <div className="rounded-2xl bg-white p-5 shadow-sm">
               <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <h2 className="text-lg font-bold">
-                    Sản phẩm báo giá
-                  </h2>
-
+                  <h2 className="text-lg font-bold">Sản phẩm báo giá</h2>
                   <p className="mt-1 text-sm text-gray-500">
                     Tìm theo tên hoặc mã sản phẩm
                   </p>
@@ -787,12 +792,10 @@ export default function CreateQuotationPage() {
                             <div className="truncate font-semibold">
                               {getProductDisplayName(product)}
                             </div>
-
                             <div className="mt-1 text-xs text-gray-500">
                               Mã: {product.product_code || "---"}
                             </div>
                           </div>
-
                           <div className="shrink-0 font-semibold text-blue-700">
                             {formatMoney(Number(product.price || 0))}đ
                           </div>
@@ -825,32 +828,19 @@ export default function CreateQuotationPage() {
                   <tbody>
                     {items.map((item, index) => {
                       const lineSubtotal =
-                        Number(item.quantity || 0) *
-                        Number(item.price || 0);
-
+                        Number(item.quantity || 0) * Number(item.price || 0);
                       const lineTotal =
                         lineSubtotal +
-                        lineSubtotal *
-                          (Number(item.tax || 0) / 100);
+                        lineSubtotal * (Number(item.tax || 0) / 100);
 
                       return (
                         <tr key={item.id} className="border-b">
-                          <td className="p-3 text-center">
-                            {index + 1}
-                          </td>
-
-                          <td className="p-3">
-                            {item.product_code || "---"}
-                          </td>
-
+                          <td className="p-3 text-center">{index + 1}</td>
+                          <td className="p-3">{item.product_code || "---"}</td>
                           <td className="p-3 align-top font-normal whitespace-normal break-words">
                             {item.printName}
                           </td>
-
-                          <td className="p-3 text-center">
-                            {item.unit}
-                          </td>
-
+                          <td className="p-3 text-center">{item.unit}</td>
                           <td className="p-3 text-center">
                             <input
                               type="number"
@@ -867,22 +857,18 @@ export default function CreateQuotationPage() {
                               className="w-20 rounded-lg border p-2 text-center"
                             />
                           </td>
-
                           <td className="p-3 text-right">
                             <input
                               inputMode="numeric"
                               value={formatMoney(item.price)}
                               onChange={(event) =>
                                 updateItem(item.id, {
-                                  price: parseMoney(
-                                    event.target.value
-                                  ),
+                                  price: parseMoney(event.target.value),
                                 })
                               }
                               className="w-32 rounded-lg border p-2 text-right"
                             />
                           </td>
-
                           <td className="p-3 text-center">
                             <select
                               value={item.tax}
@@ -898,11 +884,9 @@ export default function CreateQuotationPage() {
                               <option value="10">10%</option>
                             </select>
                           </td>
-
                           <td className="p-3 text-right font-semibold">
                             {formatMoney(lineTotal)}đ
                           </td>
-
                           <td className="p-3 align-top">
                             <textarea
                               rows={3}
@@ -916,7 +900,6 @@ export default function CreateQuotationPage() {
                               placeholder="Nhập ghi chú, có thể Enter xuống dòng"
                             />
                           </td>
-
                           <td className="p-3 text-center">
                             <button
                               type="button"
@@ -950,12 +933,10 @@ export default function CreateQuotationPage() {
                     <span>Tiền hàng:</span>
                     <strong>{formatMoney(subtotal)}đ</strong>
                   </div>
-
                   <div className="flex justify-between">
                     <span>Thuế VAT:</span>
                     <strong>{formatMoney(vatAmount)}đ</strong>
                   </div>
-
                   <div className="flex justify-between border-t pt-3 text-xl font-bold text-red-600">
                     <span>Tổng cộng:</span>
                     <span>{formatMoney(total)}đ</span>

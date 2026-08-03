@@ -1,32 +1,64 @@
-import { cert, getApps, initializeApp } from "firebase-admin/app";
+import {
+  cert,
+  getApps,
+  initializeApp,
+} from "firebase-admin/app";
+
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
-const privateKey =
-  process.env.FIREBASE_PRIVATE_KEY;
+const projectId =
+  process.env.FIREBASE_PROJECT_ID?.trim();
 
-const app =
+const clientEmail =
+  process.env.FIREBASE_CLIENT_EMAIL?.trim();
+
+const privateKey =
+  process.env.FIREBASE_PRIVATE_KEY
+    ?.replace(/\\n/g, "\n")
+    .trim();
+
+if (!projectId) {
+  throw new Error(
+    "Thiếu FIREBASE_PROJECT_ID trong .env.local"
+  );
+}
+
+if (!clientEmail) {
+  throw new Error(
+    "Thiếu FIREBASE_CLIENT_EMAIL trong .env.local"
+  );
+}
+
+if (!privateKey) {
+  throw new Error(
+    "Thiếu FIREBASE_PRIVATE_KEY trong .env.local"
+  );
+}
+
+if (
+  !privateKey.startsWith(
+    "-----BEGIN PRIVATE KEY-----"
+  ) ||
+  !privateKey.endsWith(
+    "-----END PRIVATE KEY-----"
+  )
+) {
+  throw new Error(
+    "FIREBASE_PRIVATE_KEY sai định dạng"
+  );
+}
+
+const adminApp =
   getApps().length > 0
     ? getApps()[0]
     : initializeApp({
         credential: cert({
-          projectId:
-            process.env.FIREBASE_PROJECT_ID,
-
-          clientEmail:
-            process.env.FIREBASE_CLIENT_EMAIL,
-
-          privateKey: privateKey
-            ? privateKey.replace(
-                /\\n/g,
-                "\n"
-              )
-            : undefined,
+          projectId,
+          clientEmail,
+          privateKey,
         }),
       });
 
-export const adminAuth =
-  getAuth(app);
-
-export const adminDb =
-  getFirestore(app);
+export const adminAuth = getAuth(adminApp);
+export const adminDb = getFirestore(adminApp);

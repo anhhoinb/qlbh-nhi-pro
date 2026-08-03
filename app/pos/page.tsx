@@ -10,6 +10,8 @@ import {
   updateDoc,
   getDoc,
   setDoc,
+  runTransaction,
+  serverTimestamp,
 } from "firebase/firestore";
 
 import {
@@ -1992,24 +1994,139 @@ console.log(
 );
 
 }
-      for (const item of cart) {
-        const currentStock =
-          Number(item.stock || 0);
-
-        const newStock =
-          currentStock -
-          Number(item.quantity || 0);
-
-        await updateDoc(
-          doc(db, "products", item.id),
-          {
-            stock:
-              newStock < 0
-                ? 0
-                : newStock,
-          }
+      await runTransaction(db, async (transaction) => {
+        const productRefs = cart.map((item) =>
+          doc(db, "products", item.id)
         );
-      }
+
+        const productSnapshots = [];
+
+        for (const productRef of productRefs) {
+          productSnapshots.push(
+            await transaction.get(productRef)
+          );
+        }
+
+        productSnapshots.forEach((snapshot, index) => {
+          if (!snapshot.exists()) {
+            throw new Error(
+              `Không tìm thấy sản phẩm: ${
+                cart[index]?.short_name ||
+                cart[index]?.main_name ||
+                cart[index]?.name ||
+                "Không xác định"
+              }`
+            );
+          }
+
+          const currentStock = Number(
+            snapshot.data()?.stock || 0
+          );
+
+          const quantity = Number(
+            cart[index]?.quantity || 0
+          );
+
+          if (quantity <= 0) {
+            throw new Error(
+              `Số lượng không hợp lệ: ${
+                cart[index]?.short_name ||
+                cart[index]?.main_name ||
+                cart[index]?.name ||
+                "Không xác định"
+              }`
+            );
+          }
+
+          if (quantity > currentStock) {
+            throw new Error(
+              `Sản phẩm "${
+                cart[index]?.short_name ||
+                cart[index]?.main_name ||
+                cart[index]?.name ||
+                "Không xác định"
+              }" không đủ tồn kho. Tồn hiện tại: ${currentStock}`
+            );
+          }
+        });
+
+        cart.forEach((item, index) => {
+          const productSnapshot = productSnapshots[index];
+          const productData = productSnapshot.data();
+
+          const currentStock = Number(
+            productData?.stock || 0
+          );
+
+          const quantity = Number(
+            item.quantity || 0
+          );
+
+          const newStock = currentStock - quantity;
+
+          transaction.update(productRefs[index], {
+            stock: newStock,
+            updatedAt: serverTimestamp(),
+          });
+
+          const movementRef = doc(
+            collection(db, "inventory_movements")
+          );
+
+          transaction.set(movementRef, {
+            productId: item.id,
+            productCode:
+              item.product_code ||
+              item.code ||
+              item.sku ||
+              "",
+            productName:
+              item.short_name ||
+              item.main_name ||
+              item.name ||
+              "",
+            productMainName:
+              item.main_name ||
+              item.name ||
+              "",
+
+            type: "sale",
+            direction: "out",
+            quantity,
+            stockBefore: currentStock,
+            stockAfter: newStock,
+
+            orderId: orderRef.id,
+            orderCode,
+
+            customerId: selectedCustomer?.id || "",
+            customerName:
+              selectedCustomer?.name || "Khách lẻ",
+            customerPhone:
+              selectedCustomer?.phone || "",
+
+            reason: "Bán hàng",
+            note: "Tự động trừ kho khi thanh toán POS",
+
+            createdBy:
+              currentUserInfo?.uid || "",
+            createdByName:
+              currentUserInfo?.name ||
+              accountName ||
+              "Không rõ",
+            createdByEmail:
+              currentUserInfo?.email || "",
+
+            createdAt: serverTimestamp(),
+          });
+        });
+
+        transaction.update(orderRef, {
+          stockDeducted: true,
+          stockDeductedAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      });
 
 setTimeout(() => {
   resetOrRemoveCurrentOrder();
