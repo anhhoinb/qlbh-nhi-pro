@@ -35,6 +35,7 @@ type OrderData = {
   items?: OrderItem[];
 
   status?: string;
+  returnedAmount?: number;
 };
 
 export default function SalesReportPage() {
@@ -102,8 +103,47 @@ export default function SalesReportPage() {
     if (order.profit !== undefined) {
       return Number(order.profit || 0);
     }
-    return Math.round(getOrderTotal(order) * 0.35);
+
+    return Math.round(
+      getNetOrderRevenue(order) * 0.35
+    );
   };
+
+  const getNetOrderRevenue = (
+    order: OrderData
+  ) => {
+    if (isCancelledOrder(order)) {
+      return 0;
+    }
+
+    const status = String(
+      order.status || ""
+    ).toLowerCase();
+
+    if (
+      status === "returned" ||
+      status === "return"
+    ) {
+      return 0;
+    }
+
+    if (
+      status ===
+      "partially_returned"
+    ) {
+      return Math.max(
+        0,
+        getOrderTotal(order) -
+          Number(
+            order.returnedAmount ||
+              0
+          )
+      );
+    }
+
+    return getOrderTotal(order);
+  };
+
 const isCancelledOrder = (order: OrderData) => {
   const status = String(order.status || "").toLowerCase();
 
@@ -218,29 +258,38 @@ const isCancelledOrder = (order: OrderData) => {
     return filterOrders(orders);
   }, [orders, filterType]);
 
-  const totalRevenue = filteredOrders.reduce(
-  (sum, order) => {
-
-    if (isCancelledOrder(order)) {
-      return sum;
-    }
-
-    return sum + getOrderTotal(order);
-
-  },
-  0
-);
+  const totalRevenue =
+    filteredOrders.reduce(
+      (sum, order) =>
+        sum +
+        getNetOrderRevenue(order),
+      0
+    );
 
   const totalOrders = filteredOrders.filter(
   (order) => !isCancelledOrder(order)
 ).length;
 
-  const returnedOrders = filteredOrders.filter(
-    (order) =>
-      order.status === "returned" ||
-      order.status === "return" ||
-      order.status === "partially_returned"
-  ).length;
+  const returnedOrders =
+    filteredOrders.filter(
+      (order) =>
+        order.status ===
+          "returned" ||
+        order.status ===
+          "return" ||
+        order.status ===
+          "partially_returned"
+    ).length;
+
+  const totalReturnedAmount =
+    filteredOrders.reduce(
+      (sum, order) =>
+        sum +
+        Number(
+          order.returnedAmount || 0
+        ),
+      0
+    );
 
   const getChartDays = () => {
     const now = new Date();
@@ -446,8 +495,11 @@ const isCancelledOrder = (order: OrderData) => {
     return;
   }
 
-  found.revenue += getOrderTotal(order);
-  found.profit += getOrderProfit(order);
+  found.revenue +=
+    getNetOrderRevenue(order);
+
+  found.profit +=
+    getOrderProfit(order);
 }
     });
 
@@ -557,13 +609,18 @@ const isCancelledOrder = (order: OrderData) => {
     item.price || 0,
 
   "Doanh thu":
-    getOrderTotal(order),
+    getNetOrderRevenue(order),
 
   "Lợi nhuận":
     getOrderProfit(order),
 
   "Thanh toán":
     order.paymentMethod || "---",
+
+  "Tiền đã hoàn":
+    Number(
+      order.returnedAmount || 0
+    ),
 
   "Trạng thái":
     order.status || "---",
@@ -927,8 +984,14 @@ const isCancelledOrder = (order: OrderData) => {
                 </p>
               </div>
 
-              <div className="text-3xl font-bold text-blue-600">
-                {returnedOrders}
+              <div className="text-right">
+                <div className="text-3xl font-bold text-blue-600">
+                  {returnedOrders}
+                </div>
+
+                <div className="mt-1 text-xs font-semibold text-red-600">
+                  Hoàn: {formatMoney(totalReturnedAmount)}đ
+                </div>
               </div>
             </div>
 
