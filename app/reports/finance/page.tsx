@@ -71,6 +71,10 @@ type OrderData = {
   discount?: number;
   vatAmount?: number;
   vat?: number;
+
+  status?: string;
+  orderStatus?: string;
+  returnedAmount?: number;
 };
 
 type PaymentFilter = "all" | "cash" | "bank";
@@ -240,25 +244,110 @@ export default function FinanceReportPage() {
   };
 
   const isCancelledOrder = (
-  order: any
-) => {
+    order: OrderData
+  ) => {
+    const status = String(
+      order.status ||
+        order.orderStatus ||
+        ""
+    ).toLowerCase();
 
-  const status = String(
-    order.status ||
-    order.orderStatus ||
-    ""
-  ).toLowerCase();
+    return [
+      "cancel",
+      "cancelled",
+      "canceled",
+      "huy",
+      "hủy",
+      "đã hủy",
+    ].includes(status);
+  };
 
-  return [
-    "cancel",
-    "cancelled",
-    "canceled",
-    "huy",
-    "hủy",
-    "đã hủy"
-  ].includes(status);
+  const getOrderStatus = (
+    order: OrderData
+  ) => {
+    return String(
+      order.status ||
+        order.orderStatus ||
+        ""
+    ).toLowerCase();
+  };
 
-};
+  const isReturnedOrder = (
+    order: OrderData
+  ) => {
+    const status =
+      getOrderStatus(order);
+
+    return (
+      status === "returned" ||
+      status === "return"
+    );
+  };
+
+  const isPartiallyReturnedOrder = (
+    order: OrderData
+  ) => {
+    return (
+      getOrderStatus(order) ===
+      "partially_returned"
+    );
+  };
+
+  const getReturnedAmount = (
+    order: OrderData
+  ) => {
+    return Number(
+      order.returnedAmount || 0
+    );
+  };
+
+  const getNetOrderTotal = (
+    order: OrderData
+  ) => {
+    if (isCancelledOrder(order)) {
+      return 0;
+    }
+
+    if (isReturnedOrder(order)) {
+      return 0;
+    }
+
+    if (
+      isPartiallyReturnedOrder(
+        order
+      )
+    ) {
+      return Math.max(
+        0,
+        getOrderTotal(order) -
+          getReturnedAmount(order)
+      );
+    }
+
+    return getOrderTotal(order);
+  };
+
+  const getOrderStatusText = (
+    order: OrderData
+  ) => {
+    if (isCancelledOrder(order)) {
+      return "Đã hủy";
+    }
+
+    if (isReturnedOrder(order)) {
+      return "Đã trả hàng";
+    }
+
+    if (
+      isPartiallyReturnedOrder(
+        order
+      )
+    ) {
+      return "Trả một phần";
+    }
+
+    return "Hoàn thành";
+  };
 
   const getPaymentMethodText = (
     order: OrderData
@@ -486,21 +575,29 @@ export default function FinanceReportPage() {
           }
         );
 
-      if (paymentFilter === "cash") {
-        return sorted.filter(
+      const activeOrders =
+        sorted.filter(
+          (order) =>
+            !isCancelledOrder(order)
+        );
+
+      if (
+        paymentFilter === "cash"
+      ) {
+        return activeOrders.filter(
           isCashPayment
         );
       }
 
-      if (paymentFilter === "bank") {
-        return sorted.filter(
+      if (
+        paymentFilter === "bank"
+      ) {
+        return activeOrders.filter(
           isBankPayment
         );
       }
 
-      return sorted.filter(
-  (order) => !isCancelledOrder(order)
-);
+      return activeOrders;
     }, [
       orders,
       filterType,
@@ -510,7 +607,8 @@ export default function FinanceReportPage() {
   const totalRevenue =
     filteredOrders.reduce(
       (sum, order) =>
-        sum + getOrderTotal(order),
+        sum +
+        getNetOrderTotal(order),
       0
     );
 
@@ -520,18 +618,32 @@ export default function FinanceReportPage() {
         const method =
           getPaymentMethodText(order);
 
+        const netTotal =
+          getNetOrderTotal(order);
+
         if (method === "Tiền mặt") {
-          return (
-            sum + getOrderTotal(order)
-          );
+          return sum + netTotal;
         }
 
         if (method === "CK + TM") {
-          return (
-            sum +
+          const originalTotal =
+            getOrderTotal(order);
+
+          if (
+            originalTotal <= 0 ||
+            netTotal <= 0
+          ) {
+            return sum;
+          }
+
+          const cashRatio =
             Number(
               order.cashAmount || 0
-            )
+            ) / originalTotal;
+
+          return (
+            sum +
+            netTotal * cashRatio
           );
         }
 
@@ -546,23 +658,37 @@ export default function FinanceReportPage() {
         const method =
           getPaymentMethodText(order);
 
+        const netTotal =
+          getNetOrderTotal(order);
+
         if (
           method === "Chuyển khoản" ||
           method === "Quẹt thẻ"
         ) {
-          return (
-            sum + getOrderTotal(order)
-          );
+          return sum + netTotal;
         }
 
         if (method === "CK + TM") {
-          return (
-            sum +
+          const originalTotal =
+            getOrderTotal(order);
+
+          if (
+            originalTotal <= 0 ||
+            netTotal <= 0
+          ) {
+            return sum;
+          }
+
+          const bankRatio =
             Number(
               order.bankAmount ||
                 order.cardAmount ||
                 0
-            )
+            ) / originalTotal;
+
+          return (
+            sum +
+            netTotal * bankRatio
           );
         }
 
@@ -571,17 +697,41 @@ export default function FinanceReportPage() {
       0
     );
 
+  const getNetRatio = (
+    order: OrderData
+  ) => {
+    const originalTotal =
+      getOrderTotal(order);
+
+    if (originalTotal <= 0) {
+      return 0;
+    }
+
+    return Math.max(
+      0,
+      Math.min(
+        1,
+        getNetOrderTotal(order) /
+          originalTotal
+      )
+    );
+  };
+
   const discountTotal =
     filteredOrders.reduce(
       (sum, order) =>
-        sum + getOrderDiscount(order),
+        sum +
+        getOrderDiscount(order) *
+          getNetRatio(order),
       0
     );
 
   const vatTotal =
     filteredOrders.reduce(
       (sum, order) =>
-        sum + getOrderVat(order),
+        sum +
+        getOrderVat(order) *
+          getNetRatio(order),
       0
     );
 
@@ -594,21 +744,39 @@ export default function FinanceReportPage() {
       }
 
       const revenue =
-        getOrderTotal(order);
+        getNetOrderTotal(order);
+
+      const ratio =
+        getNetRatio(order);
 
       const discount =
-        getOrderDiscount(order);
+        getOrderDiscount(order) *
+        ratio;
 
       const vat =
-        getOrderVat(order);
+        getOrderVat(order) *
+        ratio;
 
       const profit =
-        (revenue - discount - vat) * 0.35;
+        Math.max(
+          0,
+          revenue -
+            discount -
+            vat
+        ) * 0.35;
 
       return sum + profit;
     },
     0
   );
+
+  const totalReturnedAmount =
+    filteredOrders.reduce(
+      (sum, order) =>
+        sum +
+        getReturnedAmount(order),
+      0
+    );
 
   const totalPages =
     Math.max(
@@ -764,6 +932,12 @@ export default function FinanceReportPage() {
             <p className="text-2xl font-bold text-blue-700 mt-2">
               {formatMoney(totalRevenue)}đ
             </p>
+
+            {totalReturnedAmount > 0 && (
+              <p className="mt-2 text-xs font-semibold text-red-600">
+                Đã hoàn: {formatMoney(totalReturnedAmount)}đ
+              </p>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl shadow p-4 min-h-[95px]">
@@ -966,6 +1140,10 @@ export default function FinanceReportPage() {
                   </th>
 
                   <th className="p-4 text-left">
+                    Trạng thái
+                  </th>
+
+                  <th className="p-4 text-left">
                     Ngày tạo
                   </th>
                 </tr>
@@ -975,7 +1153,7 @@ export default function FinanceReportPage() {
                 {currentOrders.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="p-8 text-center text-gray-500"
                     >
                       Không có đơn hàng phù hợp
@@ -1040,11 +1218,21 @@ export default function FinanceReportPage() {
                               {getCustomerName(order)}
                             </td>
 
-                            <td className="p-4 text-right font-bold">
-                              {formatMoney(
-                                getOrderTotal(order)
+                            <td className="p-4 text-right">
+                              <div className="font-bold">
+                                {formatMoney(
+                                  getNetOrderTotal(order)
+                                )}
+                                đ
+                              </div>
+
+                              {getReturnedAmount(order) > 0 && (
+                                <div className="mt-1 text-xs font-semibold text-red-600">
+                                  Hoàn {formatMoney(
+                                    getReturnedAmount(order)
+                                  )}đ
+                                </div>
                               )}
-                              đ
                             </td>
 
                             <td className="p-4">
@@ -1078,6 +1266,20 @@ export default function FinanceReportPage() {
                             </td>
 
                             <td className="p-4">
+                              <span
+                                className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
+                                  isReturnedOrder(order)
+                                    ? "bg-orange-100 text-orange-700"
+                                    : isPartiallyReturnedOrder(order)
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : "bg-green-100 text-green-700"
+                                }`}
+                              >
+                                {getOrderStatusText(order)}
+                              </span>
+                            </td>
+
+                            <td className="p-4">
                               {formatDateTime(order)}
                             </td>
                           </tr>
@@ -1085,7 +1287,7 @@ export default function FinanceReportPage() {
                           {isExpanded && (
                             <tr className="border-t bg-blue-50/30">
                               <td
-                                colSpan={6}
+                                colSpan={7}
                                 className="p-0"
                               >
                                 <div className="m-3 rounded-xl border bg-white overflow-hidden">
@@ -1114,6 +1316,11 @@ export default function FinanceReportPage() {
                                       <span>
                                         Người tạo:{" "}
                                         <b>{getCreatedBy(order)}</b>
+                                      </span>
+
+                                      <span>
+                                        Trạng thái:{" "}
+                                        <b>{getOrderStatusText(order)}</b>
                                       </span>
                                     </div>
 
@@ -1302,14 +1509,29 @@ export default function FinanceReportPage() {
                                           </strong>
                                         </div>
 
+                                        {getReturnedAmount(order) > 0 && (
+                                          <div className="flex justify-between text-red-600">
+                                            <span>
+                                              Tiền đã hoàn
+                                            </span>
+
+                                            <strong>
+                                              -{formatMoney(
+                                                getReturnedAmount(order)
+                                              )}
+                                              đ
+                                            </strong>
+                                          </div>
+                                        )}
+
                                         <div className="border-t pt-2 flex justify-between text-base">
                                           <span className="font-bold text-blue-700">
-                                            Khách phải trả
+                                            Doanh thu còn lại
                                           </span>
 
                                           <strong className="text-blue-700">
                                             {formatMoney(
-                                              getOrderTotal(order)
+                                              getNetOrderTotal(order)
                                             )}
                                             đ
                                           </strong>
