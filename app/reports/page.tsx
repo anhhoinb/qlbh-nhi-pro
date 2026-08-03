@@ -238,7 +238,8 @@ const isCancelledOrder = (order: OrderData) => {
   const returnedOrders = filteredOrders.filter(
     (order) =>
       order.status === "returned" ||
-      order.status === "return"
+      order.status === "return" ||
+      order.status === "partially_returned"
   ).length;
 
   const getChartDays = () => {

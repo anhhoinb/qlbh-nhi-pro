@@ -10,6 +10,7 @@ import {
   doc,
   updateDoc,
   getDoc,
+  runTransaction,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -28,6 +29,24 @@ export default function OrdersPage() {
     useState<string[]>([]);
 
   const [importing, setImporting] =
+    useState(false);
+
+  const [returnOpen, setReturnOpen] =
+    useState(false);
+
+  const [returnOrder, setReturnOrder] =
+    useState<any>(null);
+
+  const [returnItems, setReturnItems] =
+    useState<any[]>([]);
+
+  const [returnReason, setReturnReason] =
+    useState("");
+
+  const [restockReturnedItems, setRestockReturnedItems] =
+    useState(true);
+
+  const [savingReturn, setSavingReturn] =
     useState(false);
 
   const ordersPerPage = 20;
@@ -949,6 +968,536 @@ export default function OrdersPage() {
   );
 };
 
+  const getAlreadyReturnedQuantity = (
+    order: any,
+    product: any,
+    index: number
+  ) => {
+    const returnedItems =
+      order.returnedItems || [];
+
+    return returnedItems.reduce(
+      (sum: number, returnedItem: any) => {
+        const sameProduct =
+          String(
+            returnedItem.productId ||
+              returnedItem.id ||
+              ""
+          ) ===
+            String(
+              product.id ||
+                product.productId ||
+                ""
+            ) ||
+          (
+            !product.id &&
+            !product.productId &&
+            returnedItem.itemIndex === index
+          );
+
+        return sameProduct
+          ? sum +
+              Number(
+                returnedItem.quantity || 0
+              )
+          : sum;
+      },
+      0
+    );
+  };
+
+  const openReturnModal = () => {
+    if (selectedOrders.length !== 1) {
+      alert("Vui lòng chọn đúng 1 đơn hàng để trả hàng");
+      return;
+    }
+
+    const order = selectedOrders[0];
+
+    if (order.status === "cancelled") {
+      alert("Đơn hàng đã hủy, không thể trả hàng");
+      return;
+    }
+
+    const items = getItems(order);
+
+    if (items.length === 0) {
+      alert("Đơn hàng không có sản phẩm để trả");
+      return;
+    }
+
+    const preparedItems = items.map(
+      (item: any, index: number) => {
+        const soldQuantity =
+          getProductQuantity(item);
+
+        const alreadyReturned =
+          getAlreadyReturnedQuantity(
+            order,
+            item,
+            index
+          );
+
+        const remainingQuantity =
+          Math.max(
+            soldQuantity -
+              alreadyReturned,
+            0
+          );
+
+        return {
+          ...item,
+          itemIndex: index,
+          productId:
+            item.id ||
+            item.productId ||
+            "",
+          selected:
+            remainingQuantity > 0,
+          returnQuantity:
+            remainingQuantity > 0
+              ? 1
+              : 0,
+          soldQuantity,
+          alreadyReturned,
+          remainingQuantity,
+        };
+      }
+    );
+
+    const hasReturnableItem =
+      preparedItems.some(
+        (item: any) =>
+          item.remainingQuantity > 0
+      );
+
+    if (!hasReturnableItem) {
+      alert("Đơn hàng này đã được trả hết");
+      return;
+    }
+
+    setReturnOrder(order);
+    setReturnItems(preparedItems);
+    setReturnReason("");
+    setRestockReturnedItems(true);
+    setReturnOpen(true);
+  };
+
+  const closeReturnModal = () => {
+    if (savingReturn) return;
+
+    setReturnOpen(false);
+    setReturnOrder(null);
+    setReturnItems([]);
+    setReturnReason("");
+    setRestockReturnedItems(true);
+  };
+
+  const updateReturnItem = (
+    index: number,
+    changes: any
+  ) => {
+    setReturnItems((prev) =>
+      prev.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              ...changes,
+            }
+          : item
+      )
+    );
+  };
+
+  const confirmReturn = async () => {
+    if (!returnOrder) return;
+
+    const selectedReturnItems =
+      returnItems.filter(
+        (item) =>
+          item.selected &&
+          Number(
+            item.returnQuantity || 0
+          ) > 0
+      );
+
+    if (
+      selectedReturnItems.length === 0
+    ) {
+      alert(
+        "Vui lòng chọn ít nhất một sản phẩm cần trả"
+      );
+      return;
+    }
+
+    for (
+      const item of selectedReturnItems
+    ) {
+      const returnQuantity =
+        Number(
+          item.returnQuantity || 0
+        );
+
+      if (
+        returnQuantity >
+        Number(
+          item.remainingQuantity || 0
+        )
+      ) {
+        alert(
+          `Số lượng trả của "${getProductName(
+            item
+          )}" vượt quá số lượng còn có thể trả`
+        );
+        return;
+      }
+    }
+
+    const confirmed =
+      window.confirm(
+        `Xác nhận trả ${selectedReturnItems.length} sản phẩm của đơn ${getOrderCode(
+          returnOrder
+        )}?`
+      );
+
+    if (!confirmed) return;
+
+    try {
+      setSavingReturn(true);
+
+      const returnRef = doc(
+        collection(db, "returns")
+      );
+
+      await runTransaction(
+        db,
+        async (transaction) => {
+          const orderRef = doc(
+            db,
+            "orders",
+            returnOrder.id
+          );
+
+          const orderSnap =
+            await transaction.get(
+              orderRef
+            );
+
+          if (!orderSnap.exists()) {
+            throw new Error(
+              "Không tìm thấy đơn hàng"
+            );
+          }
+
+          const latestOrder =
+            orderSnap.data();
+
+          const oldReturnedItems =
+            Array.isArray(
+              latestOrder.returnedItems
+            )
+              ? latestOrder.returnedItems
+              : [];
+
+          const returnRecords: any[] = [];
+          let totalRefund = 0;
+
+          for (
+            const item of selectedReturnItems
+          ) {
+            const quantity =
+              Number(
+                item.returnQuantity || 0
+              );
+
+            const unitPrice =
+              getProductPrice(item);
+
+            const vatRate =
+              getProductVat(item);
+
+            const lineSubtotal =
+              unitPrice * quantity;
+
+            const lineVat =
+              lineSubtotal *
+              (vatRate / 100);
+
+            const lineRefund =
+              lineSubtotal + lineVat;
+
+            totalRefund += lineRefund;
+
+            let stockBefore: number | null =
+              null;
+            let stockAfter: number | null =
+              null;
+
+            if (
+              restockReturnedItems &&
+              item.productId
+            ) {
+              const productRef = doc(
+                db,
+                "products",
+                item.productId
+              );
+
+              const productSnap =
+                await transaction.get(
+                  productRef
+                );
+
+              if (
+                productSnap.exists()
+              ) {
+                stockBefore = Number(
+                  productSnap.data()
+                    ?.stock || 0
+                );
+
+                stockAfter =
+                  stockBefore +
+                  quantity;
+
+                transaction.update(
+                  productRef,
+                  {
+                    stock:
+                      stockAfter,
+                    updatedAt:
+                      serverTimestamp(),
+                  }
+                );
+
+                const movementRef =
+                  doc(
+                    collection(
+                      db,
+                      "inventory_movements"
+                    )
+                  );
+
+                transaction.set(
+                  movementRef,
+                  {
+                    productId:
+                      item.productId,
+                    productCode:
+                      getProductSku(
+                        item
+                      ),
+                    productName:
+                      getProductName(
+                        item
+                      ),
+                    type: "return",
+                    direction: "in",
+                    quantity,
+                    stockBefore,
+                    stockAfter,
+                    orderId:
+                      returnOrder.id,
+                    orderCode:
+                      getOrderCode(
+                        returnOrder
+                      ),
+                    returnId:
+                      returnRef.id,
+                    customerName:
+                      getCustomerName(
+                        returnOrder
+                      ),
+                    reason:
+                      returnReason.trim() ||
+                      "Khách trả hàng",
+                    note:
+                      "Nhập lại kho từ phiếu trả hàng",
+                    createdAt:
+                      serverTimestamp(),
+                  }
+                );
+              }
+            }
+
+            returnRecords.push({
+              itemIndex:
+                item.itemIndex,
+              productId:
+                item.productId || "",
+              productName:
+                getProductName(
+                  item
+                ),
+              productCode:
+                getProductSku(
+                  item
+                ),
+              unit:
+                getProductUnit(
+                  item
+                ),
+              quantity,
+              soldQuantity:
+                Number(
+                  item.soldQuantity ||
+                    0
+                ),
+              unitPrice,
+              vatRate,
+              lineSubtotal,
+              lineVat,
+              lineRefund,
+              restocked:
+                restockReturnedItems,
+              stockBefore,
+              stockAfter,
+            });
+          }
+
+          const mergedReturnedItems =
+            [
+              ...oldReturnedItems,
+              ...returnRecords,
+            ];
+
+          const orderItems =
+            getItems({
+              ...returnOrder,
+              ...latestOrder,
+            });
+
+          const totalSoldQuantity =
+            orderItems.reduce(
+              (
+                sum: number,
+                item: any
+              ) =>
+                sum +
+                getProductQuantity(
+                  item
+                ),
+              0
+            );
+
+          const totalReturnedQuantity =
+            mergedReturnedItems.reduce(
+              (
+                sum: number,
+                item: any
+              ) =>
+                sum +
+                Number(
+                  item.quantity || 0
+                ),
+              0
+            );
+
+          const newStatus =
+            totalReturnedQuantity >=
+            totalSoldQuantity
+              ? "returned"
+              : "partially_returned";
+
+          transaction.set(
+            returnRef,
+            {
+              orderId:
+                returnOrder.id,
+              orderCode:
+                getOrderCode(
+                  returnOrder
+                ),
+              customerId:
+                returnOrder.customerId ||
+                returnOrder.customer?.id ||
+                "",
+              customerName:
+                getCustomerName(
+                  returnOrder
+                ),
+              customerPhone:
+                getCustomerPhone(
+                  returnOrder
+                ),
+              items:
+                returnRecords,
+              totalQuantity:
+                returnRecords.reduce(
+                  (
+                    sum: number,
+                    item: any
+                  ) =>
+                    sum +
+                    Number(
+                      item.quantity ||
+                        0
+                    ),
+                  0
+                ),
+              totalRefund,
+              reason:
+                returnReason.trim() ||
+                "Khách trả hàng",
+              restocked:
+                restockReturnedItems,
+              status:
+                "completed",
+              createdAt:
+                serverTimestamp(),
+            }
+          );
+
+          transaction.update(
+            orderRef,
+            {
+              status:
+                newStatus,
+              statusText:
+                newStatus ===
+                "returned"
+                  ? "Đã trả hàng"
+                  : "Trả một phần",
+              returnedItems:
+                mergedReturnedItems,
+              returnedAmount:
+                Number(
+                  latestOrder
+                    .returnedAmount ||
+                    0
+                ) +
+                totalRefund,
+              lastReturnId:
+                returnRef.id,
+              lastReturnedAt:
+                serverTimestamp(),
+              updatedAt:
+                serverTimestamp(),
+            }
+          );
+        }
+      );
+
+      alert("Đã tạo phiếu trả hàng");
+
+      closeReturnModal();
+      setSelectedOrderIds([]);
+      await loadOrders();
+    } catch (error: any) {
+      console.error(
+        "RETURN ORDER ERROR:",
+        error
+      );
+
+      alert(
+        error?.message ||
+          "Không xử lý được trả hàng"
+      );
+    } finally {
+      setSavingReturn(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gray-100 p-6">
       <div className="flex items-center justify-between mb-8">
@@ -1041,6 +1590,14 @@ export default function OrdersPage() {
 >
   Tạo phiếu vận chuyển
 </button>
+
+            <button
+              type="button"
+              onClick={openReturnModal}
+              className="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold"
+            >
+              Trả hàng
+            </button>
 
             <button
               type="button"
@@ -1151,9 +1708,21 @@ export default function OrdersPage() {
 
                 <td className="p-4">
                   {item.status === "cancelled" ? (
-                    <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold">Đã hủy</span>
+                    <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold">
+                      Đã hủy
+                    </span>
+                  ) : item.status === "returned" ? (
+                    <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">
+                      Đã trả hàng
+                    </span>
+                  ) : item.status === "partially_returned" ? (
+                    <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-bold">
+                      Trả một phần
+                    </span>
                   ) : (
-                    <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">Hoàn thành</span>
+                    <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                      Hoàn thành
+                    </span>
                   )}
                 </td>
               </tr>
@@ -1242,6 +1811,215 @@ export default function OrdersPage() {
           </div>
         )}
       </div>
+
+      {returnOpen && returnOrder && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between bg-orange-500 px-6 py-5 text-white">
+              <div>
+                <h2 className="text-2xl font-bold">
+                  Trả hàng
+                </h2>
+
+                <p className="mt-1 text-sm text-orange-100">
+                  Đơn: {getOrderCode(returnOrder)} · {getCustomerName(returnOrder)}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                disabled={savingReturn}
+                onClick={closeReturnModal}
+                className="h-10 w-10 rounded-full bg-white/20 text-xl hover:bg-white/30 disabled:opacity-50"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="max-h-[calc(92vh-90px)] overflow-auto p-6">
+              <div className="overflow-x-auto rounded-2xl border">
+                <table className="w-full min-w-[950px]">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="p-3 text-center">Chọn</th>
+                      <th className="p-3 text-left">Sản phẩm</th>
+                      <th className="p-3 text-left">Mã SP</th>
+                      <th className="p-3 text-right">Đã bán</th>
+                      <th className="p-3 text-right">Đã trả</th>
+                      <th className="p-3 text-right">Còn được trả</th>
+                      <th className="p-3 text-center">SL trả lần này</th>
+                      <th className="p-3 text-right">Tiền hoàn dự kiến</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {returnItems.map((item, index) => {
+                      const quantity = Number(item.returnQuantity || 0);
+                      const lineSubtotal = getProductPrice(item) * quantity;
+                      const lineRefund =
+                        lineSubtotal +
+                        lineSubtotal *
+                          (getProductVat(item) / 100);
+
+                      return (
+                        <tr key={`${item.productId || "item"}-${index}`} className="border-t">
+                          <td className="p-3 text-center">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(item.selected)}
+                              disabled={item.remainingQuantity <= 0}
+                              onChange={(event) =>
+                                updateReturnItem(index, {
+                                  selected: event.target.checked,
+                                  returnQuantity:
+                                    event.target.checked &&
+                                    Number(item.returnQuantity || 0) <= 0
+                                      ? 1
+                                      : item.returnQuantity,
+                                })
+                              }
+                            />
+                          </td>
+
+                          <td className="p-3 font-semibold">
+                            {getProductName(item)}
+                          </td>
+
+                          <td className="p-3">
+                            {getProductSku(item) || "---"}
+                          </td>
+
+                          <td className="p-3 text-right">
+                            {item.soldQuantity}
+                          </td>
+
+                          <td className="p-3 text-right">
+                            {item.alreadyReturned}
+                          </td>
+
+                          <td className="p-3 text-right font-semibold text-blue-700">
+                            {item.remainingQuantity}
+                          </td>
+
+                          <td className="p-3 text-center">
+                            <input
+                              type="number"
+                              min="0"
+                              max={item.remainingQuantity}
+                              disabled={!item.selected || item.remainingQuantity <= 0}
+                              value={item.returnQuantity}
+                              onChange={(event) => {
+                                const value = Math.max(
+                                  0,
+                                  Math.min(
+                                    Number(event.target.value || 0),
+                                    Number(item.remainingQuantity || 0)
+                                  )
+                                );
+
+                                updateReturnItem(index, {
+                                  returnQuantity: value,
+                                });
+                              }}
+                              className="w-24 rounded-lg border p-2 text-center disabled:bg-gray-100"
+                            />
+                          </td>
+
+                          <td className="p-3 text-right font-semibold">
+                            {formatMoney(lineRefund)}đ
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Lý do trả hàng
+                  </label>
+
+                  <textarea
+                    rows={4}
+                    value={returnReason}
+                    onChange={(event) =>
+                      setReturnReason(event.target.value)
+                    }
+                    placeholder="Ví dụ: Khách đổi sản phẩm, sản phẩm lỗi..."
+                    className="w-full resize-y rounded-2xl border p-4 outline-none focus:border-orange-500"
+                  />
+                </div>
+
+                <div className="rounded-2xl border bg-gray-50 p-5">
+                  <label className="flex cursor-pointer items-center gap-3 font-semibold">
+                    <input
+                      type="checkbox"
+                      checked={restockReturnedItems}
+                      onChange={(event) =>
+                        setRestockReturnedItems(event.target.checked)
+                      }
+                    />
+
+                    Nhập lại số lượng trả vào kho
+                  </label>
+
+                  <p className="mt-2 text-sm text-gray-500">
+                    Nếu bỏ chọn, hệ thống vẫn lưu phiếu trả hàng nhưng không cộng lại tồn kho.
+                  </p>
+
+                  <div className="mt-5 border-t pt-4">
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Tổng tiền hoàn dự kiến</span>
+
+                      <span className="text-orange-600">
+                        {formatMoney(
+                          returnItems.reduce((sum, item) => {
+                            if (!item.selected) return sum;
+
+                            const quantity = Number(item.returnQuantity || 0);
+                            const subtotal = getProductPrice(item) * quantity;
+
+                            return (
+                              sum +
+                              subtotal +
+                              subtotal * (getProductVat(item) / 100)
+                            );
+                          }, 0)
+                        )}
+                        đ
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={savingReturn}
+                  onClick={closeReturnModal}
+                  className="rounded-xl bg-gray-200 px-6 py-3 font-semibold hover:bg-gray-300 disabled:opacity-50"
+                >
+                  Hủy
+                </button>
+
+                <button
+                  type="button"
+                  disabled={savingReturn}
+                  onClick={confirmReturn}
+                  className="rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
+                >
+                  {savingReturn
+                    ? "Đang xử lý..."
+                    : "Xác nhận trả hàng"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
