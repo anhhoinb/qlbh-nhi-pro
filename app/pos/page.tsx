@@ -12,6 +12,8 @@ import {
   setDoc,
   runTransaction,
   serverTimestamp,
+  type DocumentData,
+  type DocumentSnapshot,
 } from "firebase/firestore";
 
 import {
@@ -1883,7 +1885,7 @@ if (
   Number(orderRemainingAmount) > 0
 ) {
 
-  let oldDebts = [];
+  let oldDebts: any[] = [];
 
 try {
   oldDebts =
@@ -1999,7 +2001,7 @@ console.log(
           doc(db, "products", item.id)
         );
 
-        const productSnapshots = [];
+        const productSnapshots: DocumentSnapshot<DocumentData>[] = [];
 
         for (const productRef of productRefs) {
           productSnapshots.push(
