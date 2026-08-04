@@ -323,6 +323,440 @@ function QuotationPrintContent() {
           },
         ];
 
+  const exportExcel = async () => {
+    try {
+      if (!quotation) {
+        alert("Không có dữ liệu báo giá để xuất Excel");
+        return;
+      }
+
+      /*
+       * Chỉ tải thư viện khi bấm Xuất Excel.
+       * File mẫu phải nằm tại: public/templates/BG.xlsx
+       */
+      const ExcelJSModule = await import("exceljs");
+      const ExcelJS = ExcelJSModule.default || ExcelJSModule;
+
+      const templateResponse = await fetch("/templates/BG.xlsx", {
+        cache: "no-store",
+      });
+
+      if (!templateResponse.ok) {
+        throw new Error(
+          "Không tìm thấy file mẫu public/templates/BG.xlsx"
+        );
+      }
+
+      const templateBuffer = await templateResponse.arrayBuffer();
+      const workbook = new ExcelJS.Workbook();
+
+      await workbook.xlsx.load(templateBuffer);
+
+      const worksheet =
+        workbook.getWorksheet("PBG") || workbook.worksheets[0];
+
+      if (!worksheet) {
+        throw new Error("Không tìm thấy sheet PBG trong file mẫu BG.xlsx");
+      }
+
+      const exportItems =
+        items.length > 0
+          ? items
+          : [
+              {
+                printName: "",
+                unit: "",
+                quantity: 1,
+                price: 0,
+                tax: 0,
+                note: "",
+              },
+            ];
+
+      /*
+       * File mẫu có dòng sản phẩm đầu tiên tại dòng 15.
+       * Nếu có nhiều sản phẩm, chèn thêm dòng trước phần tổng tiền.
+       */
+      const firstProductRow = 15;
+      const extraItemCount = Math.max(exportItems.length - 1, 0);
+
+      /*
+       * Gỡ toàn bộ merge liên quan đến dòng sản phẩm mẫu và 3 dòng tổng tiền
+       * TRƯỚC KHI chèn dòng. Nếu không, ExcelJS có thể tạo các vùng merge
+       * chồng lấn khi insertRows(), dẫn đến lỗi "Cannot merge already merged cells".
+       */
+      [
+        `B${firstProductRow}:D${firstProductRow}`,
+        `A${firstProductRow + 1}:G${firstProductRow + 1}`,
+        `A${firstProductRow + 2}:G${firstProductRow + 2}`,
+        `A${firstProductRow + 3}:G${firstProductRow + 3}`,
+
+        /*
+         * Các vùng merge nằm phía dưới bảng sản phẩm cũng phải được gỡ
+         * trước khi insertRows(). Nếu giữ nguyên, ExcelJS dịch dữ liệu
+         * nhưng không dịch vùng merge ổn định, làm chữ ký bị lặp/chồng.
+         */
+        "A34:D34",
+        "E34:I34",
+        "A35:D35",
+        "E36:H36",
+      ].forEach((range) => {
+        try {
+          worksheet.unMergeCells(range);
+        } catch {
+          // Bỏ qua nếu vùng chưa merge.
+        }
+      });
+
+      if (extraItemCount > 0) {
+        worksheet.insertRows(
+          firstProductRow + 1,
+          Array.from({ length: extraItemCount }, () => []),
+          "i"
+        );
+      }
+
+      /*
+       * Sao chép định dạng dòng sản phẩm mẫu cho toàn bộ sản phẩm.
+       */
+      const templateRow = worksheet.getRow(firstProductRow);
+
+      for (
+        let itemIndex = 0;
+        itemIndex < exportItems.length;
+        itemIndex += 1
+      ) {
+        const rowNumber = firstProductRow + itemIndex;
+        const targetRow = worksheet.getRow(rowNumber);
+
+        if (itemIndex > 0) {
+          targetRow.height = templateRow.height;
+
+          for (let column = 1; column <= 9; column += 1) {
+            const sourceCell = templateRow.getCell(column);
+            const targetCell = targetRow.getCell(column);
+
+            targetCell.style = {
+              ...sourceCell.style,
+              font: sourceCell.font
+                ? { ...sourceCell.font }
+                : undefined,
+              fill: sourceCell.fill
+                ? { ...sourceCell.fill }
+                : undefined,
+              border: sourceCell.border
+                ? {
+                    top: sourceCell.border.top
+                      ? { ...sourceCell.border.top }
+                      : undefined,
+                    left: sourceCell.border.left
+                      ? { ...sourceCell.border.left }
+                      : undefined,
+                    bottom: sourceCell.border.bottom
+                      ? { ...sourceCell.border.bottom }
+                      : undefined,
+                    right: sourceCell.border.right
+                      ? { ...sourceCell.border.right }
+                      : undefined,
+                    diagonal: sourceCell.border.diagonal
+                      ? { ...sourceCell.border.diagonal }
+                      : undefined,
+                  }
+                : undefined,
+              alignment: sourceCell.alignment
+                ? { ...sourceCell.alignment }
+                : undefined,
+              protection: sourceCell.protection
+                ? { ...sourceCell.protection }
+                : undefined,
+            };
+
+            targetCell.numFmt = sourceCell.numFmt;
+          }
+        }
+
+        /*
+         * Sau khi đã gỡ merge trước khi chèn dòng, có thể merge lại an toàn.
+         */
+        worksheet.mergeCells(`B${rowNumber}:D${rowNumber}`);
+
+        const item = exportItems[itemIndex];
+        const quantity = toNumber(item.quantity);
+        const price = toNumber(item.price);
+
+        worksheet.getCell(`A${rowNumber}`).value = itemIndex + 1;
+        worksheet.getCell(`B${rowNumber}`).value = getItemName(item);
+        worksheet.getCell(`E${rowNumber}`).value = item.unit || "cái";
+        worksheet.getCell(`F${rowNumber}`).value = quantity;
+        worksheet.getCell(`G${rowNumber}`).value = price;
+        worksheet.getCell(`H${rowNumber}`).value = {
+          formula: `IFERROR(F${rowNumber}*G${rowNumber},"")`,
+          result: quantity * price,
+        };
+        worksheet.getCell(`I${rowNumber}`).value = item.note || "";
+
+        worksheet.getCell(`F${rowNumber}`).numFmt = "#,##0";
+        worksheet.getCell(`G${rowNumber}`).numFmt = "#,##0";
+        worksheet.getCell(`H${rowNumber}`).numFmt = "#,##0";
+      }
+
+      /*
+       * Sau khi chèn dòng, các phần phía dưới được dời xuống tương ứng.
+       */
+      const subtotalRow = firstProductRow + exportItems.length;
+      const vatRow = subtotalRow + 1;
+      const totalRow = subtotalRow + 2;
+      const spacerRow = subtotalRow + 3;
+      const noteTitleRow = subtotalRow + 4;
+      const validityRow = subtotalRow + 5;
+      const deliveryTitleRow = subtotalRow + 6;
+      const shippingRow = subtotalRow + 7;
+      const shippingNoteRow = subtotalRow + 8;
+      const deliveryRow = subtotalRow + 9;
+      const warrantyRow = subtotalRow + 10;
+
+      /*
+       * Đảm bảo vùng tổng tiền vẫn được merge đúng sau khi chèn dòng.
+       */
+      [subtotalRow, vatRow, totalRow].forEach((rowNumber) => {
+        try {
+          worksheet.unMergeCells(`A${rowNumber}:G${rowNumber}`);
+        } catch {
+          // Không cần xử lý nếu vùng chưa merge.
+        }
+
+        worksheet.mergeCells(`A${rowNumber}:G${rowNumber}`);
+      });
+
+      const itemLastRow = firstProductRow + exportItems.length - 1;
+
+      worksheet.getCell(`A${subtotalRow}`).value =
+        "Tiền hàng trước thuế:";
+      worksheet.getCell(`H${subtotalRow}`).value = {
+        formula: `SUM(H${firstProductRow}:H${itemLastRow})`,
+        result: subtotal,
+      };
+
+      const vatText =
+        vatRates.length > 0
+          ? `Thuế VAT (${vatRates.join("%, ")}%):`
+          : "Thuế VAT (0%):";
+
+      worksheet.getCell(`A${vatRow}`).value = vatText;
+      worksheet.getCell(`H${vatRow}`).value = {
+        formula:
+          vatRates.length === 1
+            ? `H${subtotalRow}*${vatRates[0]}%`
+            : `${vatAmount}`,
+        result: vatAmount,
+      };
+
+      worksheet.getCell(`A${totalRow}`).value =
+        "Tổng cộng sau thuế:";
+      worksheet.getCell(`H${totalRow}`).value = {
+        formula: `H${subtotalRow}+H${vatRow}`,
+        result: total,
+      };
+
+      worksheet.getCell(`H${subtotalRow}`).numFmt = "#,##0";
+      worksheet.getCell(`H${vatRow}`).numFmt = "#,##0";
+      worksheet.getCell(`H${totalRow}`).numFmt = "#,##0";
+
+      /*
+       * Thông tin đầu báo giá.
+       */
+      worksheet.getCell("D1").value = [
+        seller.companyName || "",
+        `MST: ${seller.taxCode || ""}`,
+        `SĐT: ${seller.phone || ""}             Email: ${
+          seller.email || ""
+        }`,
+        `Địa Chỉ: ${seller.address || ""}`,
+      ].join("\n");
+
+      worksheet.getCell("E6").value =
+        `TP. HCM, ngày ${String(quotationDate.getDate()).padStart(
+          2,
+          "0"
+        )} tháng ${String(quotationDate.getMonth() + 1).padStart(
+          2,
+          "0"
+        )} năm ${quotationDate.getFullYear()}`;
+
+      worksheet.getCell("C9").value =
+        quotation.buyer?.companyName || "";
+      worksheet.getCell("C10").value =
+        quotation.buyer?.address || "";
+      worksheet.getCell("C11").value =
+        quotation.buyer?.taxCode || "";
+      worksheet.getCell("C12").value =
+        quotation.buyer?.phone || "";
+      worksheet.getCell("F12").value =
+        quotation.buyer?.email || "";
+
+      /*
+       * Điều kiện báo giá.
+       */
+      worksheet.getCell(`B${validityRow}`).value =
+        `* Báo giá trên có giá trị trong vòng ${validDays} ngày kể từ ngày báo.`;
+
+      worksheet.getCell(`B${shippingRow}`).value =
+        quotation.terms?.shippingIncluded
+          ? "* Giá trên đã bao gồm chi phí vận chuyển."
+          : "* Giá trên chưa bao gồm chi phí vận chuyển.";
+
+      if (quotation.terms?.shippingNote) {
+        worksheet.getCell(`B${shippingNoteRow}`).value =
+          `* ${quotation.terms.shippingNote}`;
+      } else {
+        worksheet.getCell(`B${shippingNoteRow}`).value =
+          `* ${
+            quotation.terms?.deliveryTime ||
+            "Hàng được thực hiện trong vòng 25 đến 30 ngày kể từ ngày thực hiện hợp đồng."
+          }`;
+      }
+
+      if (quotation.terms?.shippingNote) {
+        worksheet.getCell(`B${deliveryRow}`).value =
+          `* ${
+            quotation.terms?.deliveryTime ||
+            "Hàng được thực hiện trong vòng 25 đến 30 ngày kể từ ngày thực hiện hợp đồng."
+          }`;
+        worksheet.getCell(`B${warrantyRow}`).value =
+          `* ${
+            quotation.terms?.warrantyTime ||
+            "Thiết bị được bảo hành 12 tháng đối với lỗi kỹ thuật do nhà sản xuất."
+          }`;
+      } else {
+        worksheet.getCell(`B${deliveryRow}`).value =
+          `* ${
+            quotation.terms?.warrantyTime ||
+            "Thiết bị được bảo hành 12 tháng đối với lỗi kỹ thuật do nhà sản xuất."
+          }`;
+        worksheet.getCell(`B${warrantyRow}`).value = "";
+      }
+
+      /*
+       * Ngân hàng và chữ ký.
+       * Các dòng này cũng tự dịch xuống khi thêm sản phẩm.
+       */
+      const bankOwnerRow = subtotalRow + 15;
+      const bankAccountRow = subtotalRow + 16;
+      const signatureRow = subtotalRow + 18;
+      const buyerSignatureBlankRow = signatureRow + 1;
+      const sellerSignatureBlankRow = signatureRow + 2;
+
+      /*
+       * Khôi phục đúng các vùng merge chữ ký đã có trong file mẫu.
+       * Không ghi thêm nội dung mới vào nhiều ô, tránh bị lặp chữ.
+       */
+      [
+        `A${signatureRow}:D${signatureRow}`,
+        `E${signatureRow}:I${signatureRow}`,
+        `A${buyerSignatureBlankRow}:D${buyerSignatureBlankRow}`,
+        `E${sellerSignatureBlankRow}:H${sellerSignatureBlankRow}`,
+      ].forEach((range) => {
+        try {
+          worksheet.unMergeCells(range);
+        } catch {
+          // Bỏ qua nếu chưa merge.
+        }
+
+        worksheet.mergeCells(range);
+      });
+
+      /*
+       * Dòng tiêu đề Thanh toán cần merge để không bị cắt còn chữ "Thanh".
+       */
+      const paymentTitleRow = subtotalRow + 10;
+
+      try {
+        worksheet.unMergeCells(`A${paymentTitleRow}:I${paymentTitleRow}`);
+      } catch {
+        // Bỏ qua nếu chưa merge.
+      }
+
+      worksheet.mergeCells(`A${paymentTitleRow}:I${paymentTitleRow}`);
+      worksheet.getCell(`A${paymentTitleRow}`).value = "Thanh toán:";
+
+      worksheet.getCell(`B${bankOwnerRow}`).value =
+        `Đơn vị thụ hưởng: ${seller.bankOwner || ""}`;
+
+      worksheet.getCell(`B${bankAccountRow}`).value =
+        `Tài khoản số: ${seller.bankAccount || ""} – tại ${
+          seller.bankName || ""
+        } - ${seller.bankBranch || ""}`;
+
+      worksheet.getCell(`A${signatureRow}`).value =
+        "XÁC NHẬN BÊN MUA";
+
+      worksheet.getCell(`E${signatureRow}`).value =
+        seller.companyName || "";
+
+      /*
+       * Thiết lập in A4 và chỉ in vùng báo giá.
+       */
+      worksheet.pageSetup = {
+        ...worksheet.pageSetup,
+        paperSize: 9,
+        orientation: "portrait",
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0,
+        margins: {
+          left: 0.75,
+          right: 0.75,
+          top: 0.4,
+          bottom: 0.75,
+          header: 0.2,
+          footer: 0.2,
+        },
+        printArea: `A1:I${signatureRow + 2}`,
+      };
+
+      worksheet.views = [
+        {
+          state: "normal",
+          showGridLines: false,
+        },
+      ];
+
+      workbook.calcProperties.fullCalcOnLoad = true;
+      workbook.calcProperties.forceFullCalc = true;
+      workbook.calcProperties.calcMode = "auto";
+
+      const safeCode = String(
+        quotation.quotationCode || "Bao-gia-xem-truoc"
+      ).replace(/[\/:*?"<>|]/g, "-");
+
+      const outputBuffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([outputBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = downloadUrl;
+      link.download = `${safeCode}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(downloadUrl);
+    } catch (exportError) {
+      console.error("EXPORT EXCEL ERROR:", exportError);
+
+      alert(
+        exportError instanceof Error
+          ? `Không thể xuất Excel.
+
+${exportError.message}`
+          : "Không thể xuất Excel"
+      );
+    }
+  };
+
   if (loading) {
     return (
       <main className="screen-message">
@@ -353,6 +787,14 @@ function QuotationPrintContent() {
           }
         >
           Quay lại
+        </button>
+
+        <button
+          type="button"
+          className="excel"
+          onClick={exportExcel}
+        >
+          Xuất Excel
         </button>
 
         <button
@@ -803,6 +1245,12 @@ function QuotationPrintContent() {
           font-family: Arial, sans-serif;
           font-size: 14px;
           font-weight: 700;
+        }
+
+        .screen-toolbar button.excel {
+          border-color: #166534;
+          background: #16a34a;
+          color: #fff;
         }
 
         .screen-toolbar button.primary {

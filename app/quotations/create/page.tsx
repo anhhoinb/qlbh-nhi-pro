@@ -140,10 +140,17 @@ export default function CreateQuotationPage() {
       try {
         const snapshot = await getDocs(collection(db, "products"));
 
-        const data = snapshot.docs.map((item) => ({
-          id: item.id,
-          ...item.data(),
-        })) as Product[];
+        const data = snapshot.docs.map((item) => {
+          const productData = item.data();
+
+          return {
+            id: item.id,
+            ...productData,
+            price: Number(productData.price || 0),
+            tax: Number(productData.tax || 0),
+            stock: Number(productData.stock || 0),
+          };
+        }) as Product[];
 
         data.sort((a, b) =>
           getProductDisplayName(a).localeCompare(
@@ -781,26 +788,48 @@ export default function CreateQuotationPage() {
                         Không tìm thấy sản phẩm
                       </div>
                     ) : (
-                      filteredProducts.map((product) => (
-                        <button
-                          key={product.id}
-                          type="button"
-                          onMouseDown={() => addProduct(product)}
-                          className="flex w-full items-center justify-between gap-4 border-b p-3 text-left hover:bg-blue-50"
-                        >
-                          <div className="min-w-0">
-                            <div className="truncate font-semibold">
-                              {getProductDisplayName(product)}
+                      filteredProducts.map((product) => {
+                        const stock = Number(product.stock || 0);
+
+                        return (
+                          <button
+                            key={product.id}
+                            type="button"
+                            onMouseDown={() => addProduct(product)}
+                            className="flex w-full items-center justify-between gap-4 border-b p-3 text-left hover:bg-blue-50"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate font-semibold">
+                                {getProductDisplayName(product)}
+                              </div>
+
+                              <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                                <span className="text-gray-500">
+                                  Mã: {product.product_code || "---"}
+                                </span>
+
+                                <span
+                                  className={
+                                    stock > 0
+                                      ? "font-semibold text-green-600"
+                                      : "font-semibold text-red-600"
+                                  }
+                                >
+                                  Tồn kho: {formatMoney(stock)}
+                                </span>
+
+                                <span className="text-gray-500">
+                                  ĐVT: {getUnitText(product.unit)}
+                                </span>
+                              </div>
                             </div>
-                            <div className="mt-1 text-xs text-gray-500">
-                              Mã: {product.product_code || "---"}
+
+                            <div className="shrink-0 font-semibold text-blue-700">
+                              {formatMoney(Number(product.price || 0))}đ
                             </div>
-                          </div>
-                          <div className="shrink-0 font-semibold text-blue-700">
-                            {formatMoney(Number(product.price || 0))}đ
-                          </div>
-                        </button>
-                      ))
+                          </button>
+                        );
+                      })
                     )}
                   </div>
                 )}
