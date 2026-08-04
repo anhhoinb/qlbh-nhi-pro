@@ -722,7 +722,6 @@ function QuotationPrintContent() {
       ];
 
       workbook.calcProperties.fullCalcOnLoad = true;
-      workbook.calcProperties.calcMode = "auto";
 
       const safeCode = String(
         quotation.quotationCode || "Bao-gia-xem-truoc"
