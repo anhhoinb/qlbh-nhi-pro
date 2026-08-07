@@ -162,7 +162,9 @@ export default function InventoryPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 ${
+          canViewCostPrice ? "xl:grid-cols-4" : "xl:grid-cols-3"
+        }`}>
   <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[92px]">
     <p className="text-slate-500 text-sm mb-2">
       Tổng sản phẩm
@@ -173,6 +175,7 @@ export default function InventoryPage() {
     </p>
   </div>
 
+  {canViewCostPrice && (
   <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[92px]">
     <p className="text-slate-500 text-sm mb-2">
       Tổng giá trị tồn kho
@@ -182,6 +185,7 @@ export default function InventoryPage() {
       {formatMoney(totalInventoryValue)}đ
     </p>
   </div>
+  )}
 
   <button
     type="button"
