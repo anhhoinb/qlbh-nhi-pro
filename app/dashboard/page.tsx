@@ -88,6 +88,12 @@ export default function DashboardPage() {
   const [checkingPermission, setCheckingPermission] =
     useState(true);
 
+  const [canViewCostPrice, setCanViewCostPrice] =
+    useState(false);
+
+  const [isAdminUser, setIsAdminUser] =
+    useState(false);
+
   const [orders, setOrders] =
     useState<OrderData[]>([]);
 
@@ -528,6 +534,17 @@ export default function DashboardPage() {
           const canViewDashboard =
             isAdmin ||
             permissions.dashboard === true;
+
+          setIsAdminUser(isAdmin);
+
+          setCanViewCostPrice(
+            isAdmin ||
+            permissions.viewCostPrice === true
+          );
+
+          if (!isAdmin) {
+            setRangeFilter("today");
+          }
 
           if (!canViewDashboard) {
             router.replace("/pos");
@@ -1102,7 +1119,13 @@ export default function DashboardPage() {
               </option>
             </select>
 
-            <RangeSelect />
+            {isAdminUser ? (
+              <RangeSelect />
+            ) : (
+              <div className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700">
+                Hôm nay
+              </div>
+            )}
           </div>
         </div>
 
@@ -1370,7 +1393,13 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            <RangeSelect />
+            {isAdminUser ? (
+              <RangeSelect />
+            ) : (
+              <div className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700">
+                Hôm nay
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
@@ -1479,24 +1508,26 @@ export default function DashboardPage() {
               </span>
             </Link>
 
-            <Link
-              href="/reports/inventory"
-              className="bg-slate-50 hover:bg-sky-50 rounded-xl p-4 flex items-center justify-between transition cursor-pointer group"
-            >
-              <div>
-                <div className="text-sm text-slate-500">
-                  Giá trị tồn kho
+            {canViewCostPrice && (
+              <Link
+                href="/reports/inventory"
+                className="bg-slate-50 hover:bg-sky-50 rounded-xl p-4 flex items-center justify-between transition cursor-pointer group"
+              >
+                <div>
+                  <div className="text-sm text-slate-500">
+                    Giá trị tồn kho
+                  </div>
+
+                  <div className="font-bold text-xl text-emerald-600 mt-1">
+                    {formatMoney(inventoryStats.inventoryValue)}đ
+                  </div>
                 </div>
 
-                <div className="font-bold text-xl text-emerald-600 mt-1">
-                  {formatMoney(inventoryStats.inventoryValue)}đ
-                </div>
-              </div>
-
-              <span className="text-2xl text-slate-400 group-hover:text-sky-700">
-                ›
-              </span>
-            </Link>
+                <span className="text-2xl text-slate-400 group-hover:text-sky-700">
+                  ›
+                </span>
+              </Link>
+            )}
           </div>
         </div>
       </section>
