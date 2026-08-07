@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { collection, getDocs } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import * as XLSX from "xlsx";
 
 type OrderItem = {
@@ -44,6 +45,8 @@ export default function SalesReportPage() {
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [filterType, setFilterType] = useState("7days");
   const [reportType, setReportType] = useState("daily");
+
+  const [checkingPermission, setCheckingPermission] = useState(true);
 
   const [hoverChart, setHoverChart] = useState<{
     index: number;
@@ -543,8 +546,41 @@ const isCancelledOrder = (order: OrderData) => {
   };
 
   useEffect(() => {
-    loadOrders();
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (!snap.exists()) {
+          router.replace("/login");
+          return;
+        }
+
+        const userData:any = snap.data();
+        const role = String(userData.role || "").trim().toLowerCase();
+        const permissions = userData.permissions || {};
+
+        const isAdmin = role === "admin" || permissions.admin === true;
+        const canViewReports = isAdmin || permissions.reports === true;
+
+        if (!canViewReports) {
+          router.replace("/pos");
+          return;
+        }
+
+        setCheckingPermission(false);
+        await loadOrders();
+      } catch (e) {
+        console.error(e);
+        router.replace("/login");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   const goToReport = (path: string) => {
     router.push(path);
@@ -717,6 +753,16 @@ const isCancelledOrder = (order: OrderData) => {
     alert("Lỗi xuất file Excel");
   }
 };
+
+  if (checkingPermission) {
+    return (
+      <main className="min-h-screen bg-slate-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          Đang kiểm tra quyền truy cập...
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-100 p-5 text-black">

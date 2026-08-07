@@ -525,7 +525,11 @@ export default function DashboardPage() {
             role === "admin" ||
             permissions.admin === true;
 
-          if (!isAdmin) {
+          const canViewDashboard =
+            isAdmin ||
+            permissions.dashboard === true;
+
+          if (!canViewDashboard) {
             router.replace("/pos");
             return;
           }
