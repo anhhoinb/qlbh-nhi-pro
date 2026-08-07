@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   collection,
@@ -28,6 +28,18 @@ export default function RestockPage() {
 
   const [selectedProduct, setSelectedProduct] =
     useState("");
+
+  const [productSearch, setProductSearch] =
+    useState("");
+
+  const [showProductDropdown, setShowProductDropdown] =
+    useState(false);
+
+  const productPickerRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const productSearchRef =
+    useRef<HTMLInputElement | null>(null);
 
   const [items, setItems] =
     useState<RestockItem[]>([]);
@@ -62,6 +74,28 @@ export default function RestockPage() {
 
   useEffect(() => {
     loadProducts();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      if (
+        productPickerRef.current &&
+        !productPickerRef.current.contains(target)
+      ) {
+        setShowProductDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
   }, []);
 
   const getProductCode = (item: any) => {
@@ -131,6 +165,27 @@ export default function RestockPage() {
             item.productId === product.id
         )
     );
+
+  const filteredAvailableProducts =
+    productSearch.trim() === ""
+      ? availableProducts.slice(0, 30)
+      : availableProducts
+          .filter((product) => {
+            const keyword =
+              productSearch.trim().toLowerCase();
+
+            const name =
+              String(product.name || "").toLowerCase();
+
+            const code =
+              String(getProductCode(product) || "").toLowerCase();
+
+            return (
+              name.includes(keyword) ||
+              code.includes(keyword)
+            );
+          })
+          .slice(0, 30);
 
   const totalQuantity =
     items.reduce(
@@ -315,65 +370,92 @@ export default function RestockPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6 text-black">
-      <div className="max-w-[1400px] mx-auto space-y-6">
+    <main className="min-h-screen bg-slate-100 p-6 text-black">
+      <div className="max-w-[1400px] mx-auto space-y-5">
         <div>
           <h1 className="text-4xl font-bold text-blue-700">
             Nhập hàng
           </h1>
 
-          <p className="text-gray-500 mt-2">
+          <p className="text-slate-500 mt-1">
             Chọn sản phẩm, sản phẩm sẽ tự thêm xuống danh sách nhập. Sau đó nhập số lượng và tạo đơn nhập hàng.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          <div className="xl:col-span-3 bg-white p-6 rounded-3xl shadow space-y-6">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-5">
+          <div className="xl:col-span-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-5">
             <div>
-              <label className="block mb-2 text-sm font-semibold text-gray-700">
+              <label className="block mb-2 text-sm font-semibold text-slate-700">
                 Tìm kiếm / chọn sản phẩm cần nhập
               </label>
 
-              <select
-                className="w-full border p-4 rounded-2xl text-black bg-white"
-                value={selectedProduct}
-                onChange={(e) => {
-                  const productId =
-                    e.target.value;
-
-                  setSelectedProduct(productId);
-
-                  addProductToList(productId);
-                }}
+              <div
+                ref={productPickerRef}
+                className="relative"
               >
-                <option value="">
-                  Chọn sản phẩm
-                </option>
+                <input
+                  ref={productSearchRef}
+                  type="text"
+                  value={productSearch}
+                  onFocus={() =>
+                    setShowProductDropdown(true)
+                  }
+                  onChange={(e) => {
+                    setProductSearch(e.target.value);
+                    setShowProductDropdown(true);
+                  }}
+                  placeholder="Tìm theo tên hoặc mã sản phẩm..."
+                  className="w-full border border-slate-300 px-4 py-3 rounded-xl text-black bg-white outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                />
 
-                {availableProducts.map(
-                  (item) => (
-                    <option
-                      key={item.id}
-                      value={item.id}
-                    >
-                      {item.name}
-                      {getProductCode(item)
-                        ? ` - ${getProductCode(
-                            item
-                          )}`
-                        : ""}
-                    </option>
-                  )
+                {showProductDropdown && (
+                  <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+                    {filteredAvailableProducts.length > 0 ? (
+                      filteredAvailableProducts.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onMouseDown={(e) =>
+                            e.preventDefault()
+                          }
+                          onClick={() => {
+                            addProductToList(item.id);
+                            setProductSearch("");
+                            setShowProductDropdown(false);
+
+                            setTimeout(() => {
+                              productSearchRef.current?.blur();
+                            }, 0);
+                          }}
+                          className="block w-full border-b border-slate-100 px-4 py-3 text-left hover:bg-sky-50 last:border-b-0"
+                        >
+                          <div className="font-semibold text-slate-800">
+                            {item.name || "---"}
+                          </div>
+
+                          <div className="mt-0.5 text-xs text-slate-500">
+                            {getProductCode(item)
+                              ? `Mã: ${getProductCode(item)}`
+                              : "Chưa có mã sản phẩm"}
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-4 text-sm text-slate-500">
+                        Không tìm thấy sản phẩm phù hợp
+                      </div>
+                    )}
+                  </div>
                 )}
-              </select>
+              </div>
 
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-slate-500 mt-2">
                 Chọn sản phẩm xong hệ thống sẽ tự thêm vào danh sách nhập bên dưới.
               </p>
             </div>
 
-            <div className="border rounded-3xl overflow-hidden">
-              <div className="bg-blue-700 text-white px-5 py-4 flex items-center justify-between">
+            <div className="border border-slate-200 rounded-2xl overflow-hidden">
+              <div className="bg-slate-800 text-white px-5 py-3.5 flex items-center justify-between">
                 <h2 className="text-lg font-bold">
                   Danh sách sản phẩm nhập
                 </h2>
@@ -385,33 +467,33 @@ export default function RestockPage() {
 
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[1000px]">
-                  <thead className="bg-gray-100">
+                  <thead className="bg-slate-100 text-slate-700">
                     <tr>
-                      <th className="p-4 text-left">
+                      <th className="px-4 py-3 text-left">
                         Sản phẩm
                       </th>
 
-                      <th className="p-4 text-left">
+                      <th className="px-4 py-3 text-center">
                         Mã SP
                       </th>
 
-                      <th className="p-4 text-left">
+                      <th className="px-4 py-3 text-left">
                         Vị trí
                       </th>
 
-                      <th className="p-4 text-left">
+                      <th className="px-4 py-3 text-left">
                         Tồn hiện tại
                       </th>
 
-                      <th className="p-4 text-left">
+                      <th className="px-4 py-3 text-left">
                         Số lượng nhập
                       </th>
 
-                      <th className="p-4 text-left">
+                      <th className="px-4 py-3 text-left">
                         Sau nhập
                       </th>
 
-                      <th className="p-4 text-center">
+                      <th className="px-4 py-3 text-center">
                         Xóa
                       </th>
                     </tr>
@@ -421,33 +503,33 @@ export default function RestockPage() {
                     {items.map((item) => (
                       <tr
                         key={item.productId}
-                        className="border-b hover:bg-gray-50"
+                        className="border-b border-slate-200 hover:bg-slate-50"
                       >
-                        <td className="p-4 font-semibold">
+                        <td className="px-4 py-3 font-semibold text-slate-900">
                           {item.productName ||
                             "---"}
                         </td>
 
-                        <td className="p-4">
+                        <td className="px-4 py-3">
                           {item.productCode ||
                             "---"}
                         </td>
 
-                        <td className="p-4">
+                        <td className="px-4 py-3">
                           {item.productLocation ||
                             "---"}
                         </td>
 
-                        <td className="p-4 font-bold text-blue-700">
+                        <td className="px-4 py-3 text-center font-bold text-sky-700">
                           {item.beforeStock}
                         </td>
 
-                        <td className="p-4">
+                        <td className="px-4 py-3">
                           <input
                             type="number"
                             min="1"
                             placeholder="SL"
-                            className="w-32 border p-3 rounded-xl text-black"
+                            className="w-28 border border-slate-300 px-3 py-2 rounded-xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                             value={item.quantity}
                             onChange={(e) =>
                               updateItemQuantity(
@@ -458,11 +540,11 @@ export default function RestockPage() {
                           />
                         </td>
 
-                        <td className="p-4 font-bold text-green-600">
+                        <td className="px-4 py-3 text-center font-bold text-emerald-600">
                           {item.afterStock}
                         </td>
 
-                        <td className="p-4 text-center">
+                        <td className="px-4 py-3 text-center">
                           <button
                             type="button"
                             onClick={() =>
@@ -470,7 +552,7 @@ export default function RestockPage() {
                                 item.productId
                               )
                             }
-                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-semibold"
+                            className="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl font-semibold transition"
                           >
                             Xóa
                           </button>
@@ -482,7 +564,7 @@ export default function RestockPage() {
                       <tr>
                         <td
                           colSpan={7}
-                          className="p-8 text-center text-gray-500"
+                          className="p-8 text-center text-slate-500"
                         >
                           Chưa có sản phẩm nào trong đơn nhập
                         </td>
@@ -496,7 +578,7 @@ export default function RestockPage() {
             <button
               onClick={handleRestock}
               disabled={loading}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white p-4 rounded-2xl text-lg font-semibold"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white px-5 py-3.5 rounded-xl text-base font-semibold transition"
             >
               {loading
                 ? "Đang tạo đơn nhập..."
@@ -504,33 +586,33 @@ export default function RestockPage() {
             </button>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl shadow h-fit">
-            <h2 className="text-xl font-bold mb-5">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm h-fit">
+            <h2 className="text-xl font-bold text-slate-800 mb-4">
               Tóm tắt đơn nhập
             </h2>
 
             <div className="space-y-4">
-              <div className="rounded-2xl bg-blue-50 p-5">
-                <p className="text-sm text-gray-500">
+              <div className="rounded-2xl bg-sky-50 border border-sky-100 p-4">
+                <p className="text-sm text-slate-500">
                   Số sản phẩm
                 </p>
 
-                <p className="text-3xl font-bold text-blue-700 mt-1">
+                <p className="text-3xl font-bold text-sky-700 mt-1">
                   {totalItemCount}
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-green-50 p-5">
-                <p className="text-sm text-gray-500">
+              <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-4">
+                <p className="text-sm text-slate-500">
                   Tổng số lượng nhập
                 </p>
 
-                <p className="text-3xl font-bold text-green-600 mt-1">
+                <p className="text-3xl font-bold text-emerald-600 mt-1">
                   {totalQuantity}
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-gray-50 p-5 text-sm text-gray-600 leading-6">
+              <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-600 leading-6">
                 Sau khi nhấn tạo đơn nhập, hệ thống sẽ tự cộng tồn kho cho từng sản phẩm và lưu lại lịch sử theo mã đơn nhập hàng.
               </div>
             </div>

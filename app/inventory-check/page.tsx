@@ -63,16 +63,21 @@ function getStatusClass(status?: string) {
   }
 
   if (status === "balanced") {
-    return "bg-green-100 text-green-700";
+    return "bg-emerald-100 text-emerald-700";
   }
 
-  return "bg-gray-100 text-gray-700";
+  return "bg-slate-100 text-slate-700";
 }
 
 export default function InventoryCheckPage() {
-  const [checks, setChecks] = useState<InventoryCheck[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [keyword, setKeyword] = useState("");
+  const [checks, setChecks] =
+    useState<InventoryCheck[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [keyword, setKeyword] =
+    useState("");
 
   useEffect(() => {
     const loadChecks = async () => {
@@ -126,9 +131,12 @@ export default function InventoryCheckPage() {
   }, []);
 
   const filteredChecks = useMemo(() => {
-    const search = keyword.trim().toLowerCase();
+    const search =
+      keyword.trim().toLowerCase();
 
-    if (!search) return checks;
+    if (!search) {
+      return checks;
+    }
 
     return checks.filter((item) => {
       const values = [
@@ -147,49 +155,75 @@ export default function InventoryCheckPage() {
   }, [checks, keyword]);
 
   return (
-    <main className="min-h-screen bg-gray-100 p-5 text-black">
+    <main className="min-h-screen bg-slate-100 p-5 text-black">
       <div className="mx-auto max-w-[1400px]">
-        <div className="mb-5 flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+
+        <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-blue-700">
+            <h1 className="text-3xl font-bold text-slate-800">
               Kiểm hàng
             </h1>
 
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-slate-500">
               Tạo phiếu kiểm kho, ghi nhận số lượng thực tế và theo dõi chênh lệch.
             </p>
           </div>
 
           <Link
             href="/inventory-check/create"
-            className="rounded-xl bg-blue-700 px-5 py-3 text-center font-semibold text-white hover:bg-blue-800"
+            className="rounded-xl bg-sky-600 px-5 py-2.5 text-center font-semibold text-white transition hover:bg-sky-700"
           >
             + Tạo phiếu kiểm
           </Link>
         </div>
 
-        <div className="mb-5 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <input
             value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
+            onChange={(event) =>
+              setKeyword(event.target.value)
+            }
             placeholder="Tìm theo mã phiếu, người kiểm, kho hoặc trạng thái..."
-            className="w-full rounded-xl border p-3 outline-none focus:border-blue-500"
+            className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
           />
         </div>
 
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] border-collapse">
-              <thead className="bg-blue-700 text-white">
+              <thead className="bg-slate-800 text-white">
                 <tr>
-                  <th className="p-3 text-left">Mã phiếu</th>
-                  <th className="p-3 text-left">Ngày tạo</th>
-                  <th className="p-3 text-left">Kho</th>
-                  <th className="p-3 text-left">Người kiểm</th>
-                  <th className="p-3 text-center">Số sản phẩm</th>
-                  <th className="p-3 text-center">Có chênh lệch</th>
-                  <th className="p-3 text-center">Trạng thái</th>
-                  <th className="p-3 text-center">Thao tác</th>
+                  <th className="px-4 py-3 text-left">
+                    Mã phiếu
+                  </th>
+
+                  <th className="px-4 py-3 text-left">
+                    Ngày tạo
+                  </th>
+
+                  <th className="px-4 py-3 text-left">
+                    Kho
+                  </th>
+
+                  <th className="px-4 py-3 text-left">
+                    Người kiểm
+                  </th>
+
+                  <th className="px-4 py-3 text-center">
+                    Số sản phẩm
+                  </th>
+
+                  <th className="px-4 py-3 text-center">
+                    Có chênh lệch
+                  </th>
+
+                  <th className="px-4 py-3 text-center">
+                    Trạng thái
+                  </th>
+
+                  <th className="px-4 py-3 text-center">
+                    Thao tác
+                  </th>
                 </tr>
               </thead>
 
@@ -198,7 +232,7 @@ export default function InventoryCheckPage() {
                   <tr>
                     <td
                       colSpan={8}
-                      className="p-10 text-center text-gray-500"
+                      className="p-10 text-center text-slate-500"
                     >
                       Đang tải dữ liệu...
                     </td>
@@ -207,72 +241,82 @@ export default function InventoryCheckPage() {
                   <tr>
                     <td
                       colSpan={8}
-                      className="p-10 text-center text-gray-500"
+                      className="p-10 text-center text-slate-500"
                     >
                       Chưa có phiếu kiểm hàng
                     </td>
                   </tr>
                 ) : (
                   filteredChecks.map((item) => {
-                    const items = item.items || [];
-                    const differenceCount = items.filter(
-                      (product) =>
-                        Number(product.difference || 0) !== 0
-                    ).length;
+                    const items =
+                      item.items || [];
+
+                    const differenceCount =
+                      items.filter(
+                        (product) =>
+                          Number(
+                            product.difference || 0
+                          ) !== 0
+                      ).length;
 
                     return (
                       <tr
                         key={item.id}
-                        className="border-b hover:bg-gray-50"
+                        className="border-b border-slate-200 hover:bg-slate-50"
                       >
-                        <td className="p-3 font-semibold text-blue-700">
+                        <td className="px-4 py-3 font-semibold text-sky-700">
                           {item.code || item.id}
                         </td>
 
-                        <td className="p-3">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           {formatDate(
-                            item.createdAt || item.checkedAt
+                            item.createdAt ||
+                              item.checkedAt
                           )}
                         </td>
 
-                        <td className="p-3">
-                          {item.warehouseName || "Kho mặc định"}
+                        <td className="px-4 py-3">
+                          {item.warehouseName ||
+                            "Kho mặc định"}
                         </td>
 
-                        <td className="p-3">
-                          {item.checkedBy || "---"}
+                        <td className="px-4 py-3">
+                          {item.checkedBy ||
+                            "---"}
                         </td>
 
-                        <td className="p-3 text-center">
+                        <td className="px-4 py-3 text-center">
                           {items.length}
                         </td>
 
-                        <td className="p-3 text-center">
+                        <td className="px-4 py-3 text-center">
                           <span
                             className={`font-semibold ${
                               differenceCount > 0
-                                ? "text-red-600"
-                                : "text-green-600"
+                                ? "text-rose-600"
+                                : "text-emerald-600"
                             }`}
                           >
                             {differenceCount}
                           </span>
                         </td>
 
-                        <td className="p-3 text-center">
+                        <td className="px-4 py-3 text-center">
                           <span
                             className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClass(
                               item.status
                             )}`}
                           >
-                            {getStatusLabel(item.status)}
+                            {getStatusLabel(
+                              item.status
+                            )}
                           </span>
                         </td>
 
-                        <td className="p-3 text-center">
+                        <td className="px-4 py-3 text-center">
                           <Link
                             href={`/inventory-check/${item.id}`}
-                            className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-gray-100"
+                            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                           >
                             Xem
                           </Link>
@@ -285,6 +329,7 @@ export default function InventoryCheckPage() {
             </table>
           </div>
         </div>
+
       </div>
     </main>
   );

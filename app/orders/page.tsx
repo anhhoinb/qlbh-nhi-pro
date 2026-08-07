@@ -1499,9 +1499,9 @@ export default function OrdersPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-bold text-blue-700">
+    <main className="min-h-screen bg-slate-100 p-6">
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="text-4xl font-bold text-sky-700">
           Lịch sử bán hàng
         </h1>
 
@@ -1509,12 +1509,12 @@ export default function OrdersPage() {
           <button
             type="button"
             onClick={exportOrdersDetailToCSV}
-            className="px-5 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold"
+            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition"
           >
             Xuất file chi tiết
           </button>
 
-          <label className="px-5 py-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold cursor-pointer">
+          <label className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold cursor-pointer transition">
             {importing
               ? "Đang nhập..."
               : "Nhập file chi tiết"}
@@ -1531,10 +1531,10 @@ export default function OrdersPage() {
       </div>
 
       {selectedOrderIds.length > 0 && (
-        <div className="mb-4 bg-white rounded-2xl shadow px-4 py-3 flex items-center justify-between">
-          <div className="text-sm font-semibold text-gray-700">
+        <div className="mb-4 bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-2.5 flex items-center justify-between">
+          <div className="text-sm font-semibold text-slate-700">
             Đã chọn{" "}
-            <span className="text-blue-700">
+            <span className="text-sky-700">
               {selectedOrderIds.length}
             </span>{" "}
             đơn hàng
@@ -1544,7 +1544,7 @@ export default function OrdersPage() {
             <button
   type="button"
   onClick={printSelectedOrders}
-  className="px-4 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold"
+  className="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold transition"
 >
   In đơn hàng
 </button>
@@ -1578,7 +1578,7 @@ export default function OrdersPage() {
       "_blank"
     );
   }}
-  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-semibold"
+  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl font-semibold transition"
 >
   In phiếu xuất kho
 </button>
@@ -1586,7 +1586,7 @@ export default function OrdersPage() {
             <button
   type="button"
   onClick={createShippingForSelectedOrders}
-  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-semibold"
+  className="bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-2 rounded-xl font-semibold transition"
 >
   Tạo phiếu vận chuyển
 </button>
@@ -1594,7 +1594,7 @@ export default function OrdersPage() {
             <button
               type="button"
               onClick={openReturnModal}
-              className="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold"
+              className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold transition"
             >
               Trả hàng
             </button>
@@ -1602,7 +1602,7 @@ export default function OrdersPage() {
             <button
               type="button"
               onClick={cancelSelectedOrders}
-              className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold"
+              className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold transition"
             >
               Hủy đơn hàng
             </button>
@@ -1610,7 +1610,7 @@ export default function OrdersPage() {
             <button
               type="button"
               onClick={() => setSelectedOrderIds([])}
-              className="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-sm font-semibold"
+              className="px-3.5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold transition"
             >
               Bỏ chọn
             </button>
@@ -1618,11 +1618,11 @@ export default function OrdersPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-3xl shadow overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <table className="w-full">
-          <thead className="bg-blue-700 text-white">
+          <thead className="bg-slate-800 text-white">
             <tr>
-              <th className="p-4 text-center w-14">
+              <th className="px-3 py-3 text-center w-14">
                 <input
                   type="checkbox"
                   checked={isAllCurrentPageSelected}
@@ -1631,26 +1631,26 @@ export default function OrdersPage() {
                 />
               </th>
 
-              <th className="p-4 pl-6 text-left">
+              <th className="px-4 py-3 pl-5 text-left">
                 Mã đơn
               </th>
 
-              <th className="p-4 text-left">
+              <th className="px-4 py-3 text-left">
                 Khách hàng
               </th>
 
-              <th className="p-4 text-left">
+              <th className="px-4 py-3 text-left">
                 Tổng tiền
               </th>
 
-              <th className="p-4 text-left">
+              <th className="px-4 py-3 text-left">
                 Ngày tạo
               </th>
 
-              <th className="p-4 text-left">
+              <th className="px-4 py-3 text-left">
                 Người tạo
               </th>
-              <th className="p-4 text-left">
+              <th className="px-4 py-3 text-left">
                 Trạng thái
               </th>
             </tr>
@@ -1660,9 +1660,9 @@ export default function OrdersPage() {
             {currentOrders.map((item) => (
               <tr
                 key={item.id}
-                className="border-b hover:bg-gray-50"
+                className="border-b border-slate-200 hover:bg-slate-50"
               >
-                <td className="p-4 text-center">
+                <td className="px-3 py-3 text-center">
                   <input
                     type="checkbox"
                     checked={selectedOrderIds.includes(item.id)}
@@ -1672,23 +1672,23 @@ export default function OrdersPage() {
                   />
                 </td>
 
-                <td className="p-4 pl-6 text-black font-semibold">
+                <td className="px-4 py-3 pl-5 text-slate-900 font-semibold">
                   <button
                     type="button"
                     onClick={() =>
                       setSelectedOrder(item)
                     }
-                    className="text-blue-700 hover:underline font-bold"
+                    className="text-sky-700 hover:text-sky-800 hover:underline font-bold"
                   >
                     {getOrderCode(item)}
                   </button>
                 </td>
 
-                <td className="p-4 text-black">
+                <td className="px-4 py-3 text-slate-900">
                   {getCustomerName(item)}
                 </td>
 
-                <td className="p-4 text-black">
+                <td className="px-4 py-3 text-slate-900">
                   {formatMoney(
                     item.total ||
                       item.grand_total ||
@@ -1698,21 +1698,21 @@ export default function OrdersPage() {
                   đ
                 </td>
 
-                <td className="p-4 text-black">
+                <td className="px-4 py-3 text-slate-900">
                   {formatDate(item.createdAt)}
                 </td>
 
-                <td className="p-4 text-black">
+                <td className="px-4 py-3 text-slate-900">
                   {getCreatedBy(item)}
                 </td>
 
-                <td className="p-4">
+                <td className="px-4 py-3">
                   {item.status === "cancelled" ? (
-                    <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold">
+                    <span className="px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-xs font-bold">
                       Đã hủy
                     </span>
                   ) : item.status === "returned" ? (
-                    <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">
+                    <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
                       Đã trả hàng
                     </span>
                   ) : item.status === "partially_returned" ? (
@@ -1720,7 +1720,7 @@ export default function OrdersPage() {
                       Trả một phần
                     </span>
                   ) : (
-                    <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                    <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">
                       Hoàn thành
                     </span>
                   )}
@@ -1732,7 +1732,7 @@ export default function OrdersPage() {
               <tr>
                 <td
                   colSpan={6}
-                  className="p-8 text-center text-gray-500"
+                  className="p-8 text-center text-slate-500"
                 >
                   Chưa có đơn hàng nào
                 </td>
@@ -1742,8 +1742,8 @@ export default function OrdersPage() {
         </table>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 border-t bg-white">
-            <div className="text-sm text-gray-600">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-white">
+            <div className="text-sm text-slate-600">
               Hiển thị{" "}
               {orders.length === 0
                 ? 0
@@ -1767,7 +1767,7 @@ export default function OrdersPage() {
                     Math.max(prev - 1, 1)
                   )
                 }
-                className="px-4 py-2 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-100"
+                className="px-4 py-2 rounded-lg border text-sm disabled:opacity-40 hover:bg-slate-100"
               >
                 Trước
               </button>
@@ -1784,8 +1784,8 @@ export default function OrdersPage() {
                   }
                   className={
                     currentPage === page
-                      ? "px-4 py-2 rounded-lg bg-blue-700 text-white text-sm"
-                      : "px-4 py-2 rounded-lg border text-sm hover:bg-gray-100"
+                      ? "px-4 py-2 rounded-lg bg-sky-600 text-white text-sm"
+                      : "px-4 py-2 rounded-lg border text-sm hover:bg-slate-100"
                   }
                 >
                   {page}
@@ -1803,7 +1803,7 @@ export default function OrdersPage() {
                     )
                   )
                 }
-                className="px-4 py-2 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-100"
+                className="px-4 py-2 rounded-lg border text-sm disabled:opacity-40 hover:bg-slate-100"
               >
                 Sau
               </button>
@@ -1815,13 +1815,13 @@ export default function OrdersPage() {
       {returnOpen && returnOrder && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4">
           <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between bg-orange-500 px-6 py-5 text-white">
+            <div className="flex items-center justify-between bg-slate-800 px-6 py-4 text-white">
               <div>
                 <h2 className="text-2xl font-bold">
                   Trả hàng
                 </h2>
 
-                <p className="mt-1 text-sm text-orange-100">
+                <p className="mt-1 text-sm text-slate-300">
                   Đơn: {getOrderCode(returnOrder)} · {getCustomerName(returnOrder)}
                 </p>
               </div>
@@ -1839,7 +1839,7 @@ export default function OrdersPage() {
             <div className="max-h-[calc(92vh-90px)] overflow-auto p-6">
               <div className="overflow-x-auto rounded-2xl border">
                 <table className="w-full min-w-[950px]">
-                  <thead className="bg-gray-100">
+                  <thead className="bg-slate-100 text-slate-700">
                     <tr>
                       <th className="p-3 text-center">Chọn</th>
                       <th className="p-3 text-left">Sản phẩm</th>
@@ -1897,7 +1897,7 @@ export default function OrdersPage() {
                             {item.alreadyReturned}
                           </td>
 
-                          <td className="p-3 text-right font-semibold text-blue-700">
+                          <td className="p-3 text-right font-semibold text-sky-700">
                             {item.remainingQuantity}
                           </td>
 
@@ -1921,7 +1921,7 @@ export default function OrdersPage() {
                                   returnQuantity: value,
                                 });
                               }}
-                              className="w-24 rounded-lg border p-2 text-center disabled:bg-gray-100"
+                              className="w-24 rounded-lg border p-2 text-center disabled:bg-slate-100"
                             />
                           </td>
 
@@ -1937,7 +1937,7 @@ export default function OrdersPage() {
 
               <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
                     Lý do trả hàng
                   </label>
 
@@ -1948,11 +1948,11 @@ export default function OrdersPage() {
                       setReturnReason(event.target.value)
                     }
                     placeholder="Ví dụ: Khách đổi sản phẩm, sản phẩm lỗi..."
-                    className="w-full resize-y rounded-2xl border p-4 outline-none focus:border-orange-500"
+                    className="w-full resize-y rounded-2xl border border-slate-300 p-4 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
 
-                <div className="rounded-2xl border bg-gray-50 p-5">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                   <label className="flex cursor-pointer items-center gap-3 font-semibold">
                     <input
                       type="checkbox"
@@ -1965,7 +1965,7 @@ export default function OrdersPage() {
                     Nhập lại số lượng trả vào kho
                   </label>
 
-                  <p className="mt-2 text-sm text-gray-500">
+                  <p className="mt-2 text-sm text-slate-500">
                     Nếu bỏ chọn, hệ thống vẫn lưu phiếu trả hàng nhưng không cộng lại tồn kho.
                   </p>
 
@@ -2000,7 +2000,7 @@ export default function OrdersPage() {
                   type="button"
                   disabled={savingReturn}
                   onClick={closeReturnModal}
-                  className="rounded-xl bg-gray-200 px-6 py-3 font-semibold hover:bg-gray-300 disabled:opacity-50"
+                  className="rounded-xl bg-slate-200 px-6 py-3 font-semibold text-slate-700 hover:bg-slate-300 disabled:opacity-50"
                 >
                   Hủy
                 </button>
@@ -2023,8 +2023,8 @@ export default function OrdersPage() {
 
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-6xl rounded-2xl shadow-2xl overflow-hidden">
-            <div className="bg-blue-700 text-white px-6 py-4 flex items-center justify-between">
+          <div className="bg-white w-full max-w-6xl rounded-3xl border border-slate-200 shadow-2xl overflow-hidden">
+            <div className="bg-slate-800 text-white px-6 py-4 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">
                   Chi tiết đơn hàng
@@ -2047,16 +2047,16 @@ export default function OrdersPage() {
               </button>
             </div>
 
-            <div className="p-6 max-h-[78vh] overflow-auto bg-gray-50">
+            <div className="p-5 max-h-[78vh] overflow-auto bg-slate-50">
               <div className="grid grid-cols-2 gap-5 mb-5">
-                <div className="bg-white rounded-2xl border p-5">
-                  <h3 className="font-bold text-lg mb-4 text-gray-800">
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                  <h3 className="font-bold text-lg mb-4 text-slate-800">
                     Thông tin khách hàng
                   </h3>
 
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between gap-4">
-                      <span className="text-gray-500">
+                      <span className="text-slate-500">
                         Khách hàng
                       </span>
                       <span className="font-semibold text-right">
@@ -2065,7 +2065,7 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="flex justify-between gap-4">
-                      <span className="text-gray-500">
+                      <span className="text-slate-500">
                         Số điện thoại
                       </span>
                       <span className="font-semibold text-right">
@@ -2074,7 +2074,7 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="flex justify-between gap-4">
-                      <span className="text-gray-500">
+                      <span className="text-slate-500">
                         Địa chỉ
                       </span>
                       <span className="font-semibold text-right">
@@ -2084,14 +2084,14 @@ export default function OrdersPage() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl border p-5">
-                  <h3 className="font-bold text-lg mb-4 text-gray-800">
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                  <h3 className="font-bold text-lg mb-4 text-slate-800">
                     Thông tin đơn hàng
                   </h3>
 
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between gap-4">
-                      <span className="text-gray-500">
+                      <span className="text-slate-500">
                         Ngày tạo
                       </span>
                       <span className="font-semibold text-right">
@@ -2100,7 +2100,7 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="flex justify-between gap-4">
-                      <span className="text-gray-500">
+                      <span className="text-slate-500">
                         Người tạo
                       </span>
                       <span className="font-semibold text-right">
@@ -2109,10 +2109,10 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="flex justify-between gap-4">
-                      <span className="text-gray-500">
+                      <span className="text-slate-500">
                         Thanh toán
                       </span>
-                      <span className="font-bold text-blue-700 text-right">
+                      <span className="font-bold text-sky-700 text-right">
                         {getPaymentMethodText(selectedOrder)}
                       </span>
                     </div>
@@ -2123,7 +2123,7 @@ export default function OrdersPage() {
                     ) && (
                       <>
                         <div className="flex justify-between gap-4">
-                          <span className="text-gray-500">
+                          <span className="text-slate-500">
                             Tiền mặt
                           </span>
                           <span className="font-semibold text-right">
@@ -2137,7 +2137,7 @@ export default function OrdersPage() {
                         </div>
 
                         <div className="flex justify-between gap-4">
-                          <span className="text-gray-500">
+                          <span className="text-slate-500">
                             Chuyển khoản
                           </span>
                           <span className="font-semibold text-right">
@@ -2157,17 +2157,17 @@ export default function OrdersPage() {
 
               <div className="bg-white rounded-2xl border overflow-hidden mb-5">
                 <div className="px-5 py-4 border-b flex items-center justify-between">
-                  <h3 className="font-bold text-lg text-gray-800">
+                  <h3 className="font-bold text-lg text-slate-800">
                     Sản phẩm trong đơn
                   </h3>
 
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-slate-500">
                     {getItems(selectedOrder).length} sản phẩm
                   </span>
                 </div>
 
                 <table className="w-full">
-                  <thead className="bg-gray-100">
+                  <thead className="bg-slate-100 text-slate-700">
                     <tr>
                       <th className="p-3 text-left w-16">
                         STT
@@ -2201,7 +2201,7 @@ export default function OrdersPage() {
                       (product: any, index: number) => (
                         <tr
                           key={index}
-                          className="border-t hover:bg-gray-50"
+                          className="border-t hover:bg-slate-50"
                         >
                           <td className="p-3">
                             {index + 1}
@@ -2213,7 +2213,7 @@ export default function OrdersPage() {
                             </div>
                           </td>
 
-                          <td className="p-3 text-gray-700">
+                          <td className="p-3 text-slate-700">
                             {getProductSku(product) || "---"}
                           </td>
 
@@ -2250,7 +2250,7 @@ export default function OrdersPage() {
                       <tr>
                         <td
                           colSpan={8}
-                          className="p-8 text-center text-gray-500"
+                          className="p-8 text-center text-slate-500"
                         >
                           Đơn hàng này chưa có dữ liệu sản phẩm
                         </td>
@@ -2262,13 +2262,13 @@ export default function OrdersPage() {
 
               <div className="flex justify-end">
                 <div className="bg-white rounded-2xl border w-full max-w-lg p-5">
-                  <h3 className="font-bold text-lg mb-4 text-gray-800">
+                  <h3 className="font-bold text-lg mb-4 text-slate-800">
                     Tổng thanh toán
                   </h3>
 
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">
+                      <span className="text-slate-600">
                         Tổng tiền
                       </span>
                       <strong>
@@ -2283,7 +2283,7 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="flex justify-between">
-                      <span className="text-gray-600">
+                      <span className="text-slate-600">
                         VAT
                       </span>
                       <strong>
@@ -2297,7 +2297,7 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="flex justify-between">
-                      <span className="text-gray-600">
+                      <span className="text-slate-600">
                         Chiết khấu
                       </span>
                       <strong>
@@ -2309,7 +2309,7 @@ export default function OrdersPage() {
                       <span className="font-bold text-gray-900">
                         Khách phải trả
                       </span>
-                      <strong className="text-blue-700">
+                      <strong className="text-sky-700">
                         {formatMoney(
                           selectedOrder.total ||
                             selectedOrder.grand_total ||
@@ -2321,7 +2321,7 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="flex justify-between">
-                      <span className="text-gray-600">
+                      <span className="text-slate-600">
                         Khách đưa
                       </span>
                       <strong>
@@ -2335,7 +2335,7 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="flex justify-between">
-                      <span className="text-gray-600">
+                      <span className="text-slate-600">
                         Tiền thừa
                       </span>
                       <strong>
@@ -2357,7 +2357,7 @@ export default function OrdersPage() {
                   onClick={() =>
                     setSelectedOrder(null)
                   }
-                  className="px-8 py-3 rounded-xl bg-gray-200 hover:bg-gray-300 font-semibold"
+                  className="px-8 py-3 rounded-xl bg-slate-200 hover:bg-slate-300 font-semibold"
                 >
                   Đóng
                 </button>

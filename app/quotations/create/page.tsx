@@ -474,15 +474,15 @@ export default function CreateQuotationPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-5 text-black">
+    <main className="min-h-screen bg-slate-100 p-5 text-black">
       <div className="mx-auto max-w-[1500px]">
-        <div className="mb-5 flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+        <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-blue-700">
+            <h1 className="text-3xl font-bold text-slate-800">
               Tạo báo giá
             </h1>
 
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-slate-500">
               Nhập khách hàng thủ công và chọn sản phẩm cần báo giá
             </p>
           </div>
@@ -491,7 +491,7 @@ export default function CreateQuotationPage() {
             <button
               type="button"
               onClick={() => router.push("/pos")}
-              className="rounded-xl border px-4 py-2 font-semibold hover:bg-gray-50"
+              className="rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
             >
               Quay lại POS
             </button>
@@ -500,7 +500,7 @@ export default function CreateQuotationPage() {
               type="button"
               disabled={saving}
               onClick={previewQuotation}
-              className="rounded-xl border border-orange-500 bg-white px-5 py-2 font-semibold text-orange-600 hover:bg-orange-50 disabled:opacity-50"
+              className="rounded-xl border border-amber-500 bg-white px-5 py-2 font-semibold text-amber-600 hover:bg-amber-50 disabled:opacity-50"
             >
               Xem trước
             </button>
@@ -509,7 +509,7 @@ export default function CreateQuotationPage() {
               type="button"
               disabled={saving}
               onClick={() => saveQuotation(false)}
-              className="rounded-xl bg-blue-700 px-5 py-2 font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+              className="rounded-xl bg-sky-600 px-5 py-2 font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
             >
               {saving ? "Đang lưu..." : "Lưu báo giá"}
             </button>
@@ -518,7 +518,7 @@ export default function CreateQuotationPage() {
               type="button"
               disabled={saving}
               onClick={() => saveQuotation(true)}
-              className="rounded-xl bg-green-600 px-5 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+              className="rounded-xl bg-emerald-600 px-5 py-2 font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
             >
               Lưu và in
             </button>
@@ -527,7 +527,7 @@ export default function CreateQuotationPage() {
 
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[420px_1fr]">
           <section className="space-y-5">
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h2 className="mb-4 text-lg font-bold">Thông tin báo giá</h2>
 
               <div className="grid grid-cols-2 gap-3">
@@ -539,7 +539,7 @@ export default function CreateQuotationPage() {
                     type="date"
                     value={quotationDate}
                     onChange={(event) => setQuotationDate(event.target.value)}
-                    className="w-full rounded-xl border p-3"
+                    className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
 
@@ -553,15 +553,15 @@ export default function CreateQuotationPage() {
                       min="1"
                       value={validDays}
                       onChange={(event) => setValidDays(event.target.value)}
-                      className="w-full rounded-xl border p-3"
+                      className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     />
-                    <span className="text-sm text-gray-500">ngày</span>
+                    <span className="text-sm text-slate-500">ngày</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h2 className="mb-4 text-lg font-bold">Công ty mua hàng</h2>
               <div className="space-y-3">
                 <div>
@@ -576,7 +576,7 @@ export default function CreateQuotationPage() {
                         companyName: event.target.value,
                       }))
                     }
-                    className="w-full rounded-xl border p-3"
+                    className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     placeholder="Nhập tên công ty mua hàng"
                   />
                 </div>
@@ -594,7 +594,7 @@ export default function CreateQuotationPage() {
                         address: event.target.value,
                       }))
                     }
-                    className="w-full rounded-xl border p-3"
+                    className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     placeholder="Nhập địa chỉ"
                   />
                 </div>
@@ -611,7 +611,7 @@ export default function CreateQuotationPage() {
                         taxCode: event.target.value,
                       }))
                     }
-                    className="w-full rounded-xl border p-3"
+                    className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     placeholder="Nhập mã số thuế"
                   />
                 </div>
@@ -629,7 +629,7 @@ export default function CreateQuotationPage() {
                           phone: event.target.value,
                         }))
                       }
-                      className="w-full rounded-xl border p-3"
+                      className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                       placeholder="Số điện thoại"
                     />
                   </div>
@@ -647,7 +647,7 @@ export default function CreateQuotationPage() {
                           email: event.target.value,
                         }))
                       }
-                      className="w-full rounded-xl border p-3"
+                      className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                       placeholder="Email"
                     />
                   </div>
@@ -655,7 +655,7 @@ export default function CreateQuotationPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h2 className="mb-4 text-lg font-bold">Điều kiện báo giá</h2>
               <div className="space-y-4">
                 <div>
@@ -666,7 +666,7 @@ export default function CreateQuotationPage() {
                     rows={3}
                     value={deliveryTime}
                     onChange={(event) => setDeliveryTime(event.target.value)}
-                    className="w-full resize-y rounded-xl border p-3 outline-none focus:border-blue-500"
+                    className="w-full resize-y rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     placeholder="Nhập thời gian giao hàng"
                   />
                 </div>
@@ -679,7 +679,7 @@ export default function CreateQuotationPage() {
                     rows={3}
                     value={warrantyTime}
                     onChange={(event) => setWarrantyTime(event.target.value)}
-                    className="w-full resize-y rounded-xl border p-3 outline-none focus:border-blue-500"
+                    className="w-full resize-y rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     placeholder="Nhập thời gian bảo hành"
                   />
                 </div>
@@ -719,7 +719,7 @@ export default function CreateQuotationPage() {
                     rows={3}
                     value={shippingNote}
                     onChange={(event) => setShippingNote(event.target.value)}
-                    className="w-full resize-y rounded-xl border p-3 outline-none focus:border-blue-500"
+                    className="w-full resize-y rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     placeholder="Ví dụ: Miễn phí giao hàng nội thành..."
                   />
                 </div>
@@ -728,23 +728,23 @@ export default function CreateQuotationPage() {
           </section>
 
           <section className="space-y-5">
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <h2 className="text-lg font-bold">Sản phẩm báo giá</h2>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-slate-500">
                     Tìm theo tên hoặc mã sản phẩm
                   </p>
                 </div>
 
-                <div className="flex overflow-hidden rounded-xl border">
+                <div className="flex overflow-hidden rounded-xl border border-slate-300">
                   <button
                     type="button"
                     onClick={() => setShowMainName(false)}
                     className={`px-4 py-2 text-sm font-semibold ${
                       !showMainName
-                        ? "bg-blue-700 text-white"
-                        : "bg-white text-gray-700"
+                        ? "bg-sky-600 text-white"
+                        : "bg-white text-slate-700"
                     }`}
                   >
                     Tên bán
@@ -755,8 +755,8 @@ export default function CreateQuotationPage() {
                     onClick={() => setShowMainName(true)}
                     className={`px-4 py-2 text-sm font-semibold ${
                       showMainName
-                        ? "bg-blue-700 text-white"
-                        : "bg-white text-gray-700"
+                        ? "bg-sky-600 text-white"
+                        : "bg-white text-slate-700"
                     }`}
                   >
                     Tên đầy đủ
@@ -778,13 +778,13 @@ export default function CreateQuotationPage() {
                       ? "Đang tải sản phẩm..."
                       : "Nhập tên hoặc mã sản phẩm..."
                   }
-                  className="w-full rounded-xl border p-3 outline-none focus:border-blue-500"
+                  className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                 />
 
                 {showDropdown && (
-                  <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-80 overflow-auto rounded-xl border bg-white shadow-xl">
+                  <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-80 overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl">
                     {filteredProducts.length === 0 ? (
-                      <div className="p-4 text-sm text-gray-500">
+                      <div className="p-4 text-sm text-slate-500">
                         Không tìm thấy sản phẩm
                       </div>
                     ) : (
@@ -796,7 +796,7 @@ export default function CreateQuotationPage() {
                             key={product.id}
                             type="button"
                             onMouseDown={() => addProduct(product)}
-                            className="flex w-full items-center justify-between gap-4 border-b p-3 text-left hover:bg-blue-50"
+                            className="flex w-full items-center justify-between gap-4 border-b border-slate-100 p-3 text-left hover:bg-sky-50"
                           >
                             <div className="min-w-0 flex-1">
                               <div className="truncate font-semibold">
@@ -804,27 +804,27 @@ export default function CreateQuotationPage() {
                               </div>
 
                               <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                                <span className="text-gray-500">
+                                <span className="text-slate-500">
                                   Mã: {product.product_code || "---"}
                                 </span>
 
                                 <span
                                   className={
                                     stock > 0
-                                      ? "font-semibold text-green-600"
-                                      : "font-semibold text-red-600"
+                                      ? "font-semibold text-emerald-600"
+                                      : "font-semibold text-rose-600"
                                   }
                                 >
                                   Tồn kho: {formatMoney(stock)}
                                 </span>
 
-                                <span className="text-gray-500">
+                                <span className="text-slate-500">
                                   ĐVT: {getUnitText(product.unit)}
                                 </span>
                               </div>
                             </div>
 
-                            <div className="shrink-0 font-semibold text-blue-700">
+                            <div className="shrink-0 font-semibold text-sky-700">
                               {formatMoney(Number(product.price || 0))}đ
                             </div>
                           </button>
@@ -836,10 +836,10 @@ export default function CreateQuotationPage() {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[1050px] border-collapse">
-                  <thead className="bg-blue-700 text-white">
+                  <thead className="bg-slate-800 text-white">
                     <tr>
                       <th className="p-3 text-center">STT</th>
                       <th className="p-3 text-left">Mã SP</th>
@@ -863,7 +863,7 @@ export default function CreateQuotationPage() {
                         lineSubtotal * (Number(item.tax || 0) / 100);
 
                       return (
-                        <tr key={item.id} className="border-b">
+                        <tr key={item.id} className="border-b border-slate-200 hover:bg-slate-50">
                           <td className="p-3 text-center">{index + 1}</td>
                           <td className="p-3">{item.product_code || "---"}</td>
                           <td className="p-3 align-top font-normal whitespace-normal break-words">
@@ -883,7 +883,7 @@ export default function CreateQuotationPage() {
                                   ),
                                 })
                               }
-                              className="w-20 rounded-lg border p-2 text-center"
+                              className="w-20 rounded-lg border border-slate-300 p-2 text-center outline-none focus:border-sky-500"
                             />
                           </td>
                           <td className="p-3 text-right">
@@ -895,7 +895,7 @@ export default function CreateQuotationPage() {
                                   price: parseMoney(event.target.value),
                                 })
                               }
-                              className="w-32 rounded-lg border p-2 text-right"
+                              className="w-32 rounded-lg border border-slate-300 p-2 text-right outline-none focus:border-sky-500"
                             />
                           </td>
                           <td className="p-3 text-center">
@@ -906,7 +906,7 @@ export default function CreateQuotationPage() {
                                   tax: Number(event.target.value),
                                 })
                               }
-                              className="rounded-lg border p-2"
+                              className="rounded-lg border border-slate-300 p-2 outline-none focus:border-sky-500"
                             >
                               <option value="0">0%</option>
                               <option value="8">8%</option>
@@ -925,7 +925,7 @@ export default function CreateQuotationPage() {
                                   note: event.target.value,
                                 })
                               }
-                              className="min-h-[76px] w-full resize-y rounded-lg border p-2 leading-5 outline-none focus:border-blue-500"
+                              className="min-h-[76px] w-full resize-y rounded-lg border border-slate-300 p-2 leading-5 outline-none focus:border-sky-500"
                               placeholder="Nhập ghi chú, có thể Enter xuống dòng"
                             />
                           </td>
@@ -933,7 +933,7 @@ export default function CreateQuotationPage() {
                             <button
                               type="button"
                               onClick={() => removeItem(item.id)}
-                              className="rounded-lg bg-red-500 px-3 py-2 font-semibold text-white hover:bg-red-600"
+                              className="rounded-lg bg-rose-500 px-3 py-2 font-semibold text-white hover:bg-rose-600"
                             >
                               Xóa
                             </button>
@@ -946,7 +946,7 @@ export default function CreateQuotationPage() {
                       <tr>
                         <td
                           colSpan={10}
-                          className="p-10 text-center text-gray-500"
+                          className="p-10 text-center text-slate-500"
                         >
                           Chưa có sản phẩm trong báo giá
                         </td>
@@ -956,7 +956,7 @@ export default function CreateQuotationPage() {
                 </table>
               </div>
 
-              <div className="flex justify-end border-t bg-gray-50 p-5">
+              <div className="flex justify-end border-t border-slate-200 bg-slate-50 p-5">
                 <div className="w-full max-w-md space-y-3">
                   <div className="flex justify-between">
                     <span>Tiền hàng:</span>
@@ -966,7 +966,7 @@ export default function CreateQuotationPage() {
                     <span>Thuế VAT:</span>
                     <strong>{formatMoney(vatAmount)}đ</strong>
                   </div>
-                  <div className="flex justify-between border-t pt-3 text-xl font-bold text-red-600">
+                  <div className="flex justify-between border-t border-slate-200 pt-3 text-xl font-bold text-rose-600">
                     <span>Tổng cộng:</span>
                     <span>{formatMoney(total)}đ</span>
                   </div>

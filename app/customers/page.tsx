@@ -329,14 +329,14 @@ export default function CustomersPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6 text-black">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+    <main className="min-h-screen bg-slate-100 p-6 text-black">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-4xl font-bold text-blue-700">
+          <h1 className="text-4xl font-bold text-sky-700">
             Quản lý khách hàng
           </h1>
 
-          <p className="text-gray-500 mt-2">
+          <p className="text-slate-500 mt-1">
             Quản lý thông tin khách hàng, công ty và liên hệ
           </p>
         </div>
@@ -344,22 +344,22 @@ export default function CustomersPage() {
         <button
           type="button"
           onClick={() => setShowAddModal(true)}
-          className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-2xl font-semibold shadow"
+          className="bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-2xl font-semibold shadow-sm transition"
         >
           + Thêm khách hàng
         </button>
       </div>
 
-      <div className="bg-white p-5 rounded-3xl shadow mb-6">
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4">
         <input
           type="text"
           placeholder="Tìm tên, số điện thoại, công ty, email hoặc mã số thuế..."
-          className="w-full border p-4 rounded-2xl text-black outline-none focus:border-blue-600"
+          className="w-full border border-slate-300 bg-white px-4 py-3 rounded-xl text-black outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
 
-        <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm font-semibold text-gray-700">
+        <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-600">
           <input
             type="checkbox"
             checked={showInactiveCustomers}
@@ -372,16 +372,16 @@ export default function CustomersPage() {
         </label>
       </div>
 
-      <div className="bg-white rounded-3xl shadow overflow-hidden">
-        <div className="px-5 py-4 border-b flex items-center justify-between">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold">
+            <h2 className="text-lg font-bold text-slate-800">
               Danh sách khách hàng
             </h2>
 
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-xs text-slate-500 mt-0.5">
               Tổng khách hàng:{" "}
-              <span className="font-semibold text-blue-700">
+              <span className="font-semibold text-sky-700">
                 {filteredCustomers.length}
               </span>
             </p>
@@ -389,22 +389,22 @@ export default function CustomersPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px]">
-            <thead className="bg-blue-700 text-white">
+          <table className="w-full min-w-[1050px] table-fixed">
+            <thead className="bg-slate-800 text-white">
               <tr>
-                <th className="p-4 text-left w-[260px]">
+                <th className="px-4 py-3 text-left w-[40%]">
                   Khách hàng
                 </th>
 
-                <th className="p-4 text-left w-[260px]">
+                <th className="px-3 py-3 text-left w-[15%]">
                   Liên hệ
                 </th>
 
-                <th className="p-4 text-left w-[260px]">
+                <th className="px-3 py-3 text-left w-[15%]">
                   Thông tin công ty
                 </th>
 
-                <th className="p-4 text-left">
+                <th className="px-3 py-3 text-left w-[30%]">
                   Địa chỉ
                 </th>
               </tr>
@@ -414,53 +414,65 @@ export default function CustomersPage() {
               {filteredCustomers.map((item) => (
                 <tr
                   key={item.id}
-                  className="border-b hover:bg-gray-50"
+                  className="border-b border-slate-200 hover:bg-slate-50"
                 >
-                  <td className="p-4 align-top">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openEditCustomer(item)}
-                        className="font-bold text-blue-700 hover:text-blue-800 hover:underline text-left"
-                        title="Bấm để sửa thông tin khách hàng"
-                      >
-                        {item.name || "---"}
-                      </button>
+                  <td className="px-4 py-3 align-top w-[40%]">
+                    <div>
+                      <div className="flex items-start gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditCustomer(item)}
+                          className="block w-full text-left font-bold text-sky-700 hover:text-sky-800 hover:underline whitespace-nowrap overflow-hidden text-ellipsis"
+                          title={item.name || "Bấm để sửa thông tin khách hàng"}
+                        >
+                          {item.name || "---"}
+                        </button>
 
-                      {item.active === false && (
-                        <span className="rounded-full bg-gray-200 px-2 py-1 text-xs font-semibold text-gray-700">
-                          Ngừng sử dụng
-                        </span>
-                      )}
+                        {item.active === false && (
+                          <span className="shrink-0 rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
+                            Ngừng sử dụng
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="mt-1 text-sm text-slate-500 whitespace-nowrap overflow-hidden text-ellipsis">
+                        {item.companyName || "Chưa có tên công ty"}
+                      </p>
                     </div>
-
-                    <p className="text-sm text-gray-500 mt-1">
-                      {item.companyName || "Chưa có tên công ty"}
-                    </p>
                   </td>
 
-                  <td className="p-4 align-top">
-                    <p className="font-semibold text-gray-900">
+                  <td className="px-3 py-3 align-top w-[15%]">
+                    <p className="font-semibold text-slate-900 whitespace-nowrap">
                       {item.phone || "---"}
                     </p>
 
-                    <p className="text-sm text-blue-700 mt-1">
+                    <p className="text-sm text-sky-700 mt-1">
                       {item.email || "Chưa có email"}
                     </p>
                   </td>
 
-                  <td className="p-4 align-top">
-                    <p className="text-sm text-gray-500">
+                  <td className="px-3 py-3 align-top w-[15%]">
+                    <p className="text-sm text-slate-500">
                       Mã số thuế
                     </p>
 
-                    <p className="font-semibold text-gray-900 mt-1">
+                    <p className="font-semibold text-slate-900 mt-1">
                       {item.taxCode || "---"}
                     </p>
                   </td>
 
-                  <td className="p-4 align-top text-gray-700">
-                    {item.address || "---"}
+                  <td className="px-3 py-3 align-top text-slate-700 w-[30%]">
+                    <p
+                      className="overflow-hidden"
+                      style={{
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                      }}
+                      title={item.address || ""}
+                    >
+                      {item.address || "---"}
+                    </p>
                   </td>
                 </tr>
               ))}
@@ -469,7 +481,7 @@ export default function CustomersPage() {
                 <tr>
                   <td
                     colSpan={4}
-                    className="p-8 text-center text-gray-500"
+                    className="p-8 text-center text-slate-500"
                   >
                     Không có khách hàng phù hợp
                   </td>
@@ -482,14 +494,14 @@ export default function CustomersPage() {
 
       {showAddModal && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-xl overflow-hidden">
-            <div className="bg-blue-700 text-white px-6 py-5 flex items-center justify-between">
+          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="bg-slate-800 text-white px-6 py-5 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">
                   Thêm khách hàng mới
                 </h2>
 
-                <p className="text-sm text-blue-100 mt-1">
+                <p className="text-sm text-slate-300 mt-1">
                   Nhập thông tin khách hàng vào hệ thống
                 </p>
               </div>
@@ -510,7 +522,7 @@ export default function CustomersPage() {
             <div className="p-6">
               <div className="grid md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
                     Tên khách hàng <span className="text-red-500">*</span>
                   </label>
 
@@ -524,12 +536,12 @@ export default function CustomersPage() {
                       }))
                     }
                     placeholder="Ví dụ: Nguyễn Văn A"
-                    className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
                     Số điện thoại <span className="text-red-500">*</span>
                   </label>
 
@@ -543,12 +555,12 @@ export default function CustomersPage() {
                       }))
                     }
                     placeholder="Ví dụ: 0987654321"
-                    className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
                     Tên công ty
                   </label>
 
@@ -562,12 +574,12 @@ export default function CustomersPage() {
                       }))
                     }
                     placeholder="Ví dụ: Công ty TNHH ABC"
-                    className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
                     Mã số thuế
                   </label>
 
@@ -581,12 +593,12 @@ export default function CustomersPage() {
                       }))
                     }
                     placeholder="Ví dụ: 0101234567"
-                    className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
                     Email
                   </label>
 
@@ -600,12 +612,12 @@ export default function CustomersPage() {
                       }))
                     }
                     placeholder="Ví dụ: khachhang@email.com"
-                    className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
                     Địa chỉ
                   </label>
 
@@ -619,13 +631,13 @@ export default function CustomersPage() {
                     }
                     placeholder="Nhập địa chỉ khách hàng"
                     rows={3}
-                    className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600 resize-none"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100 resize-none"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="px-6 py-5 bg-gray-50 flex justify-end gap-3">
+            <div className="px-6 py-5 bg-slate-50 flex justify-end gap-3 border-t border-slate-200">
               <button
                 type="button"
                 disabled={saving}
@@ -633,7 +645,7 @@ export default function CustomersPage() {
                   resetNewCustomer();
                   setShowAddModal(false);
                 }}
-                className="px-6 py-3 rounded-2xl bg-gray-200 hover:bg-gray-300 font-semibold disabled:opacity-60"
+                className="px-6 py-3 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold disabled:opacity-60 transition"
               >
                 Hủy
               </button>
@@ -642,7 +654,7 @@ export default function CustomersPage() {
                 type="button"
                 disabled={saving}
                 onClick={handleAddCustomer}
-                className="px-6 py-3 rounded-2xl bg-blue-700 hover:bg-blue-800 text-white font-semibold disabled:opacity-60"
+                className="px-6 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-semibold disabled:opacity-60 transition"
               >
                 {saving ? "Đang lưu..." : "Lưu khách hàng"}
               </button>
@@ -660,14 +672,14 @@ export default function CustomersPage() {
             }
           }}
         >
-          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-xl overflow-hidden">
-            <div className="bg-blue-700 text-white px-6 py-5 flex items-center justify-between">
+          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="bg-slate-800 text-white px-6 py-5 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">
                   Sửa thông tin khách hàng
                 </h2>
 
-                <p className="text-sm text-blue-100 mt-1">
+                <p className="text-sm text-slate-300 mt-1">
                   Cập nhật thông tin và lưu lại hệ thống
                 </p>
               </div>
@@ -685,7 +697,7 @@ export default function CustomersPage() {
             <div className="p-6">
               <div className="grid md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
                     Tên khách hàng <span className="text-red-500">*</span>
                   </label>
 
@@ -698,12 +710,12 @@ export default function CustomersPage() {
                         name: event.target.value,
                       }))
                     }
-                    className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
                     Số điện thoại <span className="text-red-500">*</span>
                   </label>
 
@@ -716,12 +728,12 @@ export default function CustomersPage() {
                         phone: event.target.value,
                       }))
                     }
-                    className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
                     Tên công ty
                   </label>
 
@@ -734,12 +746,12 @@ export default function CustomersPage() {
                         companyName: event.target.value,
                       }))
                     }
-                    className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
                     Mã số thuế
                   </label>
 
@@ -752,12 +764,12 @@ export default function CustomersPage() {
                         taxCode: event.target.value,
                       }))
                     }
-                    className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
                     Email
                   </label>
 
@@ -770,12 +782,12 @@ export default function CustomersPage() {
                         email: event.target.value,
                       }))
                     }
-                    className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
                     Địa chỉ
                   </label>
 
@@ -788,13 +800,13 @@ export default function CustomersPage() {
                       }))
                     }
                     rows={3}
-                    className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600 resize-y"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100 resize-y"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="px-6 py-5 bg-gray-50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="px-6 py-5 bg-slate-50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-slate-200">
               <div>
                 {editingCustomer.active === false ? (
                   <button
@@ -810,7 +822,7 @@ export default function CustomersPage() {
                     type="button"
                     disabled={savingEdit || deletingCustomer}
                     onClick={handleDeleteOrDeactivateCustomer}
-                    className="px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-semibold disabled:opacity-60"
+                    className="px-6 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-semibold disabled:opacity-60 transition"
                   >
                     {deletingCustomer
                       ? "Đang xử lý..."
@@ -824,7 +836,7 @@ export default function CustomersPage() {
                   type="button"
                   disabled={savingEdit || deletingCustomer}
                   onClick={closeEditCustomer}
-                  className="px-6 py-3 rounded-2xl bg-gray-200 hover:bg-gray-300 font-semibold disabled:opacity-60"
+                  className="px-6 py-3 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold disabled:opacity-60 transition"
                 >
                   Hủy
                 </button>
@@ -833,7 +845,7 @@ export default function CustomersPage() {
                   type="button"
                   disabled={savingEdit || deletingCustomer}
                   onClick={handleUpdateCustomer}
-                  className="px-6 py-3 rounded-2xl bg-blue-700 hover:bg-blue-800 text-white font-semibold disabled:opacity-60"
+                  className="px-6 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-semibold disabled:opacity-60 transition"
                 >
                   {savingEdit ? "Đang lưu..." : "Lưu thay đổi"}
                 </button>

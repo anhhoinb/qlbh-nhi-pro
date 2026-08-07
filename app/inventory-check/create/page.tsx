@@ -347,15 +347,15 @@ export default function CreateInventoryCheckPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-5 text-black">
+    <main className="min-h-screen bg-slate-100 p-5 text-black">
       <div className="mx-auto max-w-[1500px]">
-        <div className="mb-5 flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+        <div className="mb-5 flex flex-col gap-3 rounded-2xl bg-white p-5 border border-slate-200 shadow-sm lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-blue-700">
+            <h1 className="text-3xl font-bold text-sky-700">
               Tạo phiếu kiểm hàng
             </h1>
 
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-slate-500">
               Nhập số lượng thực tế để so sánh với tồn kho hệ thống.
             </p>
           </div>
@@ -364,7 +364,7 @@ export default function CreateInventoryCheckPage() {
             <button
               type="button"
               onClick={() => router.push("/inventory-check")}
-              className="rounded-xl border px-4 py-2 font-semibold hover:bg-gray-50"
+              className="rounded-xl border px-4 py-2 font-semibold hover:bg-slate-50"
             >
               Quay lại
             </button>
@@ -373,7 +373,7 @@ export default function CreateInventoryCheckPage() {
               type="button"
               disabled={saving}
               onClick={saveDraft}
-              className="rounded-xl bg-blue-700 px-5 py-2 font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+              className="rounded-xl bg-slate-800 px-5 py-2 font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
             >
               {saving ? "Đang lưu..." : "Lưu phiếu nháp"}
             </button>
@@ -381,7 +381,7 @@ export default function CreateInventoryCheckPage() {
         </div>
 
         <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
+          <div className="rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
             <label className="mb-1 block text-sm font-semibold">
               Kho kiểm
             </label>
@@ -391,11 +391,11 @@ export default function CreateInventoryCheckPage() {
               onChange={(event) =>
                 setWarehouseName(event.target.value)
               }
-              className="w-full rounded-xl border p-3"
+              className="w-full rounded-xl border border-slate-300 p-3"
             />
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
+          <div className="rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
             <label className="mb-1 block text-sm font-semibold">
               Người kiểm
             </label>
@@ -405,11 +405,11 @@ export default function CreateInventoryCheckPage() {
               onChange={(event) =>
                 setCheckedBy(event.target.value)
               }
-              className="w-full rounded-xl border p-3"
+              className="w-full rounded-xl border border-slate-300 p-3"
             />
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
+          <div className="rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
             <label className="mb-1 block text-sm font-semibold">
               Ghi chú chung
             </label>
@@ -419,13 +419,13 @@ export default function CreateInventoryCheckPage() {
               onChange={(event) =>
                 setGeneralNote(event.target.value)
               }
-              className="w-full rounded-xl border p-3"
+              className="w-full rounded-xl border border-slate-300 p-3"
               placeholder="Nhập ghi chú nếu có"
             />
           </div>
         </div>
 
-        <div className="mb-5 rounded-2xl bg-white p-5 shadow-sm">
+        <div className="mb-5 rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
           <h2 className="mb-3 text-lg font-bold">
             Thêm sản phẩm kiểm
           </h2>
@@ -444,13 +444,13 @@ export default function CreateInventoryCheckPage() {
                   ? "Đang tải sản phẩm..."
                   : "Nhập tên hoặc mã sản phẩm..."
               }
-              className="w-full rounded-xl border p-3 outline-none focus:border-blue-500"
+              className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
             />
 
             {showDropdown && (
               <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-80 overflow-auto rounded-xl border bg-white shadow-xl">
                 {filteredProducts.length === 0 ? (
-                  <div className="p-4 text-sm text-gray-500">
+                  <div className="p-4 text-sm text-slate-500">
                     Không tìm thấy sản phẩm
                   </div>
                 ) : (
@@ -459,19 +459,19 @@ export default function CreateInventoryCheckPage() {
                       key={product.id}
                       type="button"
                       onMouseDown={() => addProduct(product)}
-                      className="flex w-full items-center justify-between gap-4 border-b p-3 text-left hover:bg-blue-50"
+                      className="flex w-full items-center justify-between gap-4 border-b border-slate-200 p-3 text-left hover:bg-blue-50"
                     >
                       <div className="min-w-0">
                         <div className="truncate font-semibold">
                           {getProductName(product)}
                         </div>
 
-                        <div className="mt-1 text-xs text-gray-500">
+                        <div className="mt-1 text-xs text-slate-500">
                           Mã: {getProductCode(product) || "---"}
                         </div>
                       </div>
 
-                      <div className="shrink-0 font-semibold text-blue-700">
+                      <div className="shrink-0 font-semibold text-sky-700">
                         Tồn: {getProductStock(product)}
                       </div>
                     </button>
@@ -482,10 +482,10 @@ export default function CreateInventoryCheckPage() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1000px] border-collapse">
-              <thead className="bg-blue-700 text-white">
+              <thead className="bg-slate-800 text-white">
                 <tr>
                   <th className="p-3 text-center">STT</th>
                   <th className="p-3 text-left">Mã SP</th>
@@ -503,7 +503,7 @@ export default function CreateInventoryCheckPage() {
                 {items.map((item, index) => (
                   <tr
                     key={item.productId}
-                    className="border-b"
+                    className="border-b border-slate-200"
                   >
                     <td className="p-3 text-center">
                       {index + 1}
@@ -521,7 +521,7 @@ export default function CreateInventoryCheckPage() {
                       {item.unit}
                     </td>
 
-                    <td className="p-3 text-center font-semibold text-blue-700">
+                    <td className="p-3 text-center font-semibold text-sky-700">
                       {item.systemStock}
                     </td>
 
@@ -547,9 +547,9 @@ export default function CreateInventoryCheckPage() {
                       <span
                         className={`font-bold ${
                           item.difference > 0
-                            ? "text-green-600"
+                            ? "text-emerald-600"
                             : item.difference < 0
-                            ? "text-red-600"
+                            ? "text-rose-600"
                             : "text-gray-600"
                         }`}
                       >
@@ -578,7 +578,7 @@ export default function CreateInventoryCheckPage() {
                         onClick={() =>
                           removeItem(item.productId)
                         }
-                        className="rounded-lg bg-red-500 px-3 py-2 font-semibold text-white hover:bg-red-600"
+                        className="rounded-lg bg-rose-500 px-3 py-2 font-semibold text-white hover:bg-rose-600"
                       >
                         Xóa
                       </button>
@@ -590,7 +590,7 @@ export default function CreateInventoryCheckPage() {
                   <tr>
                     <td
                       colSpan={9}
-                      className="p-10 text-center text-gray-500"
+                      className="p-10 text-center text-slate-500"
                     >
                       Chưa có sản phẩm trong phiếu kiểm
                     </td>
@@ -600,36 +600,36 @@ export default function CreateInventoryCheckPage() {
             </table>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 border-t bg-gray-50 p-5 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 border-t bg-slate-50 p-5 md:grid-cols-3">
             <div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-slate-500">
                 Tổng sản phẩm
               </div>
-              <div className="mt-1 text-xl font-bold text-blue-700">
+              <div className="mt-1 text-xl font-bold text-sky-700">
                 {items.length}
               </div>
             </div>
 
             <div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-slate-500">
                 Sản phẩm có chênh lệch
               </div>
-              <div className="mt-1 text-xl font-bold text-red-600">
+              <div className="mt-1 text-xl font-bold text-rose-600">
                 {differenceCount}
               </div>
             </div>
 
             <div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-slate-500">
                 Tổng chênh lệch
               </div>
               <div
                 className={`mt-1 text-xl font-bold ${
                   totalDifference > 0
-                    ? "text-green-600"
+                    ? "text-emerald-600"
                     : totalDifference < 0
-                    ? "text-red-600"
-                    : "text-gray-700"
+                    ? "text-rose-600"
+                    : "text-slate-700"
                 }`}
               >
                 {totalDifference > 0 ? "+" : ""}

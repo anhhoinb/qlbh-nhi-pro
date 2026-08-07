@@ -17,13 +17,21 @@ type User = {
   role: string;
   active: boolean;
   permissions?: {
-    dashboard: boolean;
-    sales: boolean;
-    products: boolean;
-    customers: boolean;
-    reports: boolean;
-    system: boolean;
-    users: boolean;
+    dashboard?: boolean;
+    sales?: boolean;
+    pos?: boolean;
+    orders?: boolean;
+    products?: boolean;
+    addProduct?: boolean;
+    editProduct?: boolean;
+    deleteProduct?: boolean;
+    viewCostPrice?: boolean;
+    customers?: boolean;
+    reports?: boolean;
+    finance?: boolean;
+    system?: boolean;
+    users?: boolean;
+    admin?: boolean;
   };
 };
 
@@ -35,7 +43,11 @@ const permissionLabels: Record<
   dashboard: "Dashboard",
   pos: "POS bán hàng",
   orders: "Đơn hàng",
-  products: "Sản phẩm",
+  products: "Xem sản phẩm",
+  addProduct: "Thêm sản phẩm",
+  editProduct: "Sửa sản phẩm",
+  deleteProduct: "Xóa sản phẩm",
+  viewCostPrice: "Xem giá nhập / giá vốn",
   customers: "Khách hàng",
   reports: "Báo cáo",
   finance: "Tài chính",
@@ -81,9 +93,16 @@ const [deletingUser, setDeletingUser] =
     permissions: {
       dashboard: true,
       sales: true,
+      pos: true,
+      orders: true,
       products: false,
+      addProduct: false,
+      editProduct: false,
+      deleteProduct: false,
+      viewCostPrice: false,
       customers: true,
       reports: false,
+      finance: false,
       system: false,
       users: false,
     },
@@ -191,9 +210,16 @@ const [deletingUser, setDeletingUser] =
         permissions: {
           dashboard: true,
           sales: true,
+          pos: true,
+          orders: true,
           products: false,
+          addProduct: false,
+          editProduct: false,
+          deleteProduct: false,
+          viewCostPrice: false,
           customers: true,
           reports: false,
+          finance: false,
           system: false,
           users: false,
         },
@@ -393,15 +419,14 @@ const [deletingUser, setDeletingUser] =
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-10">
-      <div className="bg-white rounded-3xl shadow p-10">
-        <h1 className="text-4xl font-bold text-blue-700">
-          Quản lý tài khoản nhân viên
+    <main className="min-h-screen bg-slate-100 p-6">
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
+        <h1 className="text-3xl font-bold text-slate-800">
+          Tài khoản nhân viên
         </h1>
 
-        <p className="text-gray-500 mt-3">
-          Tạo nhân viên, phân quyền và
-          khóa tài khoản tại đây.
+        <p className="text-slate-500 mt-1">
+          Tạo, phân quyền và khóa tài khoản.
         </p>
 
         <div className="mt-8">
@@ -409,7 +434,7 @@ const [deletingUser, setDeletingUser] =
             onClick={() =>
               setOpen(true)
             }
-            className="bg-blue-600 text-white px-5 py-2 rounded-xl"
+            className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2 rounded-xl font-semibold transition"
           >
             + Thêm nhân viên
           </button>
@@ -417,7 +442,7 @@ const [deletingUser, setDeletingUser] =
 
         <table className="w-full mt-6 border">
           <thead>
-            <tr className="bg-gray-100">
+            <tr className="bg-slate-50 text-slate-700">
               <th className="p-3 text-left">
                 Tên
               </th>
@@ -450,7 +475,7 @@ const [deletingUser, setDeletingUser] =
                   <button
                     type="button"
                     onClick={() => openEditUser(user)}
-                    className="font-semibold text-blue-700 hover:text-blue-800 hover:underline"
+                    className="font-semibold text-sky-700 hover:text-sky-800 hover:underline"
                     title="Bấm để sửa thông tin nhân viên"
                   >
                     {user.name}
@@ -479,13 +504,31 @@ const [deletingUser, setDeletingUser] =
     onClick={() => {
       setSelectedUser(user);
 
-      setPermissionForm(
-        user.permissions || {}
-      );
+      setPermissionForm({
+        dashboard: Boolean(user.permissions?.dashboard),
+        pos: Boolean(
+          user.permissions?.pos ??
+          user.permissions?.sales
+        ),
+        orders: Boolean(user.permissions?.orders),
+        customers: Boolean(user.permissions?.customers),
+        reports: Boolean(user.permissions?.reports),
+        finance: Boolean(user.permissions?.finance),
+        admin: Boolean(
+          user.permissions?.admin ??
+          user.permissions?.system
+        ),
+
+        products: Boolean(user.permissions?.products),
+        addProduct: Boolean(user.permissions?.addProduct),
+        editProduct: Boolean(user.permissions?.editProduct),
+        deleteProduct: Boolean(user.permissions?.deleteProduct),
+        viewCostPrice: Boolean(user.permissions?.viewCostPrice),
+      });
 
       setPermissionOpen(true);
     }}
-    className="bg-blue-600 text-white px-3 py-1 rounded"
+    className="bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-lg transition"
   >
     Phân quyền
   </button>
@@ -499,7 +542,7 @@ const [deletingUser, setDeletingUser] =
         user.active
       )
     }
-    className="bg-red-500 text-white px-3 py-1 rounded"
+    className="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-lg transition"
   >
     {user.active
       ? "Khóa"
@@ -529,7 +572,7 @@ const [deletingUser, setDeletingUser] =
 
                   <input
                     placeholder="Nhập tên nhân viên"
-                    className="w-full rounded-xl border p-3 outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border p-3 outline-none focus:border-sky-500"
                     value={form.name}
                     onChange={(e) =>
                       setForm({
@@ -548,7 +591,7 @@ const [deletingUser, setDeletingUser] =
                   <input
                     type="email"
                     placeholder="nhanvien@example.com"
-                    className="w-full rounded-xl border p-3 outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border p-3 outline-none focus:border-sky-500"
                     value={form.email}
                     onChange={(e) =>
                       setForm({
@@ -569,7 +612,7 @@ const [deletingUser, setDeletingUser] =
                       type="password"
                       placeholder="Tối thiểu 6 ký tự"
                       autoComplete="new-password"
-                      className="w-full rounded-xl border p-3 outline-none focus:border-blue-500"
+                      className="w-full rounded-xl border p-3 outline-none focus:border-sky-500"
                       value={form.password}
                       onChange={(e) =>
                         setForm({
@@ -589,7 +632,7 @@ const [deletingUser, setDeletingUser] =
                       type="password"
                       placeholder="Nhập lại mật khẩu"
                       autoComplete="new-password"
-                      className="w-full rounded-xl border p-3 outline-none focus:border-blue-500"
+                      className="w-full rounded-xl border p-3 outline-none focus:border-sky-500"
                       value={form.confirmPassword}
                       onChange={(e) =>
                         setForm({
@@ -607,7 +650,7 @@ const [deletingUser, setDeletingUser] =
                   </label>
 
                   <select
-                    className="w-full rounded-xl border bg-white p-3 outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border bg-white p-3 outline-none focus:border-sky-500"
                     value={form.role}
                     onChange={(e) => {
                       const role = e.target.value;
@@ -620,18 +663,32 @@ const [deletingUser, setDeletingUser] =
                             ? {
                                 dashboard: true,
                                 sales: true,
+                                pos: true,
+                                orders: true,
                                 products: true,
+                                addProduct: true,
+                                editProduct: true,
+                                deleteProduct: true,
+                                viewCostPrice: true,
                                 customers: true,
                                 reports: true,
+                                finance: true,
                                 system: true,
                                 users: true,
                               }
                             : {
                                 dashboard: true,
                                 sales: true,
+                                pos: true,
+                                orders: true,
                                 products: false,
+                                addProduct: false,
+                                editProduct: false,
+                                deleteProduct: false,
+                                viewCostPrice: false,
                                 customers: true,
                                 reports: false,
+                                finance: false,
                                 system: false,
                                 users: false,
                               },
@@ -702,7 +759,7 @@ const [deletingUser, setDeletingUser] =
                   type="button"
                   disabled={creatingUser}
                   onClick={addUser}
-                  className="rounded-xl bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                  className="rounded-xl bg-sky-600 px-5 py-2 font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
                 >
                   {creatingUser
                     ? "Đang tạo tài khoản..."
@@ -716,50 +773,116 @@ const [deletingUser, setDeletingUser] =
       {permissionOpen &&
  selectedUser && (
 
-<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
 
-  <div className="bg-white rounded-2xl p-6 w-[500px]">
+  <div className="bg-white rounded-3xl p-6 w-full max-w-2xl shadow-2xl">
 
-    <h2 className="text-xl font-bold mb-4">
-      Phân quyền: {selectedUser.name}
-    </h2>
+    <div className="mb-4">
+      <h2 className="text-2xl font-bold text-slate-800">
+        Phân quyền: {selectedUser.name}
+      </h2>
 
-    <div className="space-y-2">
-
-      {permissionForm &&
-  Object.entries(permissionForm).map(
-    ([key, value]) => (
-      <label
-        key={key}
-        className="block"
-      >
-        <input
-          type="checkbox"
-          checked={Boolean(value)}
-          onChange={(e) =>
-            setPermissionForm({
-              ...permissionForm,
-              [key]:
-                e.target.checked,
-            })
-          }
-        />
-
-        {" "}
-        {permissionLabels[key] || key}
-      </label>
-    )
-)}
-
+      <p className="mt-1 text-sm text-slate-500">
+        Chọn các quyền nhân viên được phép sử dụng.
+      </p>
     </div>
 
-    <div className="flex gap-3 mt-5">
+    {permissionForm && (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <h3 className="font-bold text-slate-800 mb-3 border-b border-slate-200 pb-2">
+            Quyền hệ thống
+          </h3>
+
+          <div className="space-y-1.5">
+            {[
+              ["dashboard", "Dashboard"],
+              ["pos", "POS bán hàng"],
+              ["orders", "Đơn hàng"],
+              ["customers", "Khách hàng"],
+              ["reports", "Báo cáo"],
+              ["finance", "Tài chính"],
+              ["admin", "Quản trị hệ thống"],
+            ].map(([key, label]) => (
+              <label
+                key={key}
+                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-white"
+              >
+                <input
+                  type="checkbox"
+                  checked={Boolean(permissionForm[key])}
+                  onChange={(e) =>
+                    setPermissionForm({
+                      ...permissionForm,
+                      [key]: e.target.checked,
+                    })
+                  }
+                  className="h-4 w-4 accent-sky-600"
+                />
+
+                <span className="text-slate-700">
+                  {label}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <h3 className="font-bold text-slate-800 mb-3 border-b border-slate-200 pb-2">
+            Quyền sản phẩm
+          </h3>
+
+          <div className="space-y-1.5">
+            {[
+              ["products", "Xem sản phẩm"],
+              ["addProduct", "Thêm sản phẩm"],
+              ["editProduct", "Sửa sản phẩm"],
+              ["deleteProduct", "Xóa sản phẩm"],
+              ["viewCostPrice", "Xem giá nhập / giá vốn"],
+            ].map(([key, label]) => (
+              <label
+                key={key}
+                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-white"
+              >
+                <input
+                  type="checkbox"
+                  checked={Boolean(permissionForm[key])}
+                  onChange={(e) =>
+                    setPermissionForm({
+                      ...permissionForm,
+                      [key]: e.target.checked,
+                    })
+                  }
+                  className="h-4 w-4 accent-sky-600"
+                />
+
+                <span className="text-slate-700">
+                  {label}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+      </div>
+    )}
+
+    <div className="flex justify-end gap-3 mt-5">
+
+      <button
+        onClick={() =>
+          setPermissionOpen(false)
+        }
+        className="rounded-xl bg-slate-200 px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-300"
+      >
+        Hủy
+      </button>
 
       <button
         onClick={async () => {
-
-          if (!selectedUser)
-            return;
+          if (!selectedUser) return;
 
           await updateDoc(
             doc(
@@ -768,8 +891,13 @@ const [deletingUser, setDeletingUser] =
               selectedUser.id
             ),
             {
-              permissions:
-                permissionForm,
+              permissions: {
+                ...permissionForm,
+
+                // Giữ tương thích với code cũ đang dùng sales/system.
+                sales: Boolean(permissionForm.pos),
+                system: Boolean(permissionForm.admin),
+              },
             }
           );
 
@@ -781,18 +909,9 @@ const [deletingUser, setDeletingUser] =
             "Cập nhật quyền thành công"
           );
         }}
-        className="bg-blue-600 text-white px-4 py-2 rounded"
+        className="rounded-xl bg-sky-600 px-5 py-2.5 font-semibold text-white hover:bg-sky-700"
       >
         Lưu quyền
-      </button>
-
-      <button
-        onClick={() =>
-          setPermissionOpen(false)
-        }
-        className="bg-gray-300 px-4 py-2 rounded"
-      >
-        Hủy
       </button>
 
     </div>
@@ -813,13 +932,13 @@ const [deletingUser, setDeletingUser] =
           }}
         >
           <div className="w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between bg-blue-700 px-6 py-5 text-white">
+            <div className="flex items-center justify-between bg-slate-800 px-6 py-5 text-white">
               <div>
                 <h2 className="text-2xl font-bold">
                   Sửa thông tin nhân viên
                 </h2>
 
-                <p className="mt-1 text-sm text-blue-100">
+                <p className="mt-1 text-sm text-slate-300">
                   {editingUser.email}
                 </p>
               </div>
@@ -849,7 +968,7 @@ const [deletingUser, setDeletingUser] =
                       name: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border p-4 outline-none focus:border-blue-600"
+                  className="w-full rounded-2xl border p-4 outline-none focus:border-sky-500"
                 />
               </div>
 
@@ -883,7 +1002,7 @@ const [deletingUser, setDeletingUser] =
                       role: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border bg-white p-4 outline-none focus:border-blue-600"
+                  className="w-full rounded-2xl border bg-white p-4 outline-none focus:border-sky-500"
                 >
                   <option value="Nhân viên">
                     Nhân viên
@@ -966,7 +1085,7 @@ const [deletingUser, setDeletingUser] =
                   type="button"
                   disabled={savingEdit || deletingUser}
                   onClick={saveEditUser}
-                  className="rounded-2xl bg-blue-700 px-6 py-3 font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+                  className="rounded-2xl bg-sky-600 px-6 py-3 font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
                 >
                   {savingEdit
                     ? "Đang lưu..."

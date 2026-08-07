@@ -320,17 +320,17 @@ debt.firestoreId
 };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6">
+    <main className="min-h-screen bg-slate-100 p-6">
 
       <div className="max-w-[1800px] mx-auto">
 
         <div className="mb-8">
 
-          <h1 className="text-4xl font-bold text-blue-700">
+          <h1 className="text-4xl font-bold text-sky-700">
             Báo cáo công nợ
           </h1>
 
-          <p className="text-gray-500 mt-2">
+          <p className="text-slate-500 mt-2">
             Theo dõi công nợ khách hàng và nhà cung cấp
           </p>
 
@@ -338,12 +338,12 @@ debt.firestoreId
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
 
-          <div className="bg-white rounded-3xl p-6 shadow-sm border">
-            <p className="text-gray-500">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm border border-slate-200">
+            <p className="text-slate-500">
               Tổng phải thu
             </p>
 
-            <h2 className="text-3xl font-bold text-red-600 mt-2">
+            <h2 className="text-3xl font-bold text-rose-600 mt-2">
               {formatMoney(
                 totalReceivable
               )}đ
@@ -351,25 +351,25 @@ debt.firestoreId
 
           </div>
 
-          <div className="bg-white rounded-3xl p-6 shadow-sm border">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm border border-slate-200">
 
-            <p className="text-gray-500">
+            <p className="text-slate-500">
               Tổng phải trả
             </p>
 
-            <h2 className="text-3xl font-bold text-orange-500 mt-2">
+            <h2 className="text-3xl font-bold text-amber-600 mt-2">
               0đ
             </h2>
 
           </div>
 
-          <div className="bg-white rounded-3xl p-6 shadow-sm border">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm border border-slate-200">
 
-            <p className="text-gray-500">
+            <p className="text-slate-500">
               Đã thu
             </p>
 
-            <h2 className="text-3xl font-bold text-green-600 mt-2">
+            <h2 className="text-3xl font-bold text-emerald-600 mt-2">
               {formatMoney(
                 totalPaid
               )}đ
@@ -377,13 +377,13 @@ debt.firestoreId
 
           </div>
 
-          <div className="bg-white rounded-3xl p-6 shadow-sm border">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm border border-slate-200">
 
-            <p className="text-gray-500">
+            <p className="text-slate-500">
               Còn nợ
             </p>
 
-            <h2 className="text-3xl font-bold text-blue-700 mt-2">
+            <h2 className="text-3xl font-bold text-sky-700 mt-2">
               {formatMoney(
                 totalDebt
               )}đ
@@ -393,7 +393,7 @@ debt.firestoreId
 
         </div>
 
-        <div className="bg-white rounded-3xl border shadow-sm p-6">
+        <div className="bg-white border border-slate-200 rounded-2xl border shadow-sm p-6">
 
           <div className="flex items-center justify-between mb-5">
 
@@ -405,7 +405,7 @@ debt.firestoreId
               onClick={() =>
                 setShowAddDebt(true)
               }
-              className="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-2xl font-semibold"
+              className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-3 rounded-2xl font-semibold"
             >
               + Thêm công nợ
             </button>
@@ -418,41 +418,41 @@ debt.firestoreId
 
               <thead>
 
-                <tr className="border-b text-gray-600">
+                <tr className="bg-slate-800 text-white">
 
-                  <th className="p-4 text-left">
+                  <th className="px-4 py-3 text-left">
                     Ngày
                   </th>
 
-                  <th className="p-4 text-left">
+                  <th className="px-4 py-3 text-left">
                     Mã đơn
                   </th>
 
-                  <th className="p-4 text-left">
+                  <th className="px-4 py-3 text-left">
                     Đối tượng
                   </th>
 
-                  <th className="p-4 text-right">
+                  <th className="px-4 py-3 text-right">
                     Tổng tiền
                   </th>
 
-                  <th className="p-4 text-right">
+                  <th className="px-4 py-3 text-right">
                     Đã thanh toán
                   </th>
 
-                  <th className="p-4 text-right">
+                  <th className="px-4 py-3 text-right">
                     Còn nợ
                   </th>
 
-                  <th className="p-4 text-center">
+                  <th className="px-4 py-3 text-center">
                     Trạng thái
                   </th>
 
-                  <th className="p-4 text-left">
+                  <th className="px-4 py-3 text-left">
                     Ghi chú
                 </th>
 
-                <th className="p-4 text-left">
+                <th className="px-4 py-3 text-left">
                     Hành động
                 </th>
 
@@ -470,7 +470,7 @@ debt.firestoreId
 
                     <tr
                       key={index}
-                      className="border-b hover:bg-gray-50"
+                      className="border-b border-slate-200 hover:bg-slate-50"
                     >
 
                       <td className="p-4">
@@ -513,7 +513,7 @@ debt.firestoreId
       )
     }
     className="
-      text-blue-700
+      text-sky-700
       font-semibold
       hover:underline
     "
@@ -529,32 +529,32 @@ debt.firestoreId
                         {item.customer}
                       </td>
 
-                      <td className="p-4 text-right">
+                      <td className="px-4 py-3 text-right">
                         {formatMoney(
                           item.total
                         )}đ
                       </td>
 
-                      <td className="p-4 text-right text-green-600">
+                      <td className="p-4 text-right text-emerald-600">
                         {formatMoney(
                           item.paid
                         )}đ
                       </td>
 
-                      <td className="p-4 text-right text-red-600 font-bold">
+                      <td className="p-4 text-right text-rose-600 font-bold">
                         {formatMoney(
                           item.remaining
                         )}đ
                       </td>
 
-                      <td className="p-4 text-center">
+                      <td className="px-4 py-3 text-center">
 
                         <span
                           className={`px-3 py-1 rounded-full text-sm font-medium ${
                             item.status ===
                             "paid"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-rose-100 text-rose-700"
                           }`}
                         >
                           {item.status ===
@@ -578,7 +578,7 @@ debt.firestoreId
       className="
       px-3 py-1
       rounded-lg
-      bg-green-600
+      bg-emerald-600
       text-white
       text-sm
       "
@@ -612,7 +612,7 @@ debt.firestoreId
         >
 
           <div
-            className="bg-white p-7 rounded-3xl w-full max-w-2xl"
+            className="bg-white p-7 rounded-2xl w-full max-w-2xl"
             onClick={(e) =>
               e.stopPropagation()
             }
@@ -636,7 +636,7 @@ debt.firestoreId
                       e.target.value,
                   })
                 }
-                className="border p-4 rounded-2xl"
+                className="border border-slate-300 p-4 rounded-xl"
               />
 
               <select
@@ -650,7 +650,7 @@ debt.firestoreId
                       e.target.value,
                   })
                 }
-                className="border p-4 rounded-2xl"
+                className="border border-slate-300 p-4 rounded-xl"
               >
 
                 <option value="customer">
@@ -671,7 +671,7 @@ debt.firestoreId
     )
   }
   readOnly
-  className="border p-4 rounded-2xl bg-gray-100"
+  className="border border-slate-300 p-4 rounded-xl bg-slate-100"
 />
 
               <input
@@ -686,16 +686,16 @@ debt.firestoreId
                       e.target.value,
                   })
                 }
-                className="border p-4 rounded-2xl"
+                className="border border-slate-300 p-4 rounded-xl"
               />
 
               <div className="col-span-2">
 
-                <label className="text-sm text-gray-500 block mb-2">
+                <label className="text-sm text-slate-500 block mb-2">
                   Còn nợ
                 </label>
 
-                <div className="border rounded-2xl p-4 bg-gray-100 font-semibold text-red-600">
+                <div className="border rounded-2xl p-4 bg-slate-100 font-semibold text-rose-600">
 
                   {formatMoney(
                     autoRemaining
@@ -707,7 +707,7 @@ debt.firestoreId
 
               <div>
 
-                <label className="text-sm text-gray-500 mb-2 block">
+                <label className="text-sm text-slate-500 mb-2 block">
                   Ngày tạo
                 </label>
 
@@ -723,14 +723,14 @@ debt.firestoreId
                         e.target.value,
                     })
                   }
-                  className="border p-4 rounded-2xl w-full"
+                  className="border border-slate-300 p-4 rounded-xl w-full"
                 />
 
               </div>
 
               <div>
 
-                <label className="text-sm text-gray-500 mb-2 block">
+                <label className="text-sm text-slate-500 mb-2 block">
                   Hạn thanh toán
                 </label>
 
@@ -746,7 +746,7 @@ debt.firestoreId
                         e.target.value,
                     })
                   }
-                  className="border p-4 rounded-2xl w-full"
+                  className="border border-slate-300 p-4 rounded-xl w-full"
                 />
 
               </div>
@@ -765,7 +765,7 @@ debt.firestoreId
 
       <div>
 
-        <label className="text-xs text-gray-500 mb-1 block">
+        <label className="text-xs text-slate-500 mb-1 block">
           Sản phẩm
         </label>
 
@@ -803,7 +803,7 @@ debt.firestoreId
   );
 
 }}
-  className="border p-3 rounded-xl w-full"
+  className="border border-slate-300 p-3 rounded-xl w-full"
 />
 
         <datalist
@@ -835,7 +835,7 @@ debt.firestoreId
 
       <div>
 
-        <label className="text-xs text-gray-500 mb-1 block">
+        <label className="text-xs text-slate-500 mb-1 block">
           SL
         </label>
 
@@ -855,14 +855,14 @@ debt.firestoreId
             setProducts(clone);
 
           }}
-          className="border p-3 rounded-xl w-full"
+          className="border border-slate-300 p-3 rounded-xl w-full"
         />
 
       </div>
 
       <div>
 
-        <label className="text-xs text-gray-500 mb-1 block">
+        <label className="text-xs text-slate-500 mb-1 block">
           Đơn giá
         </label>
 
@@ -882,18 +882,18 @@ debt.firestoreId
             setProducts(clone);
 
           }}
-          className="border p-3 rounded-xl w-full"
+          className="border border-slate-300 p-3 rounded-xl w-full"
         />
 
       </div>
 
       <div>
 
-        <label className="text-xs text-gray-500 mb-1 block">
+        <label className="text-xs text-slate-500 mb-1 block">
           Thành tiền
         </label>
 
-        <div className="border rounded-xl p-3 bg-gray-100">
+        <div className="border rounded-xl p-3 bg-slate-100">
 
           {formatMoney(
             item.qty *
@@ -927,7 +927,7 @@ debt.firestoreId
           );
 
         }}
-        className="h-11 w-11 rounded-xl bg-red-500 text-white text-lg"
+        className="h-11 w-11 rounded-xl bg-rose-500 text-white text-lg"
       >
 
         ✕
@@ -950,7 +950,7 @@ debt.firestoreId
         },
       ])
     }
-    className="bg-gray-200 px-4 py-2 rounded-xl"
+    className="bg-slate-200 px-4 py-2 rounded-xl"
   >
     + Thêm sản phẩm
   </button>
@@ -968,7 +968,7 @@ debt.firestoreId
                       e.target.value,
                   })
                 }
-                className="border p-4 rounded-2xl col-span-2 h-24"
+                className="border border-slate-300 p-4 rounded-xl col-span-2 h-24"
               />
 
             </div>
@@ -979,14 +979,14 @@ debt.firestoreId
                 onClick={() =>
                   setShowAddDebt(false)
                 }
-                className="bg-gray-200 px-6 py-3 rounded-2xl"
+                className="bg-slate-200 px-6 py-3 rounded-2xl"
               >
                 Hủy
               </button>
 
               <button
                 onClick={saveDebt}
-                className="bg-blue-700 text-white px-6 py-3 rounded-2xl"
+                className="bg-sky-600 text-white px-6 py-3 rounded-2xl"
               >
                 Lưu công nợ
               </button>
@@ -1003,7 +1003,7 @@ debt.firestoreId
 
 <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
 
-  <div className="bg-white rounded-3xl w-[900px] max-h-[85vh] overflow-auto p-6">
+  <div className="bg-white border border-slate-200 rounded-2xl w-[900px] max-h-[85vh] overflow-auto p-6">
 
     <div className="flex justify-between mb-6">
 
@@ -1064,7 +1064,7 @@ debt.firestoreId
 
       <thead>
 
-        <tr className="bg-gray-100">
+        <tr className="bg-slate-100">
 
           <th className="p-3">
             SP

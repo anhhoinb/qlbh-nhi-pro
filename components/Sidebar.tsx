@@ -443,9 +443,9 @@ export default function Sidebar() {
 
   return (
 
-    <aside className="w-64 min-h-screen bg-blue-700 text-white flex flex-col">
+    <aside className="w-64 min-h-screen bg-slate-800 text-white flex flex-col shadow-xl">
 
-      <div className="px-6 py-6 border-b border-blue-500">
+      <div className="px-6 py-6 border-b border-slate-700">
 
         <Link
           href="/dashboard"
@@ -456,7 +456,7 @@ export default function Sidebar() {
 
         {currentUserInfo?.name && (
 
-          <div className="mt-3 text-sm text-blue-100">
+          <div className="mt-3 text-sm text-slate-300">
 
             <div className="font-semibold">
               {
@@ -525,8 +525,8 @@ export default function Sidebar() {
                   }
                   className={`w-full flex items-center justify-between rounded-2xl px-4 py-3 font-semibold transition ${
                     hasActiveChild
-                      ? "bg-blue-500 text-white"
-                      : "bg-blue-600/60 hover:bg-blue-600"
+                      ? "bg-sky-600 text-white shadow-sm"
+                      : "bg-slate-700/40 hover:bg-slate-700"
                   }`}
                 >
 
@@ -550,7 +550,7 @@ export default function Sidebar() {
 
                 {isOpen && (
 
-                  <div className="ml-3 pl-3 border-l border-blue-400 space-y-2">
+                  <div className="ml-3 pl-3 border-l border-slate-600 space-y-2">
 
                     {group.items.map(
                       (item) => {
@@ -579,8 +579,8 @@ export default function Sidebar() {
                                   pathname.startsWith(
                                     "/dashboard/print-template"
                                   )
-                                    ? "bg-white text-blue-700 font-bold shadow"
-                                    : "text-blue-50 hover:bg-blue-600"
+                                    ? "bg-sky-500 text-white font-bold shadow"
+                                    : "text-slate-300 hover:bg-slate-700 hover:text-white"
                                 }`}
                               >
 
@@ -602,15 +602,15 @@ export default function Sidebar() {
 
                               {openPrintMenu && (
 
-                                <div className="ml-4 mt-2 border-l border-blue-300 pl-3 space-y-1">
+                                <div className="ml-4 mt-2 border-l border-slate-600 pl-3 space-y-1">
 
                                   <Link
                                     href="/dashboard/print-template/sales"
                                     className={`block rounded-lg px-3 py-2 text-sm transition ${
                                       pathname ===
                                       "/dashboard/print-template/sales"
-                                        ? "bg-white text-blue-700 font-bold"
-                                        : "text-blue-100 hover:bg-blue-600"
+                                        ? "bg-sky-500 text-white font-bold"
+                                        : "text-slate-300 hover:bg-slate-700 hover:text-white"
                                     }`}
                                   >
                                     Đơn bán hàng
@@ -621,8 +621,8 @@ export default function Sidebar() {
                                     className={`block rounded-lg px-3 py-2 text-sm transition ${
                                       pathname ===
                                       "/dashboard/print-template/export"
-                                        ? "bg-white text-blue-700 font-bold"
-                                        : "text-blue-100 hover:bg-blue-600"
+                                        ? "bg-sky-500 text-white font-bold"
+                                        : "text-slate-300 hover:bg-slate-700 hover:text-white"
                                     }`}
                                   >
                                     Phiếu xuất kho
@@ -633,8 +633,8 @@ export default function Sidebar() {
                                     className={`block rounded-lg px-3 py-2 text-sm transition ${
                                       pathname ===
                                       "/dashboard/print-template/delivery"
-                                        ? "bg-white text-blue-700 font-bold"
-                                        : "text-blue-100 hover:bg-blue-600"
+                                        ? "bg-sky-500 text-white font-bold"
+                                        : "text-slate-300 hover:bg-slate-700 hover:text-white"
                                     }`}
                                   >
                                     Phiếu giao hàng
@@ -663,8 +663,8 @@ export default function Sidebar() {
                               isExactActive(
                                 item.href
                               )
-                                ? "bg-white text-blue-700 font-bold shadow"
-                                : "text-blue-50 hover:bg-blue-600"
+                                ? "bg-sky-500 text-white font-bold shadow"
+                                : "text-slate-300 hover:bg-slate-700 hover:text-white"
                             }`}
                           >
                             {
@@ -685,8 +685,8 @@ export default function Sidebar() {
                               isExactActive(
                                 item.href
                               )
-                                ? "bg-white text-blue-700 font-bold shadow"
-                                : "text-blue-50 hover:bg-blue-600"
+                                ? "bg-sky-500 text-white font-bold shadow"
+                                : "text-slate-300 hover:bg-slate-700 hover:text-white"
                             }`}
                           >
                             {
@@ -707,12 +707,12 @@ export default function Sidebar() {
 
       </nav>
 
-      <div className="p-4 border-t border-blue-500">
+      <div className="p-4 border-t border-slate-700">
 
         <button
           type="button"
           onClick={handleLogout}
-          className="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-2xl font-bold transition"
+          className="w-full bg-rose-500 hover:bg-rose-600 text-white px-4 py-3 rounded-2xl font-bold transition"
         >
           Đăng xuất
         </button>

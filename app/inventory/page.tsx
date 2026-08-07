@@ -85,7 +85,7 @@ export default function InventoryPage() {
       return {
         label: "Hết hàng",
         className:
-          "bg-red-100 text-red-700",
+          "bg-rose-100 text-rose-700",
       };
     }
 
@@ -93,14 +93,14 @@ export default function InventoryPage() {
       return {
         label: "Dưới định mức",
         className:
-          "bg-orange-100 text-orange-700",
+          "bg-amber-100 text-amber-700",
       };
     }
 
     return {
       label: "Bình thường",
       className:
-        "bg-green-100 text-green-700",
+        "bg-emerald-100 text-emerald-700",
     };
   };
 
@@ -138,50 +138,47 @@ export default function InventoryPage() {
       ? "Danh sách sản phẩm hết hàng"
       : "Danh sách sản phẩm dưới định mức";
 
-  const popupColor =
-    popupType === "out"
-      ? "bg-red-600"
-      : "bg-orange-600";
+  const popupColor = "bg-slate-800";
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6 text-black">
-      <div className="max-w-[1400px] mx-auto space-y-6">
+    <main className="min-h-screen bg-slate-100 p-6 text-black">
+      <div className="max-w-[1400px] mx-auto space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-blue-700">
+            <h1 className="text-3xl font-bold text-slate-800">
               Quản lý tồn kho
             </h1>
 
-            <p className="text-gray-500 mt-2">
+            <p className="text-slate-500 mt-1">
               Trang này chỉ dùng để xem tồn kho. Muốn tăng tồn kho hãy vào trang Nhập hàng.
             </p>
           </div>
 
           <button
             onClick={loadProducts}
-            className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-2xl font-semibold"
+            className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl font-semibold transition"
           >
             Tải lại tồn kho
           </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-  <div className="bg-white rounded-2xl shadow p-4 min-h-[95px]">
-    <p className="text-gray-500 text-sm mb-2">
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[92px]">
+    <p className="text-slate-500 text-sm mb-2">
       Tổng sản phẩm
     </p>
 
-    <p className="text-2xl font-bold text-blue-700">
+    <p className="text-2xl font-bold text-sky-700">
       {products.length}
     </p>
   </div>
 
-  <div className="bg-white rounded-2xl shadow p-4 min-h-[95px]">
-    <p className="text-gray-500 text-sm mb-2">
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[92px]">
+    <p className="text-slate-500 text-sm mb-2">
       Tổng giá trị tồn kho
     </p>
 
-    <p className="text-2xl font-bold text-purple-700">
+    <p className="text-2xl font-bold text-violet-700">
       {formatMoney(totalInventoryValue)}đ
     </p>
   </div>
@@ -191,17 +188,17 @@ export default function InventoryPage() {
     onClick={() =>
       setPopupType("out")
     }
-    className="bg-white rounded-2xl shadow p-4 min-h-[95px] text-left hover:shadow-md transition cursor-pointer"
+    className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[92px] text-left hover:shadow-md hover:border-slate-300 transition cursor-pointer"
   >
-    <p className="text-gray-500 text-sm mb-2">
+    <p className="text-slate-500 text-sm mb-2">
       Sản phẩm hết hàng
     </p>
 
-    <p className="text-2xl font-bold text-red-600">
+    <p className="text-2xl font-bold text-rose-600">
       {outOfStockProducts.length}
     </p>
 
-    <p className="text-xs text-gray-400 mt-2">
+    <p className="text-xs text-slate-400 mt-2">
       Click để xem danh sách
     </p>
   </button>
@@ -211,35 +208,35 @@ export default function InventoryPage() {
     onClick={() =>
       setPopupType("low")
     }
-    className="bg-white rounded-2xl shadow p-4 min-h-[95px] text-left hover:shadow-md transition cursor-pointer"
+    className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[92px] text-left hover:shadow-md hover:border-slate-300 transition cursor-pointer"
   >
-    <p className="text-gray-500 text-sm mb-2">
+    <p className="text-slate-500 text-sm mb-2">
       Sản phẩm dưới định mức
     </p>
 
-    <p className="text-2xl font-bold text-orange-600">
+    <p className="text-2xl font-bold text-amber-600">
       {lowStockProducts.length}
     </p>
 
-    <p className="text-xs text-gray-400 mt-2">
+    <p className="text-xs text-slate-400 mt-2">
       Click để xem danh sách
     </p>
   </button>
 </div>
 
         {loading ? (
-          <div className="bg-white rounded-3xl shadow p-8 text-lg">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-lg">
             Đang tải dữ liệu...
           </div>
         ) : (
-          <div className="bg-white rounded-3xl shadow overflow-hidden">
-            <div className="px-6 py-5 border-b flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold">
+                <h2 className="text-xl font-bold text-slate-800">
                   Danh sách tồn kho
                 </h2>
 
-                <p className="text-gray-500 text-sm mt-1">
+                <p className="text-slate-500 text-sm mt-1">
                   Tồn kho được cập nhật từ nhập hàng và bán hàng, không chỉnh trực tiếp tại đây.
                 </p>
               </div>
@@ -247,33 +244,33 @@ export default function InventoryPage() {
 
             <div className="overflow-x-auto">
               <table className="w-full min-w-[900px]">
-                <thead className="bg-blue-700 text-white">
+                <thead className="bg-slate-800 text-white">
                   <tr>
-                    <th className="p-4 text-left">
+                    <th className="px-4 py-3 text-left">
                       Sản phẩm
                     </th>
 
-                    <th className="p-4 text-left">
+                    <th className="px-4 py-3 text-left">
                       Giá bán
                     </th>
 
                     {canViewCostPrice && (
-                    <th className="p-4 text-left">
-                      Giá vốn
-                    </th>
-)}
+                      <th className="px-4 py-3 text-left">
+                        Giá vốn
+                      </th>
+                    )}
 
-                    <th className="p-4 text-left">
+                    <th className="px-4 py-3 text-left">
                       Tồn kho
                     </th>
 
                     {canViewCostPrice && (
-                    <th className="p-4 text-left">
-                      Tổng tồn
-                    </th>
-)}
+                      <th className="px-4 py-3 text-left">
+                        Tổng tồn
+                      </th>
+                    )}
 
-                    <th className="p-4 text-left">
+                    <th className="px-4 py-3 text-left">
                       Trạng thái
                     </th>
                   </tr>
@@ -296,32 +293,29 @@ export default function InventoryPage() {
                     return (
                       <tr
                         key={item.id}
-                        className="border-b hover:bg-gray-50"
+                        className="border-b border-slate-200 hover:bg-slate-50"
                       >
-                        <td className="p-4 font-semibold text-black">
+                        <td className="px-4 py-3 font-semibold text-slate-900">
                           {item.name || "---"}
                         </td>
 
-                        <td className="p-4 text-blue-700">
+                        <td className="px-4 py-3 text-sky-700 font-medium">
                           {formatMoney(item.price)}đ
                         </td>
 
                         {canViewCostPrice && (
-                        <td className="p-4 text-orange-600 font-semibold">
-                          {formatMoney(
-                            item.capital_price
-                          )}
-                          đ
-                        </td>
-)}
+                          <td className="px-4 py-3 text-amber-600 font-semibold">
+                            {formatMoney(item.capital_price)}đ
+                          </td>
+                        )}
 
                         <td
-                          className={`p-4 font-bold ${
+                          className={`px-4 py-3 font-bold ${
                             stock === 0
-                              ? "text-red-600"
+                              ? "text-rose-600"
                               : stock <= 5
                               ? "text-orange-600"
-                              : "text-green-600"
+                              : "text-emerald-600"
                           }`}
                         >
                           {stock}
@@ -329,15 +323,12 @@ export default function InventoryPage() {
                         </td>
 
                         {canViewCostPrice && (
-                        <td className="p-4 font-bold text-purple-700">
-                          {formatMoney(
-                            inventoryValue
-                          )}
-                          đ
-                        </td>
-)}
+                          <td className="px-4 py-3 font-bold text-violet-700">
+                            {formatMoney(inventoryValue)}đ
+                          </td>
+                        )}
 
-                        <td className="p-4">
+                        <td className="px-4 py-3">
                           <span
                             className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${status.className}`}
                           >
@@ -352,7 +343,7 @@ export default function InventoryPage() {
                     <tr>
                       <td
                         colSpan={canViewCostPrice ? 6 : 4}
-                        className="p-8 text-center text-gray-500"
+                        className="p-8 text-center text-slate-500"
                       >
                         Chưa có dữ liệu tồn kho
                       </td>
@@ -367,12 +358,12 @@ export default function InventoryPage() {
 
       {popupType && (
         <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-5xl overflow-hidden">
             <div
               className={`${popupColor} text-white px-6 py-5 flex items-center justify-between`}
             >
               <div>
-                <h2 className="text-2xl font-bold">
+                <h2 className="text-2xl font-bold text-white">
                   {popupTitle}
                 </h2>
 
@@ -391,9 +382,9 @@ export default function InventoryPage() {
               </button>
             </div>
 
-            <div className="p-6 max-h-[70vh] overflow-y-auto">
+            <div className="p-5 max-h-[70vh] overflow-y-auto">
               <table className="w-full min-w-[800px] text-sm">
-                <thead className="bg-gray-100">
+                <thead className="bg-slate-100 text-slate-700">
                   <tr>
                     <th className="p-3 text-left">
                       STT
@@ -408,20 +399,20 @@ export default function InventoryPage() {
                     </th>
 
                     {canViewCostPrice && (
-                    <th className="p-3 text-left">
-                      Giá vốn
-                    </th>
-)}
+                      <th className="p-3 text-left">
+                        Giá vốn
+                      </th>
+                    )}
 
                     <th className="p-3 text-left">
                       Tồn kho
                     </th>
 
                     {canViewCostPrice && (
-                    <th className="p-3 text-left">
-                      Tổng tồn
-                    </th>
-)}
+                      <th className="p-3 text-left">
+                        Tổng tồn
+                      </th>
+                    )}
                   </tr>
                 </thead>
 
@@ -440,7 +431,7 @@ export default function InventoryPage() {
                       return (
                         <tr
                           key={item.id}
-                          className="border-b hover:bg-gray-50"
+                          className="border-b border-slate-200 hover:bg-slate-50"
                         >
                           <td className="p-3">
                             {index + 1}
@@ -450,7 +441,7 @@ export default function InventoryPage() {
                             {item.name || "---"}
                           </td>
 
-                          <td className="p-3 text-blue-700">
+                          <td className="p-3 text-sky-700">
                             {formatMoney(
                               item.price
                             )}
@@ -458,18 +449,15 @@ export default function InventoryPage() {
                           </td>
 
                           {canViewCostPrice && (
-                          <td className="p-3 text-orange-600 font-semibold">
-                            {formatMoney(
-                              item.capital_price
-                            )}
-                            đ
-                          </td>
-)}
+                            <td className="p-3 text-amber-600 font-semibold">
+                              {formatMoney(item.capital_price)}đ
+                            </td>
+                          )}
 
                           <td
                             className={`p-3 font-bold ${
                               stock === 0
-                                ? "text-red-600"
+                                ? "text-rose-600"
                                 : "text-orange-600"
                             }`}
                           >
@@ -478,13 +466,10 @@ export default function InventoryPage() {
                           </td>
 
                           {canViewCostPrice && (
-                          <td className="p-3 font-bold text-purple-700">
-                            {formatMoney(
-                              inventoryValue
-                            )}
-                            đ
-                          </td>
-)}
+                            <td className="p-3 font-bold text-violet-700">
+                              {formatMoney(inventoryValue)}đ
+                            </td>
+                          )}
                         </tr>
                       );
                     }
@@ -494,7 +479,7 @@ export default function InventoryPage() {
                     <tr>
                       <td
                         colSpan={canViewCostPrice ? 6 : 4}
-                        className="p-8 text-center text-gray-500"
+                        className="p-8 text-center text-slate-500"
                       >
                         Không có sản phẩm nào
                       </td>
@@ -504,12 +489,12 @@ export default function InventoryPage() {
               </table>
             </div>
 
-            <div className="p-5 border-t flex justify-end">
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
               <button
                 onClick={() =>
                   setPopupType(null)
                 }
-                className="px-6 py-3 rounded-xl bg-gray-200 hover:bg-gray-300 font-semibold"
+                className="px-6 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold transition"
               >
                 Đóng
               </button>

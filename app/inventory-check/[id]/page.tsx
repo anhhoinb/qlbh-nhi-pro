@@ -228,8 +228,8 @@ export default function InventoryCheckDetailPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-100 p-5">
-        <div className="mx-auto max-w-5xl rounded-2xl bg-white p-8 text-center shadow-sm">
+      <main className="min-h-screen bg-slate-100 p-5">
+        <div className="mx-auto max-w-5xl rounded-2xl bg-white p-8 text-center border border-slate-200 shadow-sm">
           Đang tải phiếu kiểm...
         </div>
       </main>
@@ -238,8 +238,8 @@ export default function InventoryCheckDetailPage() {
 
   if (!check) {
     return (
-      <main className="min-h-screen bg-gray-100 p-5">
-        <div className="mx-auto max-w-5xl rounded-2xl bg-white p-8 text-center shadow-sm">
+      <main className="min-h-screen bg-slate-100 p-5">
+        <div className="mx-auto max-w-5xl rounded-2xl bg-white p-8 text-center border border-slate-200 shadow-sm">
           Không có dữ liệu phiếu kiểm.
         </div>
       </main>
@@ -247,15 +247,15 @@ export default function InventoryCheckDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-5 text-black">
+    <main className="min-h-screen bg-slate-100 p-5 text-black">
       <div className="mx-auto max-w-[1400px]">
-        <div className="mb-5 flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+        <div className="mb-5 flex flex-col gap-3 rounded-2xl bg-white p-5 border border-slate-200 shadow-sm lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-blue-700">
+            <h1 className="text-3xl font-bold text-sky-700">
               Phiếu kiểm {check.code || ""}
             </h1>
 
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-slate-500">
               {check.status === "balanced"
                 ? "Phiếu đã hoàn thành và tồn kho đã được cập nhật."
                 : "Phiếu đang ở trạng thái nháp, chưa cập nhật tồn kho."}
@@ -265,7 +265,7 @@ export default function InventoryCheckDetailPage() {
           <div className="flex flex-wrap gap-2">
             <Link
               href="/inventory-check"
-              className="rounded-xl border px-4 py-2 text-center font-semibold hover:bg-gray-50"
+              className="rounded-xl border border-slate-300 px-4 py-2 text-center font-semibold text-slate-700 hover:bg-slate-50"
             >
               Quay lại danh sách
             </Link>
@@ -275,7 +275,7 @@ export default function InventoryCheckDetailPage() {
                 type="button"
                 disabled={completing}
                 onClick={completeInventoryCheck}
-                className="rounded-xl bg-green-600 px-5 py-2 font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl bg-emerald-600 px-5 py-2 font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {completing
                   ? "Đang cập nhật kho..."
@@ -286,29 +286,29 @@ export default function InventoryCheckDetailPage() {
         </div>
 
         <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="text-sm text-gray-500">Mã phiếu</div>
-            <div className="mt-1 font-bold text-blue-700">
+          <div className="rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
+            <div className="text-sm text-slate-500">Mã phiếu</div>
+            <div className="mt-1 font-bold text-sky-700">
               {check.code || check.id}
             </div>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="text-sm text-gray-500">Ngày tạo</div>
+          <div className="rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
+            <div className="text-sm text-slate-500">Ngày tạo</div>
             <div className="mt-1 font-semibold">
               {formatDate(check.createdAt || check.checkedAt)}
             </div>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="text-sm text-gray-500">Kho kiểm</div>
+          <div className="rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
+            <div className="text-sm text-slate-500">Kho kiểm</div>
             <div className="mt-1 font-semibold">
               {check.warehouseName || "Kho mặc định"}
             </div>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="text-sm text-gray-500">Người kiểm</div>
+          <div className="rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
+            <div className="text-sm text-slate-500">Người kiểm</div>
             <div className="mt-1 font-semibold">
               {check.checkedBy || "---"}
             </div>
@@ -316,8 +316,8 @@ export default function InventoryCheckDetailPage() {
         </div>
 
         {check.generalNote && (
-          <div className="mb-5 rounded-2xl bg-white p-5 shadow-sm">
-            <div className="text-sm font-semibold text-gray-700">
+          <div className="mb-5 rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
+            <div className="text-sm font-semibold text-slate-700">
               Ghi chú chung
             </div>
 
@@ -327,10 +327,10 @@ export default function InventoryCheckDetailPage() {
           </div>
         )}
 
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] border-collapse">
-              <thead className="bg-blue-700 text-white">
+              <thead className="bg-slate-800 text-white">
                 <tr>
                   <th className="p-3 text-center">STT</th>
                   <th className="p-3 text-left">Mã SP</th>
@@ -347,7 +347,7 @@ export default function InventoryCheckDetailPage() {
                 {items.map((item, index) => (
                   <tr
                     key={`${item.productId}-${index}`}
-                    className="border-b"
+                    className="border-b border-slate-200 hover:bg-slate-50"
                   >
                     <td className="p-3 text-center">
                       {index + 1}
@@ -365,7 +365,7 @@ export default function InventoryCheckDetailPage() {
                       {item.unit || "cái"}
                     </td>
 
-                    <td className="p-3 text-center text-blue-700">
+                    <td className="p-3 text-center text-sky-700">
                       {Number(item.systemStock || 0)}
                     </td>
 
@@ -377,9 +377,9 @@ export default function InventoryCheckDetailPage() {
                       <span
                         className={`font-bold ${
                           Number(item.difference || 0) > 0
-                            ? "text-green-600"
+                            ? "text-emerald-600"
                             : Number(item.difference || 0) < 0
-                            ? "text-red-600"
+                            ? "text-rose-600"
                             : "text-gray-600"
                         }`}
                       >
@@ -397,7 +397,7 @@ export default function InventoryCheckDetailPage() {
             </table>
           </div>
 
-          <div className="border-t bg-gray-50 p-5">
+          <div className="border-t border-slate-200 bg-slate-50 p-5">
             <span className="font-semibold">
               Có {differenceCount} sản phẩm chênh lệch.
             </span>
@@ -405,7 +405,7 @@ export default function InventoryCheckDetailPage() {
         </div>
 
         {check.status === "balanced" ? (
-          <div className="mt-5 rounded-2xl border border-green-300 bg-green-50 p-5 text-green-800">
+          <div className="mt-5 rounded-2xl border border-emerald-300 bg-emerald-50 p-5 text-emerald-800">
             Phiếu đã hoàn thành. Tồn kho đã được cập nhật theo số lượng thực tế
             vào lúc {formatDate(check.completedAt)}.
           </div>

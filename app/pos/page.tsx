@@ -83,7 +83,7 @@ const parseInputMoney = (value: string) => {
     id,
     cart: [],
     customer: null,
-    useProductVat: true,
+    useProductVat: false,
     paymentMethod: "cash",
     customerPay: "0",
     search: "",
@@ -257,7 +257,7 @@ useEffect(() => {
     currentOrder?.customer || null;
 
   const useProductVat =
-    currentOrder?.useProductVat ?? true;
+    currentOrder?.useProductVat ?? false;
 
   const paymentMethod =
     currentOrder?.paymentMethod || "cash";
@@ -2481,10 +2481,10 @@ const itemShortName =
         });
 
   return (
-    <main className="min-h-screen bg-gray-100 text-black">
+    <main className="min-h-screen bg-slate-100 text-black">
 
       {/* THANH TRÊN */}
-      <div className="h-12 bg-blue-700 text-white flex items-center justify-between px-3">
+      <div className="h-12 bg-slate-800 text-white flex items-center justify-between px-3 shadow-sm">
 
         <div className="flex items-center gap-2 flex-1">
 
@@ -2502,7 +2502,7 @@ const itemShortName =
               ref={productSearchRef}
               type="text"
               placeholder="Thêm sản phẩm vào đơn (F3)"
-              className="w-full bg-white text-black px-3 py-2 rounded-lg outline-none text-sm"
+              className="w-full bg-white text-slate-900 px-3 py-2 rounded-lg outline-none text-sm border border-slate-200 focus:border-sky-400"
               value={search}
               onChange={(e) => {
                 updateCurrentOrder({
@@ -2544,7 +2544,7 @@ const itemShortName =
                           showProductDropdown: false,
                         });
                       }}
-                      className="w-full p-3 hover:bg-blue-50 border-b"
+                      className="w-full p-3 hover:bg-sky-50 border-b"
                     >
                       <div className="flex items-center justify-between gap-4">
 
@@ -2594,7 +2594,7 @@ const itemShortName =
                         {/* BÊN PHẢI */}
                         <div className="text-right w-[130px] shrink-0">
 
-                          <div className="font-semibold text-blue-700">
+                          <div className="font-semibold text-sky-700">
                             {formatMoney(product.price)}đ
                           </div>
 
@@ -2624,7 +2624,7 @@ const itemShortName =
               <input
                 type="text"
                 placeholder="Quét barcode hoặc mã sản phẩm..."
-                className="w-[280px] bg-white text-black px-3 py-2 rounded-lg outline-none text-sm"
+                className="w-[280px] bg-white text-slate-900 px-3 py-2 rounded-lg outline-none text-sm border border-slate-200 focus:border-sky-400"
                 value={barcode}
                 onChange={(e) =>
                   handleBarcode(e.target.value)
@@ -2642,7 +2642,7 @@ const itemShortName =
                   ? "Ẩn ô quét mã"
                   : "Hiện ô quét mã"
               }
-              className="w-10 h-10 rounded-lg bg-blue-600 hover:bg-blue-800 flex items-center justify-center"
+              className="w-10 h-10 rounded-lg bg-sky-600 hover:bg-sky-700 flex items-center justify-center"
             >
               {showBarcodeInput ? (
                 <svg
@@ -2674,8 +2674,8 @@ const itemShortName =
     onClick={() => setShowMainName(false)}
     className={`px-3 py-2 text-sm ${
       !showMainName
-        ? "bg-white text-blue-700 font-semibold"
-        : "bg-blue-600 text-white"
+        ? "bg-white text-sky-700 font-semibold"
+        : "bg-sky-600 text-white"
     }`}
   >
     Tên bán
@@ -2686,8 +2686,8 @@ const itemShortName =
     onClick={() => setShowMainName(true)}
     className={`px-3 py-2 text-sm ${
       showMainName
-        ? "bg-white text-blue-700 font-semibold"
-        : "bg-blue-600 text-white"
+        ? "bg-white text-sky-700 font-semibold"
+        : "bg-sky-600 text-white"
     }`}
   >
     Tên đầy đủ
@@ -2702,8 +2702,8 @@ const itemShortName =
                 key={order.id}
                 className={
                   activeOrder === order.id
-                    ? "bg-blue-900 rounded-lg flex items-center overflow-hidden"
-                    : "bg-blue-600 hover:bg-blue-800 rounded-lg flex items-center overflow-hidden"
+                    ? "bg-slate-900 rounded-lg flex items-center overflow-hidden"
+                    : "bg-sky-600 hover:bg-sky-700 rounded-lg flex items-center overflow-hidden"
                 }
               >
                 <button
@@ -2735,7 +2735,7 @@ const itemShortName =
               type="button"
               onClick={addNewOrder}
               title="Tạo đơn hàng mới"
-              className="text-3xl leading-none px-3 hover:bg-blue-800 rounded-lg"
+              className="text-3xl leading-none px-3 hover:bg-slate-700 rounded-lg"
             >
               +
             </button>
@@ -2760,7 +2760,7 @@ const itemShortName =
               setShowShortcutModal(true)
             }
             title="Phím tắt"
-            className="h-10 px-3 rounded-lg border border-white/80 hover:bg-blue-800 flex items-center gap-1 text-sm font-semibold"
+            className="h-10 px-3 rounded-lg border border-white/70 hover:bg-slate-700 flex items-center gap-1 text-sm font-semibold"
           >
             <span className="w-5 h-5 rounded-full border border-white flex items-center justify-center text-xs">
               ?
@@ -2774,7 +2774,7 @@ const itemShortName =
               router.push("/admin")
             }
             title="Về trang quản trị"
-            className="w-10 h-10 rounded-lg bg-blue-600 hover:bg-blue-800 flex items-center justify-center"
+            className="w-10 h-10 rounded-lg bg-sky-600 hover:bg-sky-700 flex items-center justify-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -2837,7 +2837,7 @@ const itemShortName =
         <button
           type="button"
           onClick={focusProductSearch}
-          className="px-12 py-3 border rounded-xl text-lg hover:bg-blue-50 hover:border-blue-600 hover:text-blue-700"
+          className="px-12 py-3 border rounded-xl text-lg hover:bg-sky-50 hover:border-sky-500 hover:text-sky-700"
         >
           Thêm sản phẩm ngay
         </button>
@@ -2847,40 +2847,45 @@ const itemShortName =
     </div>
   ) : (
     <table className="w-full table-fixed border-collapse text-sm">
+      <colgroup>
+        <col className="w-[60px]" />
+        <col className="w-[90px]" />
+        <col />
+        <col className="w-[90px]" />
+        <col className="w-[160px]" />
+        <col className="w-[150px]" />
+        <col className="w-[150px]" />
+      </colgroup>
 
-      <thead className="bg-gray-100 sticky top-0 z-10">
+      <thead className="bg-slate-100 sticky top-0 z-10">
         <tr className="border-b">
-          <th className="p-3 text-left w-[60px] whitespace-nowrap">
-  STT
-</th>
+          <th className="p-3 text-left whitespace-nowrap">
+            STT
+          </th>
 
-<th className="p-3 text-left w-[90px] whitespace-nowrap">
-  Mã SKU
-</th>
+          <th className="p-3 text-left whitespace-nowrap">
+            Mã SKU
+          </th>
 
-<th className="p-3 text-left">
-  Tên sản phẩm
-</th>
+          <th className="p-3 text-left">
+            Tên sản phẩm
+          </th>
 
-<th className="p-3 text-center w-[80px] whitespace-nowrap">
-  Đơn vị
-</th>
+          <th className="p-3 text-center whitespace-nowrap">
+            Đơn vị
+          </th>
 
-<th className="p-3 text-center w-[150px] whitespace-nowrap">
-  Số lượng
-</th>
+          <th className="p-3 text-center whitespace-nowrap">
+            Số lượng
+          </th>
 
-<th className="p-3 text-right w-[140px] whitespace-nowrap">
-  Đơn giá
-</th>
+          <th className="p-3 text-right whitespace-nowrap">
+            Đơn giá
+          </th>
 
-<th className="p-3 text-right w-[140px] whitespace-nowrap">
-  Thành tiền
-</th>
-
-<th className="p-3 w-[50px]"></th>
-
-          <th className="p-3 text-center w-14"></th>
+          <th className="p-3 text-right whitespace-nowrap">
+            Thành tiền
+          </th>
         </tr>
       </thead>
 
@@ -2905,7 +2910,7 @@ const itemShortName =
           return (
             <tr
               key={item.id || index}
-              className="border-b hover:bg-blue-50"
+              className="border-b hover:bg-sky-50"
             >
 
               <td className="p-3">
@@ -2968,7 +2973,7 @@ const itemShortName =
   </div>
 </td>
 
-              <td className="p-3">
+              <td className="p-3 text-center whitespace-nowrap">
                 {getUnitText(item.unit)}
               </td>
 
@@ -2979,7 +2984,7 @@ const itemShortName =
                     onClick={() =>
                       decreaseQty(item.id)
                     }
-                    className="bg-gray-200 px-2 py-1 rounded"
+                    className="bg-slate-200 px-2 py-1 rounded"
                   >
                     -
                   </button>
@@ -3002,14 +3007,14 @@ const itemShortName =
                     onClick={() =>
                       increaseQty(item.id)
                     }
-                    className="bg-gray-200 px-2 py-1 rounded"
+                    className="bg-slate-200 px-2 py-1 rounded"
                   >
                     +
                   </button>
                 </div>
               </td>
 
-              <td className="p-3 text-right">
+              <td className="p-3 text-right whitespace-nowrap">
   <input
     type="text"
     inputMode="numeric"
@@ -3024,7 +3029,7 @@ const itemShortName =
   />
 </td>
 
-              <td className="p-3 text-right font-semibold">
+              <td className="p-3 text-right font-semibold whitespace-nowrap">
                 {formatMoney(itemFinalTotal)}
               </td>
             </tr>
@@ -3081,7 +3086,7 @@ const itemShortName =
                           onMouseDown={() =>
                             selectCustomer(customer)
                           }
-                          className="w-full text-left p-3 hover:bg-blue-50 border-b"
+                          className="w-full text-left p-3 hover:bg-sky-50 border-b"
                         >
                           <div className="font-semibold text-black">
                             {customer.name || "Chưa có tên"}
@@ -3117,8 +3122,8 @@ const itemShortName =
             </div>
 
             {selectedCustomer && (
-              <div className="mt-2 bg-blue-50 border border-blue-100 rounded-lg p-2 text-xs">
-                <div className="font-semibold text-blue-700">
+              <div className="mt-2 bg-sky-50 border border-sky-100 rounded-lg p-2 text-xs">
+                <div className="font-semibold text-sky-700">
                   {selectedCustomer.name}
                 </div>
 
@@ -3177,7 +3182,7 @@ const itemShortName =
             <button
               type="button"
               onClick={openDiscountModal}
-              className="w-full flex justify-between text-sm py-2 px-1 rounded hover:bg-blue-50"
+              className="w-full flex justify-between text-sm py-2 px-1 rounded hover:bg-sky-50"
             >
               <span>
                 Chiết khấu (F6)
@@ -3194,7 +3199,7 @@ const itemShortName =
                   KHÁCH PHẢI TRẢ
                 </span>
 
-                <span className="text-2xl font-bold text-blue-700">
+                <span className="text-2xl font-bold text-sky-700">
                   {formatMoney(total)}
                 </span>
               </div>
@@ -3238,7 +3243,7 @@ const itemShortName =
                 <button
                   type="button"
                   onClick={openSplitPaymentModal}
-                  className="mt-2 w-full text-left text-sm text-blue-700 font-semibold hover:underline"
+                  className="mt-2 w-full text-left text-sm text-sky-700 font-semibold hover:underline"
                 >
                   Nhập chi tiết tiền mặt / chuyển khoản
                 </button>
@@ -3261,11 +3266,11 @@ const itemShortName =
                 }
               >
                 <option value="yes">
-                  Có VAT theo sản phẩm
+                  Có VAT
                 </option>
 
                 <option value="no">
-                  Không tính VAT
+                  Chưa VAT
                 </option>
               </select>
             </div>
@@ -3308,7 +3313,7 @@ const itemShortName =
                   <button
                     key={money}
                     type="button"
-                    className="bg-gray-100 hover:bg-gray-200 rounded-xl py-2 text-sm"
+                    className="bg-slate-100 hover:bg-slate-200 rounded-xl py-2 text-sm"
                     onClick={() => {
   if (paymentMethod === "mixed") {
     setTempSplitPayment({
@@ -3362,7 +3367,7 @@ const itemShortName =
             <button
               type="button"
               onClick={() => checkout()}
-              className="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-xl text-lg font-bold"
+              className="w-full bg-sky-600 hover:bg-sky-700 text-white py-4 rounded-xl text-lg font-bold shadow-sm transition"
             >
               Thanh toán
             </button>
@@ -3410,7 +3415,7 @@ const itemShortName =
 
           <div className="grid grid-cols-[130px_1fr] gap-3 items-center">
 
-            <div className="flex rounded-lg border border-blue-600 overflow-hidden h-11">
+            <div className="flex rounded-lg border border-sky-500 overflow-hidden h-11">
               <button
                 type="button"
                 onClick={() =>
@@ -3418,8 +3423,8 @@ const itemShortName =
                 }
                 className={
                   tempDiscountType === "percent"
-                    ? "w-1/2 bg-blue-700 text-white font-semibold"
-                    : "w-1/2 bg-white text-blue-700 font-semibold hover:bg-blue-50"
+                    ? "w-1/2 bg-slate-800 text-white font-semibold"
+                    : "w-1/2 bg-white text-sky-700 font-semibold hover:bg-sky-50"
                 }
               >
                 %
@@ -3432,8 +3437,8 @@ const itemShortName =
                 }
                 className={
                   tempDiscountType === "value"
-                    ? "w-1/2 bg-blue-700 text-white font-semibold"
-                    : "w-1/2 bg-white text-blue-700 font-semibold hover:bg-blue-50"
+                    ? "w-1/2 bg-slate-800 text-white font-semibold"
+                    : "w-1/2 bg-white text-sky-700 font-semibold hover:bg-sky-50"
                 }
               >
                 Giá trị
@@ -3444,7 +3449,7 @@ const itemShortName =
               <input
                 type="number"
                 min="0"
-                className="w-full h-11 border rounded-lg outline-none text-right px-3 pr-10 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                className="w-full h-11 border rounded-lg outline-none text-right px-3 pr-10 focus:border-sky-500 focus:ring-1 focus:ring-blue-600"
                 value={tempDiscountValue}
                 onChange={(e) =>
                   setTempDiscountValue(e.target.value)
@@ -3472,7 +3477,7 @@ const itemShortName =
 
           <input
             type="text"
-            className="w-full h-11 border rounded-lg outline-none px-3 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+            className="w-full h-11 border rounded-lg outline-none px-3 focus:border-sky-500 focus:ring-1 focus:ring-blue-600"
             value={tempDiscountCode}
             onChange={(e) =>
               setTempDiscountCode(e.target.value)
@@ -3483,13 +3488,13 @@ const itemShortName =
 
       </div>
 
-      <div className="flex justify-end gap-3 px-5 py-4 bg-gray-50 border-t">
+      <div className="flex justify-end gap-3 px-5 py-4 bg-slate-50 border-t border-slate-200">
         <button
           type="button"
           onClick={() =>
             setShowDiscountModal(false)
           }
-          className="px-7 py-2.5 rounded-lg bg-white border font-semibold hover:bg-gray-100"
+          className="px-7 py-2.5 rounded-lg bg-white border border-slate-300 font-semibold hover:bg-slate-100"
         >
           Thoát
         </button>
@@ -3497,7 +3502,7 @@ const itemShortName =
         <button
           type="button"
           onClick={applyDiscount}
-          className="px-7 py-2.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold"
+          className="px-7 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold"
         >
           Áp dụng
         </button>
@@ -3526,7 +3531,7 @@ const itemShortName =
             <div className="p-5 space-y-5">
               <div className="flex justify-between items-center border-b pb-4">
                 <span className="font-bold text-lg">Khách phải trả</span>
-                <span className="text-2xl font-bold text-blue-700">{formatMoney(total)}</span>
+                <span className="text-2xl font-bold text-sky-700">{formatMoney(total)}</span>
               </div>
 
               <div className="grid grid-cols-[130px_1fr] items-center gap-4">
@@ -3535,7 +3540,7 @@ const itemShortName =
                 <input
                   type="number"
                   min="0"
-                  className="w-full border-b border-gray-300 p-2 text-right text-xl font-bold outline-none focus:border-blue-700"
+                  className="w-full border-b border-gray-300 p-2 text-right text-xl font-bold outline-none focus:border-sky-500"
                   value={tempSplitPayment.cash}
                   onChange={(e) => {
                     const cashValue =
@@ -3562,7 +3567,7 @@ const itemShortName =
                 <input
                   type="number"
                   min="0"
-                  className="w-full border-b border-gray-300 p-2 text-right text-xl font-bold outline-none focus:border-blue-700 bg-gray-50"
+                  className="w-full border-b border-gray-300 p-2 text-right text-xl font-bold outline-none focus:border-sky-500 bg-slate-50"
                   value={tempSplitPayment.bank}
                   onChange={(e) =>
                     setTempSplitPayment((prev) => ({
@@ -3593,11 +3598,11 @@ const itemShortName =
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 px-5 py-4 bg-gray-50 border-t">
+            <div className="flex justify-end gap-3 px-5 py-4 bg-slate-50 border-t border-slate-200">
               <button
                 type="button"
                 onClick={() => setShowSplitPaymentModal(false)}
-                className="px-7 py-2.5 rounded-lg bg-white border font-semibold hover:bg-gray-100"
+                className="px-7 py-2.5 rounded-lg bg-white border border-slate-300 font-semibold hover:bg-slate-100"
               >
                 Thoát
               </button>
@@ -3605,7 +3610,7 @@ const itemShortName =
               <button
                 type="button"
                 onClick={applySplitPayment}
-                className="px-7 py-2.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold"
+                className="px-7 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold"
               >
                 Lưu (F1)
               </button>
@@ -3615,147 +3620,159 @@ const itemShortName =
       )}
 
       {showCustomerForm && (
-        <div className="fixed inset-0 bg-black/40 z-[999] flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/40 z-[999] flex items-center justify-center p-4">
 
-          <div className="bg-white w-[520px] rounded-2xl shadow-xl p-6">
+          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden text-black">
 
-            <div className="flex justify-between items-center mb-5">
-              <h2 className="text-xl font-bold text-blue-700">
-                Thêm khách hàng mới
-              </h2>
+            <div className="bg-slate-800 text-white px-6 py-5 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">
+                  Thêm khách hàng mới
+                </h2>
+
+                <p className="text-sm text-slate-300 mt-1">
+                  Nhập thông tin khách hàng vào hệ thống
+                </p>
+              </div>
 
               <button
                 type="button"
                 onClick={() =>
                   setShowCustomerForm(false)
                 }
-                className="text-2xl font-bold text-gray-500 hover:text-red-600"
+                className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 text-xl font-bold flex items-center justify-center"
               >
                 ×
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="p-6">
+              <div className="grid grid-cols-2 gap-5">
 
-              <div>
-                <label className="block mb-1 text-sm font-semibold">
-                  Tên khách hàng *
-                </label>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
+                    Tên khách hàng <span className="text-red-500">*</span>
+                  </label>
 
-                <input
-                  type="text"
-                  className="w-full border rounded-lg p-2"
-                  value={newCustomer.name}
-                  onChange={(e) =>
-                    setNewCustomer({
-                      ...newCustomer,
-                      name: e.target.value,
-                    })
-                  }
-                />
+                  <input
+                    type="text"
+                    value={newCustomer.name}
+                    onChange={(e) =>
+                      setNewCustomer({
+                        ...newCustomer,
+                        name: e.target.value,
+                      })
+                    }
+                    placeholder="Ví dụ: Nguyễn Văn A"
+                    className="w-full border border-slate-300 p-4 rounded-2xl outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
+                    Số điện thoại <span className="text-red-500">*</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    value={newCustomer.phone}
+                    onChange={(e) =>
+                      setNewCustomer({
+                        ...newCustomer,
+                        phone: e.target.value,
+                      })
+                    }
+                    placeholder="Ví dụ: 0987654321"
+                    className="w-full border border-slate-300 p-4 rounded-2xl outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
+                    Mã khách hàng
+                  </label>
+
+                  <input
+                    type="text"
+                    value={newCustomer.code}
+                    onChange={(e) =>
+                      setNewCustomer({
+                        ...newCustomer,
+                        code: e.target.value,
+                      })
+                    }
+                    placeholder="Ví dụ: KH001"
+                    className="w-full border border-slate-300 p-4 rounded-2xl outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
+                    Mã số thuế
+                  </label>
+
+                  <input
+                    type="text"
+                    value={newCustomer.taxCode}
+                    onChange={(e) =>
+                      setNewCustomer({
+                        ...newCustomer,
+                        taxCode: e.target.value,
+                      })
+                    }
+                    placeholder="Ví dụ: 0101234567"
+                    className="w-full border border-slate-300 p-4 rounded-2xl outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
+                    Email
+                  </label>
+
+                  <input
+                    type="email"
+                    value={newCustomer.email}
+                    onChange={(e) =>
+                      setNewCustomer({
+                        ...newCustomer,
+                        email: e.target.value,
+                      })
+                    }
+                    placeholder="Ví dụ: khachhang@email.com"
+                    className="w-full border border-slate-300 p-4 rounded-2xl outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
+                    Địa chỉ
+                  </label>
+
+                  <textarea
+                    rows={3}
+                    value={newCustomer.address}
+                    onChange={(e) =>
+                      setNewCustomer({
+                        ...newCustomer,
+                        address: e.target.value,
+                      })
+                    }
+                    placeholder="Nhập địa chỉ khách hàng"
+                    className="w-full border border-slate-300 p-4 rounded-2xl outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 resize-none"
+                  />
+                </div>
+
               </div>
-
-              <div>
-                <label className="block mb-1 text-sm font-semibold">
-                  Số điện thoại *
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border rounded-lg p-2"
-                  value={newCustomer.phone}
-                  onChange={(e) =>
-                    setNewCustomer({
-                      ...newCustomer,
-                      phone: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 text-sm font-semibold">
-                  Mã khách hàng
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border rounded-lg p-2"
-                  placeholder="VD: KH0001"
-                  value={newCustomer.code}
-                  onChange={(e) =>
-                    setNewCustomer({
-                      ...newCustomer,
-                      code: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 text-sm font-semibold">
-                  Email
-                </label>
-
-                <input
-                  type="email"
-                  className="w-full border rounded-lg p-2"
-                  value={newCustomer.email}
-                  onChange={(e) =>
-                    setNewCustomer({
-                      ...newCustomer,
-                      email: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block mb-1 text-sm font-semibold">
-                  Địa chỉ
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border rounded-lg p-2"
-                  value={newCustomer.address}
-                  onChange={(e) =>
-                    setNewCustomer({
-                      ...newCustomer,
-                      address: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block mb-1 text-sm font-semibold">
-                  Mã số thuế
-                </label>
-
-                <input
-                  type="text"
-                  className="w-full border rounded-lg p-2"
-                  value={newCustomer.taxCode}
-                  onChange={(e) =>
-                    setNewCustomer({
-                      ...newCustomer,
-                      taxCode: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
             </div>
 
-            <div className="flex justify-end gap-3 mt-6">
-
+            <div className="px-6 py-5 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() =>
                   setShowCustomerForm(false)
                 }
-                className="px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
+                className="px-6 py-3 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold"
               >
                 Hủy
               </button>
@@ -3763,11 +3780,10 @@ const itemShortName =
               <button
                 type="button"
                 onClick={addNewCustomer}
-                className="px-5 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold"
+                className="px-6 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-semibold"
               >
                 Lưu khách hàng
               </button>
-
             </div>
 
           </div>
@@ -3780,7 +3796,7 @@ const itemShortName =
 
           <div className="bg-white rounded-2xl shadow-2xl w-[760px] max-h-[90vh] overflow-hidden text-black">
 
-            <div className="flex items-center justify-between px-6 py-4 border-b bg-blue-700 text-white">
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-slate-800 text-white">
               <h2 className="text-xl font-bold">
                 Phím tắt màn hình bán hàng
               </h2>
@@ -3790,7 +3806,7 @@ const itemShortName =
                 onClick={() =>
                   setShowShortcutModal(false)
                 }
-                className="w-8 h-8 rounded-full hover:bg-blue-800 text-2xl leading-none"
+                className="w-8 h-8 rounded-full hover:bg-slate-700 text-2xl leading-none"
               >
                 ×
               </button>
@@ -3801,7 +3817,7 @@ const itemShortName =
               <div className="grid grid-cols-2 gap-6">
 
                 <div className="space-y-3">
-                  <h3 className="font-bold text-blue-700 border-b pb-2">
+                  <h3 className="font-bold text-sky-700 border-b pb-2">
                     Thao tác bán hàng
                   </h3>
 
@@ -3849,7 +3865,7 @@ const itemShortName =
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="font-bold text-blue-700 border-b pb-2">
+                  <h3 className="font-bold text-sky-700 border-b pb-2">
                     Thao tác nhanh
                   </h3>
 
@@ -3904,7 +3920,7 @@ const itemShortName =
                 </div>
 
                 <div className="space-y-3 col-span-2">
-                  <h3 className="font-bold text-blue-700 border-b pb-2">
+                  <h3 className="font-bold text-sky-700 border-b pb-2">
                     Phím điều hướng
                   </h3>
 

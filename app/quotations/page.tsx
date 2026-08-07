@@ -80,14 +80,14 @@ function getStatusLabel(status?: string) {
 
 function getStatusClass(status?: string) {
   if (status === "confirmed") {
-    return "bg-green-100 text-green-700";
+    return "bg-emerald-100 text-emerald-700";
   }
 
   if (status === "cancelled") {
-    return "bg-red-100 text-red-700";
+    return "bg-rose-100 text-rose-700";
   }
 
-  return "bg-gray-100 text-gray-700";
+  return "bg-slate-100 text-gray-700";
 }
 
 export default function QuotationsPage() {
@@ -198,15 +198,15 @@ export default function QuotationsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-5 text-black">
+    <main className="min-h-screen bg-slate-100 p-5 text-black">
       <div className="mx-auto max-w-[1400px]">
-        <div className="mb-5 flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+        <div className="mb-5 flex flex-col gap-3 rounded-2xl bg-white p-5 border border-slate-200 shadow-sm lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-blue-700">
+            <h1 className="text-3xl font-bold text-sky-700">
               Quản lý báo giá
             </h1>
 
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-slate-500">
               Xem lại, in lại và quản lý các bảng báo giá đã lưu.
             </p>
           </div>
@@ -214,7 +214,7 @@ export default function QuotationsPage() {
           <button
             type="button"
             onClick={() => router.push("/quotations/create")}
-            className="rounded-xl bg-blue-700 px-5 py-3 font-semibold text-white hover:bg-blue-800"
+            className="rounded-xl bg-slate-800 px-5 py-3 font-semibold text-white hover:bg-sky-700"
           >
             + Tạo báo giá
           </button>
@@ -225,24 +225,24 @@ export default function QuotationsPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Tìm theo mã báo giá, tên công ty, số điện thoại hoặc email..."
-            className="w-full rounded-xl border p-3 outline-none focus:border-blue-500"
+            className="w-full rounded-xl border p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
           />
         </div>
 
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1000px] border-collapse">
-              <thead className="bg-blue-700 text-white">
+              <thead className="bg-slate-800 text-white">
                 <tr>
-                  <th className="p-3 text-left">Mã báo giá</th>
-                  <th className="p-3 text-left">Ngày tạo</th>
-                  <th className="p-3 text-left">Khách hàng</th>
-                  <th className="p-3 text-center">Số sản phẩm</th>
-                  <th className="p-3 text-right">Tiền hàng</th>
-                  <th className="p-3 text-right">VAT</th>
-                  <th className="p-3 text-right">Tổng cộng</th>
-                  <th className="p-3 text-center">Trạng thái</th>
-                  <th className="p-3 text-center">Thao tác</th>
+                  <th className="px-4 py-3 text-left">Mã báo giá</th>
+                  <th className="px-4 py-3 text-left">Ngày tạo</th>
+                  <th className="px-4 py-3 text-left">Khách hàng</th>
+                  <th className="px-4 py-3 text-center">Số sản phẩm</th>
+                  <th className="px-4 py-3 text-right">Tiền hàng</th>
+                  <th className="px-4 py-3 text-right">VAT</th>
+                  <th className="px-4 py-3 text-right">Tổng cộng</th>
+                  <th className="px-4 py-3 text-center">Trạng thái</th>
+                  <th className="px-4 py-3 text-center">Thao tác</th>
                 </tr>
               </thead>
 
@@ -251,7 +251,7 @@ export default function QuotationsPage() {
                   <tr>
                     <td
                       colSpan={9}
-                      className="p-10 text-center text-gray-500"
+                      className="p-10 text-center text-slate-500"
                     >
                       Đang tải danh sách báo giá...
                     </td>
@@ -260,7 +260,7 @@ export default function QuotationsPage() {
                   <tr>
                     <td
                       colSpan={9}
-                      className="p-10 text-center text-gray-500"
+                      className="p-10 text-center text-slate-500"
                     >
                       Chưa có báo giá nào
                     </td>
@@ -269,9 +269,9 @@ export default function QuotationsPage() {
                   filteredQuotations.map((item) => (
                     <tr
                       key={item.id}
-                      className="border-b hover:bg-gray-50"
+                      className="border-b border-slate-200 hover:bg-slate-50"
                     >
-                      <td className="p-3 font-semibold text-blue-700">
+                      <td className="px-4 py-3 font-semibold text-sky-700">
                         {getQuotationCode(item)}
                       </td>
 
@@ -288,7 +288,7 @@ export default function QuotationsPage() {
                         </div>
 
                         {(item.buyer?.phone || item.buyer?.email) && (
-                          <div className="mt-1 text-xs text-gray-500">
+                          <div className="mt-1 text-xs text-slate-500">
                             {[item.buyer?.phone, item.buyer?.email]
                               .filter(Boolean)
                               .join(" • ")}
@@ -296,23 +296,23 @@ export default function QuotationsPage() {
                         )}
                       </td>
 
-                      <td className="p-3 text-center">
+                      <td className="px-4 py-3 text-center">
                         {item.items?.length || 0}
                       </td>
 
-                      <td className="p-3 text-right">
+                      <td className="px-4 py-3 text-right">
                         {formatMoney(item.subtotal)}đ
                       </td>
 
-                      <td className="p-3 text-right">
+                      <td className="px-4 py-3 text-right">
                         {formatMoney(item.vatAmount)}đ
                       </td>
 
-                      <td className="p-3 text-right font-bold text-red-600">
+                      <td className="px-4 py-3 text-right font-bold text-red-600">
                         {formatMoney(item.total)}đ
                       </td>
 
-                      <td className="p-3 text-center">
+                      <td className="px-4 py-3 text-center">
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClass(
                             item.status
@@ -334,7 +334,7 @@ export default function QuotationsPage() {
                                 "_blank"
                               )
                             }
-                            className="rounded-lg border border-blue-600 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                            className="rounded-lg border border-blue-600 px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-blue-50"
                           >
                             Xem
                           </button>
@@ -349,7 +349,7 @@ export default function QuotationsPage() {
                                 "_blank"
                               )
                             }
-                            className="rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                            className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
                           >
                             In lại
                           </button>
@@ -358,7 +358,7 @@ export default function QuotationsPage() {
                             type="button"
                             disabled={deletingId === item.id}
                             onClick={() => deleteQuotation(item)}
-                            className="rounded-lg bg-red-500 px-3 py-2 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50"
+                            className="rounded-lg bg-rose-500 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-600 disabled:opacity-50"
                           >
                             {deletingId === item.id
                               ? "Đang xóa..."
@@ -374,7 +374,7 @@ export default function QuotationsPage() {
           </div>
         </div>
 
-        <div className="mt-4 text-sm text-gray-500">
+        <div className="mt-4 text-sm text-slate-500">
           Tổng số báo giá:{" "}
           <strong>{filteredQuotations.length}</strong>
         </div>

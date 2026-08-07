@@ -8,17 +8,10 @@ import {
   signOut,
 } from "firebase/auth";
 
-import {
-  doc,
-  getDoc,
-} from "firebase/firestore";
-
+import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
-import {
-  auth,
-  db,
-} from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 
 type CurrentUserInfo = {
   uid: string;
@@ -31,32 +24,21 @@ type CurrentUserInfo = {
 export default function LoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] =
-    useState("");
-
-  const [password, setPassword] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [checking, setChecking] =
-    useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   const goToPage = (path: string) => {
     window.location.href = path;
   };
 
-  const getRedirectPath = (
-    userInfo: CurrentUserInfo
-  ) => {
-    const role =
-      String(userInfo.role || "")
-        .trim()
-        .toLowerCase();
+  const getRedirectPath = (userInfo: CurrentUserInfo) => {
+    const role = String(userInfo.role || "")
+      .trim()
+      .toLowerCase();
 
-    const permissions =
-      userInfo.permissions || {};
+    const permissions = userInfo.permissions || {};
 
     const isAdmin =
       role === "admin" ||
@@ -74,28 +56,16 @@ export default function LoginPage() {
     authEmail?: string | null,
     showAlert: boolean = true
   ) => {
-      console.log("UID LOGIN:", uid);
-    const userRef =
-      doc(db, "users", uid);
+    console.log("UID LOGIN:", uid);
 
-    const userSnap =
-      await getDoc(userRef);
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
 
-      console.log(
-  "DOC EXISTS:",
-  userSnap.exists()
-);
-
-console.log(
-  "DATA:",
-  userSnap.data()
-);
+    console.log("DOC EXISTS:", userSnap.exists());
+    console.log("DATA:", userSnap.data());
 
     if (!userSnap.exists()) {
-      localStorage.removeItem(
-        "currentUserInfo"
-      );
-
+      localStorage.removeItem("currentUserInfo");
       await signOut(auth);
 
       if (showAlert) {
@@ -107,29 +77,22 @@ console.log(
       return null;
     }
 
-    const userData: any =
-      userSnap.data();
+    const userData: any = userSnap.data();
 
     if (userData.active !== true) {
-      localStorage.removeItem(
-        "currentUserInfo"
-      );
-
+      localStorage.removeItem("currentUserInfo");
       await signOut(auth);
 
       if (showAlert) {
-        alert(
-          "Tài khoản này đang bị khóa"
-        );
+        alert("Tài khoản này đang bị khóa");
       }
 
       return null;
     }
 
-    const role =
-      String(userData.role || "staff")
-        .trim()
-        .toLowerCase();
+    const role = String(userData.role || "staff")
+      .trim()
+      .toLowerCase();
 
     const permissions =
       userData.permissions &&
@@ -138,26 +101,14 @@ console.log(
         : {};
 
     const currentUserInfo: CurrentUserInfo = {
-      uid: uid,
-
-      email:
-        userData.email ||
-        authEmail ||
-        "",
-
-      name:
-        userData.name ||
-        "",
-
-      role: role,
-
-      permissions: permissions,
+      uid,
+      email: userData.email || authEmail || "",
+      name: userData.name || "",
+      role,
+      permissions,
     };
 
-    localStorage.removeItem(
-      "currentUserInfo"
-    );
-
+    localStorage.removeItem("currentUserInfo");
     localStorage.setItem(
       "currentUserInfo",
       JSON.stringify(currentUserInfo)
@@ -169,59 +120,49 @@ console.log(
   useEffect(() => {
     let isMounted = true;
 
-    const unsubscribe =
-      onAuthStateChanged(
-        auth,
-        async (currentUser) => {
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async (currentUser) => {
+        if (!isMounted) {
+          return;
+        }
+
+        if (!currentUser) {
+          localStorage.removeItem("currentUserInfo");
+          setChecking(false);
+          return;
+        }
+
+        try {
+          const userInfo = await saveUserPermission(
+            currentUser.uid,
+            currentUser.email,
+            false
+          );
+
           if (!isMounted) {
             return;
           }
 
-          if (!currentUser) {
-            localStorage.removeItem(
-              "currentUserInfo"
-            );
-
+          if (!userInfo) {
             setChecking(false);
             return;
           }
 
-          try {
-            const userInfo =
-              await saveUserPermission(
-                currentUser.uid,
-                currentUser.email,
-                false
-              );
+          const redirectPath = getRedirectPath(userInfo);
+          goToPage(redirectPath);
+        } catch (error) {
+          console.error(error);
 
-            if (!isMounted) {
-              return;
-            }
+          localStorage.removeItem("currentUserInfo");
+          await signOut(auth);
 
-            if (!userInfo) {
-              setChecking(false);
-              return;
-            }
-
-            const redirectPath =
-              getRedirectPath(userInfo);
-
-            goToPage(redirectPath);
-          } catch (error) {
-            console.error(error);
-
-            localStorage.removeItem(
-              "currentUserInfo"
-            );
-
-            await signOut(auth);
-
-            if (isMounted) {
-              setChecking(false);
-            }
+          if (isMounted) {
+            setChecking(false);
           }
         }
-      );
+      }
+    );
 
     return () => {
       isMounted = false;
@@ -230,8 +171,7 @@ console.log(
   }, []);
 
   const handleLogin = async () => {
-    const cleanEmail =
-      email.trim();
+    const cleanEmail = email.trim();
 
     if (!cleanEmail) {
       alert("Vui lòng nhập email");
@@ -246,32 +186,26 @@ console.log(
     try {
       setLoading(true);
 
-      localStorage.removeItem(
-        "currentUserInfo"
+      localStorage.removeItem("currentUserInfo");
+
+      const result = await signInWithEmailAndPassword(
+        auth,
+        cleanEmail,
+        password
       );
 
-      const result =
-        await signInWithEmailAndPassword(
-          auth,
-          cleanEmail,
-          password
-        );
-
-      const userInfo =
-        await saveUserPermission(
-          result.user.uid,
-          result.user.email,
-          true
-        );
+      const userInfo = await saveUserPermission(
+        result.user.uid,
+        result.user.email,
+        true
+      );
 
       if (!userInfo) {
         setLoading(false);
         return;
       }
 
-      const redirectPath =
-        getRedirectPath(userInfo);
-
+      const redirectPath = getRedirectPath(userInfo);
       goToPage(redirectPath);
     } catch (error: any) {
       console.error(error);
@@ -281,15 +215,11 @@ console.log(
         error?.code === "auth/wrong-password" ||
         error?.code === "auth/invalid-credential"
       ) {
-        alert(
-          "Email hoặc mật khẩu không đúng"
-        );
+        alert("Email hoặc mật khẩu không đúng");
         return;
       }
 
-      if (
-        error?.code === "auth/too-many-requests"
-      ) {
+      if (error?.code === "auth/too-many-requests") {
         alert(
           "Bạn nhập sai quá nhiều lần, vui lòng thử lại sau"
         );
@@ -306,30 +236,34 @@ console.log(
 
   if (checking) {
     return (
-      <main className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <p className="text-gray-600">
+      <main className="min-h-screen bg-slate-100 flex items-center justify-center p-6 text-slate-700">
+        <div className="rounded-2xl bg-white px-8 py-6 shadow-sm border border-slate-200">
           Đang kiểm tra đăng nhập...
-        </p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 flex items-center justify-center p-5">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
-        <div className="bg-blue-700 text-white p-7">
-          <h1 className="text-3xl font-bold">
-            Đăng nhập quản trị
+    <main className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-xl shadow-slate-200/70 border border-slate-200">
+        <div className="bg-slate-800 px-7 py-8 text-white">
+          <div className="text-sm font-semibold tracking-[0.18em] text-sky-300 uppercase">
+            Quản lý bán hàng
+          </div>
+
+          <h1 className="mt-2 text-3xl font-bold">
+            Đăng nhập
           </h1>
 
-          <p className="text-blue-100 mt-2">
+          <p className="mt-2 text-slate-300">
             Vui lòng đăng nhập để vào hệ thống quản lý bán hàng
           </p>
         </div>
 
         <div className="p-7 space-y-5 text-black">
           <div>
-            <label className="block text-sm font-semibold text-gray-600 mb-2">
+            <label className="block text-sm font-semibold text-slate-600 mb-2">
               Email
             </label>
 
@@ -345,12 +279,12 @@ console.log(
                 }
               }}
               placeholder="Nhập email đăng nhập"
-              className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600"
+              className="w-full border border-slate-300 bg-white p-4 rounded-2xl outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-600 mb-2">
+            <label className="block text-sm font-semibold text-slate-600 mb-2">
               Mật khẩu
             </label>
 
@@ -366,7 +300,7 @@ console.log(
                 }
               }}
               placeholder="Nhập mật khẩu"
-              className="w-full border p-4 rounded-2xl outline-none focus:border-blue-600"
+              className="w-full border border-slate-300 bg-white p-4 rounded-2xl outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
             />
           </div>
 
@@ -374,14 +308,14 @@ console.log(
             type="button"
             disabled={loading}
             onClick={handleLogin}
-            className="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-2xl font-bold text-lg disabled:opacity-60"
+            className="w-full bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white py-4 rounded-2xl font-bold text-lg transition disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
           >
             {loading
               ? "Đang đăng nhập..."
               : "Đăng nhập"}
           </button>
 
-          <p className="text-sm text-gray-500 text-center">
+          <p className="text-sm text-slate-500 text-center">
             Admin sẽ vào trang Dashboard, nhân viên sẽ vào màn hình POS.
           </p>
         </div>

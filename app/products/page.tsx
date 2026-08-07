@@ -90,6 +90,18 @@ export default function ProductsPage() {
   const columnPopupRef =
   useRef<HTMLDivElement | null>(null);
 
+  const columnButtonRef =
+  useRef<HTMLButtonElement | null>(null);
+
+  const columnSettingsLoadedRef =
+  useRef(false);
+
+  const [columnPopupPosition, setColumnPopupPosition] =
+  useState({
+    top: 0,
+    left: 0,
+  });
+
   useEffect(() => {
   const handleClickOutside = (
     event: MouseEvent
@@ -97,6 +109,10 @@ export default function ProductsPage() {
     if (
       columnPopupRef.current &&
       !columnPopupRef.current.contains(
+        event.target as Node
+      ) &&
+      columnButtonRef.current &&
+      !columnButtonRef.current.contains(
         event.target as Node
       )
     ) {
@@ -126,10 +142,48 @@ const [visibleColumns, setVisibleColumns] =
     actions: true,
   });
 
+useEffect(() => {
+  try {
+    const savedColumns =
+      localStorage.getItem("products_visible_columns");
+
+    if (savedColumns) {
+      const parsedColumns =
+        JSON.parse(savedColumns);
+
+      setVisibleColumns((prev) => ({
+        ...prev,
+        ...parsedColumns,
+      }));
+    }
+  } catch (error) {
+    console.log(
+      "Không đọc được cài đặt cột sản phẩm",
+      error
+    );
+  } finally {
+    columnSettingsLoadedRef.current = true;
+  }
+}, []);
+
+useEffect(() => {
+  if (!columnSettingsLoadedRef.current) {
+    return;
+  }
+
+  localStorage.setItem(
+    "products_visible_columns",
+    JSON.stringify(visibleColumns)
+  );
+}, [visibleColumns]);
+
 const [canViewCostPrice, setCanViewCostPrice] =
   useState(false);
 
   const [canDeleteProduct, setCanDeleteProduct] =
+  useState(false);
+
+  const [canEditProduct, setCanEditProduct] =
   useState(false);
 
   const handleImageChange = (
@@ -254,8 +308,14 @@ reader.readAsDataURL(file);
         user.deleteProduct === true ||
         user.permissions?.deleteProduct === true;
 
+      const canEdit =
+        isAdmin ||
+        user.editProduct === true ||
+        user.permissions?.editProduct === true;
+
       setCanViewCostPrice(canView);
       setCanDeleteProduct(canDelete);
+      setCanEditProduct(canEdit);
     } catch (error) {
       console.log(
         "Không đọc được quyền người dùng",
@@ -264,6 +324,7 @@ reader.readAsDataURL(file);
 
       setCanViewCostPrice(false);
       setCanDeleteProduct(false);
+      setCanEditProduct(false);
     }
   }, []);
   // ADD PRODUCT
@@ -443,6 +504,11 @@ if (duplicateCode) {
 
   // OPEN EDIT MODAL
   const openEditModal = (item: any) => {
+    if (!canEditProduct) {
+      alert("Bạn không có quyền sửa sản phẩm");
+      return;
+    }
+
     setEditingProduct(item);
     setShowStockHistory(false);
     setStockHistory([]);
@@ -470,6 +536,11 @@ if (duplicateCode) {
   // SAVE EDIT
   const saveEditProduct = async () => {
   if (!editingProduct) return;
+
+  if (!canEditProduct) {
+    alert("Bạn không có quyền sửa sản phẩm");
+    return;
+  }
 
   try {
 
@@ -842,16 +913,16 @@ successCount++;
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6">
+    <main className="min-h-screen bg-slate-100 p-6">
       <div className="w-full max-w-[1800px] mx-auto">
         {/* HEADER */}
         <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-blue-700">
+            <h1 className="text-4xl font-bold text-sky-700">
               Quản lý sản phẩm
             </h1>
 
-            <p className="text-gray-500 mt-2">
+            <p className="text-slate-500 mt-1">
               Quản lý danh sách sản phẩm, tồn kho, giá bán và VAT
             </p>
           </div>
@@ -868,14 +939,14 @@ successCount++;
 <a
   href="/templates/mau-nhap-san-pham.xlsx"
   download
-  className="border border-blue-500 text-blue-600 hover:bg-blue-50 px-5 py-3 rounded-2xl font-semibold transition"
+  className="border border-sky-500 text-sky-700 hover:bg-sky-50 px-5 py-3 rounded-2xl font-semibold transition"
 >
   Tải file mẫu
 </a>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="bg-white border border-blue-600 text-blue-700 hover:bg-blue-50 px-5 py-3 rounded-2xl font-semibold"
+              className="bg-white border border-sky-500 text-sky-700 hover:bg-sky-50 px-5 py-3 rounded-2xl font-semibold"
             >
               Nhập file
             </button>
@@ -897,7 +968,7 @@ successCount++;
 
   setShowAddForm((prev) => !prev);
 }}
-              className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-2xl font-semibold"
+              className="bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-2xl font-semibold"
             >
               {showAddForm ? "Ẩn form" : "+ Thêm sản phẩm"}
             </button>
@@ -916,7 +987,7 @@ successCount++;
         {showAddForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
   <div
-    className="bg-white w-full max-w-7xl max-h-[90vh] overflow-y-auto p-7 rounded-3xl shadow-2xl border border-gray-100"
+    className="bg-white w-full max-w-7xl max-h-[90vh] overflow-y-auto p-7 rounded-3xl shadow-2xl border border-slate-200"
     onClick={(e) =>
       e.stopPropagation()
     }
@@ -930,7 +1001,7 @@ successCount++;
                 <input
                   type="text"
                   placeholder="Nhập tên chính"
-                  className="w-full border p-4 rounded-2xl text-black"
+                  className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   value={mainName}
                   onChange={(e) => {
                     setMainName(e.target.value);
@@ -947,7 +1018,7 @@ successCount++;
                 <input
                   type="text"
                   placeholder="Ví dụ: NE555"
-                  className="w-full border p-4 rounded-2xl text-black"
+                  className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   value={shortName}
                   onChange={(e) => setShortName(e.target.value)}
                 />
@@ -961,7 +1032,7 @@ successCount++;
                 <input
                   type="text"
                   placeholder="Nhập mã sản phẩm"
-                  className="w-full border p-4 rounded-2xl text-black"
+                  className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   value={productCode}
                   onChange={(e) =>
                     setProductCode(e.target.value)
@@ -977,7 +1048,7 @@ successCount++;
                 <input
                   type="text"
                   placeholder="VD: Kệ A1, Ngăn B2"
-                  className="w-full border p-4 rounded-2xl text-black"
+                  className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   value={productLocation}
                   onChange={(e) =>
                     setProductLocation(e.target.value)
@@ -993,7 +1064,7 @@ successCount++;
                 <input
                   type="number"
                   placeholder="Nhập giá bán"
-                  className="w-full border p-4 rounded-2xl text-black"
+                  className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                 />
@@ -1009,7 +1080,7 @@ successCount++;
                 <input
                   type="number"
                   placeholder="Nhập giá nhập"
-                  className="w-full border p-4 rounded-2xl text-black"
+                  className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   value={importPrice}
                   onChange={(e) =>
                     setImportPrice(e.target.value)
@@ -1025,7 +1096,7 @@ successCount++;
                 <input
                   type="number"
                   placeholder="Nhập giá vốn"
-                  className="w-full border p-4 rounded-2xl text-black"
+                  className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   value={capitalPrice}
                   onChange={(e)=>setCapitalPrice(e.target.value)}
                 />
@@ -1041,7 +1112,7 @@ successCount++;
                 <input
                   type="number"
                   placeholder="Nhập tồn kho"
-                  className="w-full border p-4 rounded-2xl text-black"
+                  className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   value={stock}
                   onChange={(e) => setStock(e.target.value)}
                 />
@@ -1055,7 +1126,7 @@ successCount++;
                 <input
                   type="text"
                   placeholder="VD: cái, bộ, mét..."
-                  className="w-full border p-4 rounded-2xl text-black"
+                  className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
                 />
@@ -1067,7 +1138,7 @@ successCount++;
                 </label>
 
                 <select
-                  className="w-full border p-4 rounded-2xl text-black bg-white"
+                  className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   value={tax}
                   onChange={(e) => setTax(e.target.value)}
                 >
@@ -1098,7 +1169,7 @@ successCount++;
     type="file"
     accept="image/*"
     onChange={handleImageChange}
-    className="w-full border p-3 rounded-2xl"
+    className="w-full border border-slate-300 bg-white p-3 rounded-2xl outline-none focus:border-sky-500"
   />
 
   {imagePreview && (
@@ -1113,7 +1184,7 @@ successCount++;
               <button
                 type="button"
                 onClick={() => setShowAddForm(false)}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-7 py-3 rounded-2xl font-semibold"
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-7 py-3 rounded-2xl font-semibold"
               >
                 Hủy
               </button>
@@ -1121,7 +1192,7 @@ successCount++;
               <button
                 type="button"
                 onClick={addProduct}
-                className="bg-blue-700 hover:bg-blue-800 text-white px-8 py-3 rounded-2xl font-semibold"
+                className="bg-sky-600 hover:bg-sky-700 text-white px-8 py-3 rounded-2xl font-semibold"
               >
                 Lưu sản phẩm
               </button>
@@ -1131,12 +1202,12 @@ successCount++;
 )}
 
         {/* SEARCH */}
-        <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 mb-6">
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 mb-6">
           <input
             type="text"
             placeholder="Tìm theo tên, mã sản phẩm hoặc vị trí..."
             autoComplete="off"
-            className="w-full border p-4 rounded-2xl text-black"
+            className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -1146,22 +1217,32 @@ successCount++;
         </div>
 
         {/* TABLE */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-x-auto">
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-x-auto">
           <table className="w-full min-w-[1400px]">
-            <thead className="bg-blue-700 text-white">
+            <thead className="bg-slate-800 text-white">
               <tr>
                 <th className="p-4 text-left">
 
   <div className="flex items-center gap-2">
 
     <button
+      ref={columnButtonRef}
       type="button"
-      onClick={() =>
-        setShowColumnSettings(
-          !showColumnSettings
-        )
-      }
+      onClick={() => {
+        if (columnButtonRef.current) {
+          const rect =
+            columnButtonRef.current.getBoundingClientRect();
+
+          setColumnPopupPosition({
+            top: rect.bottom + 8,
+            left: rect.left,
+          });
+        }
+
+        setShowColumnSettings((prev) => !prev);
+      }}
       className="hover:scale-110 transition text-lg"
+      title="Chọn cột hiển thị"
     >
       ⚙️
     </button>
@@ -1173,21 +1254,21 @@ successCount++;
   {showColumnSettings && (
     <div
       ref={columnPopupRef}
-      className="fixed bg-white border border-gray-200 shadow-2xl rounded-2xl p-4 w-38 z-[9999]"
+      className="fixed bg-white border border-slate-200 shadow-2xl rounded-2xl p-4 w-[180px] z-[9999]"
       style={{
-        top: "300px",
-        left: "560px",
+        top: `${columnPopupPosition.top}px`,
+        left: `${columnPopupPosition.left}px`,
       }}
     >
 
-      <h3 className="font-bold mb-4 text-black text-base">
+      <h3 className="font-bold mb-3 text-slate-800 text-sm">
         Hiển thị cột
       </h3>
 
-      <div className="space-y-3 text-sm text-black">
+      <div className="space-y-2 text-sm text-slate-700">
 
         {canViewCostPrice && (
-  <label className="flex items-center gap-3 cursor-pointer">
+  <label className="flex items-center gap-2 cursor-pointer">
     <input
       type="checkbox"
       checked={visibleColumns.importPrice}
@@ -1203,7 +1284,7 @@ successCount++;
 )}
 
         {canViewCostPrice && (
-  <label className="flex items-center gap-3 cursor-pointer">
+  <label className="flex items-center gap-2 cursor-pointer">
     <input
       type="checkbox"
       checked={visibleColumns.capitalPrice}
@@ -1217,7 +1298,7 @@ successCount++;
     <span>Giá vốn</span>
   </label>
 )}
-        <label className="flex items-center gap-3 cursor-pointer">
+        <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={visibleColumns.stock}
@@ -1232,7 +1313,7 @@ successCount++;
           <span>Tồn kho</span>
         </label>
 
-        <label className="flex items-center gap-3 cursor-pointer">
+        <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={visibleColumns.vat}
@@ -1247,7 +1328,7 @@ successCount++;
           <span>VAT</span>
         </label>
 
-        <label className="flex items-center gap-3 cursor-pointer">
+        <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={visibleColumns.actions}
@@ -1322,7 +1403,7 @@ successCount++;
               {paginatedProducts.map((item: any) => (
                 <tr
                   key={item.id}
-                  className="border-b hover:bg-gray-50"
+                  className="border-b border-slate-200 hover:bg-slate-50"
                 >
                   <td className="p-4">
 
@@ -1344,7 +1425,7 @@ successCount++;
     item.main_name ||
     item.name}
 </span>
-      <span className="text-sm text-gray-500">{item.main_name || item.name}</span>
+      <span className="text-sm text-slate-500">{item.main_name || item.name}</span>
     </div>
 
   </div>
@@ -1366,7 +1447,7 @@ successCount++;
     </td>
 )}
 
-                  <td className="p-4 text-right text-blue-700 font-semibold">
+                  <td className="p-4 text-right text-sky-700 font-semibold">
                     {formatMoney(item.price)}
                   </td>
 
@@ -1398,13 +1479,15 @@ successCount++;
                   {visibleColumns.actions && (
   <td className="p-4">
     <div className="flex justify-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(item)}
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-xl text-sm"
-                      >
-                        Sửa
-                      </button>
+                      {canEditProduct && (
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(item)}
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-xl text-sm"
+                        >
+                          Sửa
+                        </button>
+                      )}
 
                       {canDeleteProduct && (
   <button
@@ -1425,7 +1508,7 @@ successCount++;
                 <tr>
                   <td
                     colSpan={10}
-                    className="p-10 text-center text-gray-500"
+                    className="p-10 text-center text-slate-500"
                   >
                     Không tìm thấy sản phẩm phù hợp
                   </td>
@@ -1437,8 +1520,8 @@ successCount++;
 
         {/* PAGINATION */}
         {filteredProducts.length > itemsPerPage && (
-          <div className="bg-white mt-5 p-4 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="text-sm text-gray-600">
+          <div className="bg-white mt-5 p-4 rounded-3xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="text-sm text-slate-600">
               Hiển thị{" "}
               <span className="font-semibold text-black">
                 {startIndex + 1}
@@ -1468,8 +1551,8 @@ successCount++;
                 }
                 className={`px-4 py-2 rounded-xl font-semibold ${
                   currentPage === 1
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-200 hover:bg-gray-300 text-black"
+                    ? "bg-slate-100 text-gray-400 cursor-not-allowed"
+                    : "bg-slate-200 hover:bg-slate-300 text-black"
                 }`}
               >
                 Trước
@@ -1485,8 +1568,8 @@ successCount++;
                   onClick={() => setCurrentPage(page)}
                   className={`px-4 py-2 rounded-xl font-semibold ${
                     currentPage === page
-                      ? "bg-blue-700 text-white"
-                      : "bg-gray-100 hover:bg-gray-200 text-black"
+                      ? "bg-sky-600 text-white"
+                      : "bg-slate-100 hover:bg-slate-200 text-black"
                   }`}
                 >
                   {page}
@@ -1503,8 +1586,8 @@ successCount++;
                 }
                 className={`px-4 py-2 rounded-xl font-semibold ${
                   currentPage === totalPages
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-200 hover:bg-gray-300 text-black"
+                    ? "bg-slate-100 text-gray-400 cursor-not-allowed"
+                    : "bg-slate-200 hover:bg-slate-300 text-black"
                 }`}
               >
                 Sau
@@ -1519,11 +1602,11 @@ successCount++;
             <div className="bg-white rounded-3xl shadow-xl w-full max-w-5xl p-7">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-blue-700">
+                  <h2 className="text-2xl font-bold text-slate-800">
                     Sửa sản phẩm
                   </h2>
 
-                  <p className="text-gray-500 mt-1">
+                  <p className="text-slate-500 mt-1">
                     Cập nhật thông tin sản phẩm
                   </p>
                 </div>
@@ -1531,7 +1614,7 @@ successCount++;
                 <button
                   type="button"
                   onClick={() => setEditingProduct(null)}
-                  className="bg-gray-100 hover:bg-gray-200 w-10 h-10 rounded-full text-xl"
+                  className="bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full text-xl"
                 >
                   ×
                 </button>
@@ -1544,7 +1627,7 @@ successCount++;
                   </label>
                   <input
                     type="text"
-                    className="w-full border p-4 rounded-2xl text-black"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     value={editMainName}
                     onChange={(e) => {
                       setEditMainName(e.target.value);
@@ -1559,7 +1642,7 @@ successCount++;
                   </label>
                   <input
                     type="text"
-                    className="w-full border p-4 rounded-2xl text-black"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     value={editShortName}
                     onChange={(e)=>setEditShortName(e.target.value)}
                   />
@@ -1572,7 +1655,7 @@ successCount++;
 
                   <input
                     type="text"
-                    className="w-full border p-4 rounded-2xl text-black"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     value={editProductCode}
                     onChange={(e) =>
                       setEditProductCode(e.target.value)
@@ -1587,7 +1670,7 @@ successCount++;
 
                   <input
                     type="text"
-                    className="w-full border p-4 rounded-2xl text-black"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     value={editProductLocation}
                     onChange={(e) =>
                       setEditProductLocation(e.target.value)
@@ -1602,7 +1685,7 @@ successCount++;
 
                   <input
                     type="number"
-                    className="w-full border p-4 rounded-2xl text-black"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     value={editPrice}
                     onChange={(e) =>
                       setEditPrice(e.target.value)
@@ -1619,7 +1702,7 @@ successCount++;
 
       <input
         type="number"
-        className="w-full border p-4 rounded-2xl text-black"
+        className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
         value={editImportPrice}
         onChange={(e) =>
           setEditImportPrice(e.target.value)
@@ -1634,7 +1717,7 @@ successCount++;
 
       <input
         type="number"
-        className="w-full border p-4 rounded-2xl text-black"
+        className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
         value={editCapitalPrice}
         onChange={(e) =>
           setEditCapitalPrice(e.target.value)
@@ -1651,7 +1734,7 @@ successCount++;
 
                   <input
                     type="number"
-                    className="w-full border p-4 rounded-2xl text-black"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     value={editStock}
                     onChange={(e) =>
                       setEditStock(e.target.value)
@@ -1666,7 +1749,7 @@ successCount++;
 
                   <input
                     type="text"
-                    className="w-full border p-4 rounded-2xl text-black"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     value={editUnit}
                     onChange={(e) =>
                       setEditUnit(e.target.value)
@@ -1680,7 +1763,7 @@ successCount++;
                   </label>
 
                   <select
-                    className="w-full border p-4 rounded-2xl text-black bg-white"
+                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     value={editTax}
                     onChange={(e) =>
                       setEditTax(e.target.value)
@@ -1709,7 +1792,7 @@ successCount++;
     type="file"
     accept="image/*"
     onChange={handleImageChange}
-    className="w-full border p-3 rounded-2xl"
+    className="w-full border border-slate-300 bg-white p-3 rounded-2xl outline-none focus:border-sky-500"
   />
 
   {imagePreview && (
@@ -1728,7 +1811,7 @@ successCount++;
                     setShowStockHistory(false);
                     setStockHistory([]);
                   }}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-2xl font-semibold"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-3 rounded-2xl font-semibold"
                 >
                   Hủy
                 </button>
@@ -1744,7 +1827,7 @@ successCount++;
                 <button
                   type="button"
                   onClick={saveEditProduct}
-                  className="bg-blue-700 hover:bg-blue-800 text-white px-7 py-3 rounded-2xl font-semibold"
+                  className="bg-sky-600 hover:bg-sky-700 text-white px-7 py-3 rounded-2xl font-semibold"
                 >
                   Lưu thay đổi
                 </button>
@@ -1757,11 +1840,11 @@ successCount++;
             <div className="max-h-[88vh] w-full max-w-6xl overflow-hidden rounded-3xl bg-white shadow-2xl">
               <div className="flex items-center justify-between border-b p-5">
                 <div>
-                  <h2 className="text-2xl font-bold text-blue-700">
+                  <h2 className="text-2xl font-bold text-slate-800">
                     Lịch sử kho
                   </h2>
 
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-slate-500">
                     {editingProduct.short_name ||
                       editingProduct.main_name ||
                       editingProduct.name}
@@ -1774,7 +1857,7 @@ successCount++;
                 <button
                   type="button"
                   onClick={() => setShowStockHistory(false)}
-                  className="h-10 w-10 rounded-full bg-gray-100 text-xl hover:bg-gray-200"
+                  className="h-10 w-10 rounded-full bg-slate-100 text-xl hover:bg-slate-200"
                 >
                   ×
                 </button>
@@ -1782,16 +1865,16 @@ successCount++;
 
               <div className="max-h-[calc(88vh-90px)] overflow-auto">
                 {loadingStockHistory ? (
-                  <div className="p-10 text-center text-gray-500">
+                  <div className="p-10 text-center text-slate-500">
                     Đang tải lịch sử kho...
                   </div>
                 ) : stockHistory.length === 0 ? (
                   <div className="p-10 text-center">
-                    <div className="text-lg font-semibold text-gray-700">
+                    <div className="text-lg font-semibold text-slate-700">
                       Chưa có lịch sử kho
                     </div>
 
-                    <p className="mt-2 text-sm text-gray-500">
+                    <p className="mt-2 text-sm text-slate-500">
                       Lịch sử sẽ xuất hiện sau khi POS bắt đầu ghi dữ liệu vào
                       collection inventory_movements.
                     </p>
@@ -1799,7 +1882,7 @@ successCount++;
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[1050px] border-collapse">
-                      <thead className="sticky top-0 bg-blue-700 text-white">
+                      <thead className="sticky top-0 bg-slate-800 text-white">
                         <tr>
                           <th className="p-3 text-left">Thời gian</th>
                           <th className="p-3 text-left">Loại</th>
@@ -1820,7 +1903,7 @@ successCount++;
                           return (
                             <tr
                               key={movement.id}
-                              className="border-b hover:bg-gray-50"
+                              className="border-b border-slate-200 hover:bg-slate-50"
                             >
                               <td className="p-3 whitespace-nowrap">
                                 {formatHistoryDate(movement.createdAt)}
@@ -1838,7 +1921,7 @@ successCount++;
                                 </span>
                               </td>
 
-                              <td className="p-3 font-semibold text-blue-700">
+                              <td className="p-3 font-semibold text-sky-700">
                                 {movement.orderCode || "---"}
                               </td>
 

@@ -711,7 +711,7 @@ export default function OrdersReportPage() {
 
   const getStatusClass = (status?: string) => {
     if (status === "cancelled") {
-      return "bg-red-100 text-red-600";
+      return "bg-rose-100 text-rose-600";
     }
 
     if (status === "pending") {
@@ -719,10 +719,10 @@ export default function OrdersReportPage() {
     }
 
     if (status === "returned") {
-      return "bg-orange-100 text-orange-600";
+      return "bg-amber-100 text-amber-600";
     }
 
-    return "bg-green-100 text-green-600";
+    return "bg-emerald-100 text-emerald-600";
   };
 
   const filteredOrders = useMemo(() => {
@@ -911,15 +911,15 @@ export default function OrdersReportPage() {
   }, [currentPage, totalPages]);
 
   return (
-    <main className="min-h-screen bg-gray-100 p-5 text-black">
+    <main className="min-h-screen bg-slate-100 p-5 text-black">
       <div className="max-w-[1700px] mx-auto space-y-5">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div>
-            <h1 className="text-3xl font-bold text-blue-700">
+            <h1 className="text-3xl font-bold text-slate-800">
               Toàn bộ đơn hàng
             </h1>
 
-            <p className="text-gray-500 mt-1">
+            <p className="text-slate-500 mt-1">
               Báo cáo thống kê theo đơn hàng
             </p>
           </div>
@@ -930,7 +930,7 @@ export default function OrdersReportPage() {
               onChange={(e) =>
                 setFilterType(e.target.value)
               }
-              className="border bg-white rounded-xl px-4 py-3 outline-none w-56"
+              className="border border-slate-300 bg-white rounded-xl px-4 py-3 outline-none w-56 focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
             >
               {FILTER_OPTIONS.map((item) => (
                 <option
@@ -950,7 +950,7 @@ export default function OrdersReportPage() {
                   onChange={(e) =>
                     setCustomFrom(e.target.value)
                   }
-                  className="border bg-white rounded-xl px-4 py-3 outline-none"
+                  className="border border-slate-300 bg-white rounded-xl px-4 py-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                 />
 
                 <input
@@ -959,7 +959,7 @@ export default function OrdersReportPage() {
                   onChange={(e) =>
                     setCustomTo(e.target.value)
                   }
-                  className="border bg-white rounded-xl px-4 py-3 outline-none"
+                  className="border border-slate-300 bg-white rounded-xl px-4 py-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                 />
               </>
             )}
@@ -967,7 +967,7 @@ export default function OrdersReportPage() {
             <button
               type="button"
               onClick={loadOrders}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-semibold"
+              className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl font-semibold transition"
             >
               Tải lại
             </button>
@@ -975,12 +975,12 @@ export default function OrdersReportPage() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+            <p className="text-slate-500">
               Số đơn hàng
             </p>
 
-            <p className="text-2xl font-bold text-blue-700 mt-2">
+            <p className="text-2xl font-bold text-sky-700 mt-2">
               {
   sortedOrders.filter(
     (order) =>
@@ -991,88 +991,88 @@ export default function OrdersReportPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+            <p className="text-slate-500">
               Số lượng SP
             </p>
 
-            <p className="text-2xl font-bold text-purple-600 mt-2">
+            <p className="text-2xl font-bold text-violet-600 mt-2">
               {summary.items}
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+            <p className="text-slate-500">
               Doanh số
             </p>
 
-            <p className="text-2xl font-bold text-green-600 mt-2">
+            <p className="text-2xl font-bold text-emerald-600 mt-2">
               {formatMoney(summary.total)}
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+            <p className="text-slate-500">
               Tiền mặt
             </p>
 
-            <p className="text-2xl font-bold text-green-600 mt-2">
+            <p className="text-2xl font-bold text-emerald-600 mt-2">
               {formatMoney(summary.cash)}
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+            <p className="text-slate-500">
               CK / thẻ
             </p>
 
-            <p className="text-2xl font-bold text-blue-600 mt-2">
+            <p className="text-2xl font-bold text-sky-600 mt-2">
               {formatMoney(summary.transfer)}
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+            <p className="text-slate-500">
               Tiền vốn
             </p>
 
-            <p className="text-2xl font-bold text-orange-600 mt-2">
+            <p className="text-2xl font-bold text-amber-600 mt-2">
               {formatMoney(summary.capital)}
             </p>
           </div>
         </div>
 
-        <section className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-5 border-b flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
               <h2 className="text-xl font-bold">
                 Danh sách đơn hàng
               </h2>
 
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-slate-500 text-sm mt-1">
                 Hiển thị {paginatedOrders.length} /{" "}
                 {sortedOrders.length} đơn hàng phù hợp
               </p>
             </div>
 
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-slate-500">
               20 dòng / trang
             </p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1300px]">
-              <thead className="bg-gray-50">
+              <thead className="bg-slate-800 text-white">
                 <tr className="text-left">
-                  <th className="p-4">
+                  <th className="px-4 py-3">
                     Ngày
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-4 py-3">
                     Mã đơn hàng
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-4 py-3">
                     Trạng thái
                   </th>
 
@@ -1114,15 +1114,15 @@ export default function OrdersReportPage() {
                   return (
                     <Fragment key={order.id}>
                       <tr
-                        className={`border-t hover:bg-gray-50 ${
-                          isOpen ? "bg-blue-50/40" : ""
+                        className={`border-t border-slate-200 hover:bg-slate-50 ${
+                          isOpen ? "bg-sky-50" : ""
                         }`}
                       >
-                        <td className="p-4 whitespace-nowrap">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           {formatDate(order.createdAt)}
                         </td>
 
-                        <td className="p-4 whitespace-nowrap">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() =>
@@ -1130,7 +1130,7 @@ export default function OrdersReportPage() {
                                 isOpen ? "" : order.id
                               )
                             }
-                            className="inline-flex items-center gap-2 font-bold text-blue-700 hover:text-blue-900 hover:underline"
+                            className="inline-flex items-center gap-2 font-bold text-sky-700 hover:text-sky-900 hover:underline"
                           >
                             <span>
                               {getOrderCode(order)}
@@ -1142,7 +1142,7 @@ export default function OrdersReportPage() {
                           </button>
                         </td>
 
-                        <td className="p-4">
+                        <td className="px-4 py-3">
                           <span
                             className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusClass(
                               order.status
@@ -1152,43 +1152,43 @@ export default function OrdersReportPage() {
                           </span>
                         </td>
 
-                        <td className="p-4 text-center font-semibold">
+                        <td className="px-4 py-3 text-center font-semibold">
                           {getItemsCount(order)}
                         </td>
 
-                        <td className="p-4 text-right font-semibold">
+                        <td className="px-4 py-3 text-right font-semibold">
                           {formatMoney(getOrderTotal(order))}
                         </td>
 
-                        <td className="p-4 text-right text-green-600 font-semibold">
+                        <td className="px-4 py-3 text-right text-emerald-600 font-semibold">
                           {formatMoney(getCashAmount(order))}
                         </td>
 
-                        <td className="p-4 text-right text-blue-600 font-semibold">
+                        <td className="px-4 py-3 text-right text-sky-600 font-semibold">
                           {formatMoney(getTransferAmount(order))}
                         </td>
 
-                        <td className="p-4 text-right text-orange-600 font-semibold">
+                        <td className="px-4 py-3 text-right text-amber-600 font-semibold">
                           {formatMoney(getCodAmount(order))}
                         </td>
 
-                        <td className="p-4 text-right text-red-600 font-semibold">
+                        <td className="px-4 py-3 text-right text-rose-600 font-semibold">
                           {formatMoney(getRemainingAmount(order))}
                         </td>
 
-                        <td className="p-4 text-right font-semibold">
+                        <td className="px-4 py-3 text-right font-semibold">
                           {formatMoney(getCapitalMoney(order))}
                         </td>
                       </tr>
 
                       {isOpen && (
-                        <tr className="border-t bg-blue-50/40">
+                        <tr className="border-t border-slate-200 bg-sky-50/60">
                           <td
                             colSpan={10}
-                            className="px-4 pb-4 pt-2"
+                            className="px-4 pb-4 pt-3"
                           >
-                            <div className="ml-auto w-[58%] min-w-[760px] rounded-xl border border-blue-100 bg-white p-3 shadow-sm">
-                              <div className="mb-4 flex flex-wrap items-center gap-2">
+                            <div className="ml-auto w-[58%] min-w-[760px] rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                              <div className="mb-4 flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
   <button
     type="button"
     onClick={() =>
@@ -1199,7 +1199,7 @@ export default function OrdersReportPage() {
   "_blank"
 )
     }
-    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold"
+    className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-xl font-semibold transition"
   >
     In đơn hàng
   </button>
@@ -1214,7 +1214,7 @@ export default function OrdersReportPage() {
   "_blank"
 )
     }
-    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-semibold"
+    className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-semibold transition"
   >
     In phiếu xuất kho
   </button>
@@ -1229,7 +1229,7 @@ export default function OrdersReportPage() {
   "_blank"
 )
     }
-    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-semibold"
+    className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl font-semibold transition"
   >
     Phiếu giao hàng
   </button>
@@ -1237,17 +1237,17 @@ export default function OrdersReportPage() {
 
 <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
   <div>
-    <span className="text-gray-500">
+    <span className="text-slate-500">
       Mã đơn:{" "}
     </span>
 
-    <span className="font-bold text-blue-700">
+    <span className="font-bold text-sky-700">
       {getOrderCode(order)}
     </span>
   </div>
 
   <div>
-    <span className="text-gray-500">
+    <span className="text-slate-500">
       Thanh toán:{" "}
     </span>
 
@@ -1257,7 +1257,7 @@ export default function OrdersReportPage() {
   </div>
 
   <div>
-    <span className="text-gray-500">
+    <span className="text-slate-500">
       Khách:{" "}
     </span>
 
@@ -1269,57 +1269,57 @@ export default function OrdersReportPage() {
   </div>
 
   <div>
-    <span className="text-gray-500">
+    <span className="text-slate-500">
       Tổng:{" "}
     </span>
 
-    <span className="font-bold text-green-600">
+    <span className="font-bold text-emerald-600">
       {formatMoney(getOrderTotal(order))}
     </span>
   </div>
 
   <div>
-    <span className="text-gray-500">
+    <span className="text-slate-500">
       TM:{" "}
     </span>
 
-    <span className="font-semibold text-green-600">
+    <span className="font-semibold text-emerald-600">
       {formatMoney(getCashAmount(order))}
     </span>
   </div>
 
   <div>
-    <span className="text-gray-500">
+    <span className="text-slate-500">
       CK:{" "}
     </span>
 
-    <span className="font-semibold text-blue-600">
+    <span className="font-semibold text-sky-600">
       {formatMoney(getTransferAmount(order))}
     </span>
   </div>
 
   <div>
-    <span className="text-gray-500">
+    <span className="text-slate-500">
       COD:{" "}
     </span>
 
-    <span className="font-semibold text-orange-600">
+    <span className="font-semibold text-amber-600">
       {formatMoney(getCodAmount(order))}
     </span>
   </div>
 
   <div>
-    <span className="text-gray-500">
+    <span className="text-slate-500">
       Còn lại:{" "}
     </span>
 
-    <span className="font-semibold text-red-600">
+    <span className="font-semibold text-rose-600">
       {formatMoney(getRemainingAmount(order))}
     </span>
   </div>
 
   <div>
-    <span className="text-gray-500">
+    <span className="text-slate-500">
       Vốn:{" "}
     </span>
 
@@ -1328,9 +1328,9 @@ export default function OrdersReportPage() {
     </span>
   </div>
 </div>
-                              <div className="overflow-hidden rounded-lg border">
+                              <div className="overflow-hidden rounded-xl border border-slate-200">
                                 <table className="w-full text-sm">
-                                  <thead className="bg-gray-50 text-gray-600">
+                                  <thead className="bg-slate-100 text-slate-700">
                                     <tr>
                                       <th className="px-3 py-2 text-left">
                                         Sản phẩm
@@ -1358,7 +1358,7 @@ export default function OrdersReportPage() {
                                     {orderItems.map((item, index) => (
                                       <tr
                                         key={index}
-                                        className="border-t hover:bg-gray-50"
+                                        className="border-t border-slate-200 hover:bg-slate-50"
                                       >
                                         <td className="px-3 py-2">
                                           <div className="font-semibold leading-5">
@@ -1366,7 +1366,7 @@ export default function OrdersReportPage() {
                                           </div>
 
                                           {getItemCode(item) && (
-                                            <div className="text-xs text-gray-500 leading-4 truncate max-w-[260px]">
+                                            <div className="text-xs text-slate-500 leading-4 truncate max-w-[260px]">
                                               Mã: {getItemCode(item)}
                                             </div>
                                           )}
@@ -1380,11 +1380,11 @@ export default function OrdersReportPage() {
                                           {formatMoney(getItemPrice(item))}
                                         </td>
 
-                                        <td className="px-3 py-2 text-right font-bold text-blue-700">
+                                        <td className="px-3 py-2 text-right font-bold text-sky-700">
                                           {formatMoney(getItemTotal(item))}
                                         </td>
 
-                                        <td className="px-3 py-2 text-right text-orange-600 font-semibold">
+                                        <td className="px-3 py-2 text-right text-amber-600 font-semibold">
                                           {formatMoney(getItemCapitalTotal(item))}
                                         </td>
                                       </tr>
@@ -1394,7 +1394,7 @@ export default function OrdersReportPage() {
                                       <tr>
                                         <td
                                           colSpan={5}
-                                          className="px-3 py-4 text-center text-gray-500"
+                                          className="px-3 py-4 text-center text-slate-500"
                                         >
                                           Đơn hàng này chưa có chi tiết sản phẩm
                                         </td>
@@ -1415,7 +1415,7 @@ export default function OrdersReportPage() {
                   <tr>
                     <td
                       colSpan={10}
-                      className="p-8 text-center text-gray-500"
+                      className="p-8 text-center text-slate-500"
                     >
                       Không có đơn hàng phù hợp
                     </td>
@@ -1426,8 +1426,8 @@ export default function OrdersReportPage() {
           </div>
 
           {sortedOrders.length > 0 && (
-            <div className="p-4 border-t flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <p className="text-sm text-gray-500">
+            <div className="p-4 border-t border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <p className="text-sm text-slate-500">
                 Trang {currentPage} / {totalPages || 1}
               </p>
 
@@ -1440,7 +1440,7 @@ export default function OrdersReportPage() {
                       Math.max(page - 1, 1)
                     )
                   }
-                  className="px-4 py-2 rounded-lg border bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="px-4 py-2 rounded-xl border border-slate-300 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition"
                 >
                   Trước
                 </button>
@@ -1452,12 +1452,12 @@ export default function OrdersReportPage() {
                       onClick={() =>
                         setCurrentPage(1)
                       }
-                      className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-50"
+                      className="px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition"
                     >
                       1
                     </button>
 
-                    <span className="px-2 text-gray-400">
+                    <span className="px-2 text-slate-400">
                       ...
                     </span>
                   </>
@@ -1470,10 +1470,10 @@ export default function OrdersReportPage() {
                     onClick={() =>
                       setCurrentPage(page)
                     }
-                    className={`px-4 py-2 rounded-lg border font-semibold ${
+                    className={`px-4 py-2 rounded-xl border font-semibold transition ${
                       currentPage === page
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white hover:bg-gray-50"
+                        ? "bg-sky-600 text-white border-sky-600"
+                        : "bg-white hover:bg-slate-50"
                     }`}
                   >
                     {page}
@@ -1484,7 +1484,7 @@ export default function OrdersReportPage() {
                   visiblePages.length - 1
                 ] < totalPages && (
                   <>
-                    <span className="px-2 text-gray-400">
+                    <span className="px-2 text-slate-400">
                       ...
                     </span>
 
@@ -1493,7 +1493,7 @@ export default function OrdersReportPage() {
                       onClick={() =>
                         setCurrentPage(totalPages)
                       }
-                      className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-50"
+                      className="px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition"
                     >
                       {totalPages}
                     </button>
@@ -1508,7 +1508,7 @@ export default function OrdersReportPage() {
                       Math.min(page + 1, totalPages)
                     )
                   }
-                  className="px-4 py-2 rounded-lg border bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="px-4 py-2 rounded-xl border border-slate-300 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition"
                 >
                   Sau
                 </button>

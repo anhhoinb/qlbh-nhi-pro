@@ -517,15 +517,15 @@ export default function ProductsReportPage() {
   }, [currentPage, totalPages]);
 
   return (
-    <main className="min-h-screen bg-gray-100 p-5 text-black">
+    <main className="min-h-screen bg-slate-100 p-5 text-black">
       <div className="max-w-[1700px] mx-auto space-y-5">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-blue-700">
+            <h1 className="text-3xl font-bold text-sky-700">
               Báo cáo thống kê sản phẩm
             </h1>
 
-            <p className="text-gray-500 mt-1">
+            <p className="text-slate-500 mt-1">
               Chi tiết các sản phẩm bán ra
             </p>
           </div>
@@ -536,7 +536,7 @@ export default function ProductsReportPage() {
               onChange={(e) =>
                 setFilterType(e.target.value)
               }
-              className="border bg-white rounded-xl px-4 py-3 outline-none w-56"
+              className="border border-slate-300 bg-white rounded-xl px-4 py-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 w-56"
             >
               {FILTER_OPTIONS.map((item) => (
                 <option
@@ -558,7 +558,7 @@ export default function ProductsReportPage() {
                       e.target.value
                     )
                   }
-                  className="border bg-white rounded-xl px-4 py-3 outline-none"
+                  className="border border-slate-300 bg-white rounded-xl px-4 py-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                 />
 
                 <input
@@ -569,7 +569,7 @@ export default function ProductsReportPage() {
                       e.target.value
                     )
                   }
-                  className="border bg-white rounded-xl px-4 py-3 outline-none"
+                  className="border border-slate-300 bg-white rounded-xl px-4 py-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                 />
               </>
             )}
@@ -577,7 +577,7 @@ export default function ProductsReportPage() {
             <button
               type="button"
               onClick={exportReport}
-              className="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-semibold"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl font-semibold"
             >
               Xuất báo cáo
             </button>
@@ -585,7 +585,7 @@ export default function ProductsReportPage() {
             <button
               type="button"
               onClick={loadOrders}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-semibold"
+              className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-3 rounded-xl font-semibold"
             >
               Tải lại
             </button>
@@ -593,83 +593,83 @@ export default function ProductsReportPage() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+            <p className="text-slate-500">
               Dòng sản phẩm
             </p>
 
-            <p className="text-2xl font-bold text-blue-700 mt-2">
+            <p className="text-2xl font-bold text-sky-700 mt-2">
               {rows.length}
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+            <p className="text-slate-500">
               SL hàng bán
             </p>
 
-            <p className="text-2xl font-bold text-purple-600 mt-2">
+            <p className="text-2xl font-bold text-violet-600 mt-2">
               {summary.quantity}
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+            <p className="text-slate-500">
               Tiền hàng
             </p>
 
-            <p className="text-2xl font-bold text-green-600 mt-2">
+            <p className="text-2xl font-bold text-emerald-600 mt-2">
               {formatMoney(
                 summary.productMoney
               )}
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+            <p className="text-slate-500">
               Chiết khấu
             </p>
 
-            <p className="text-2xl font-bold text-red-600 mt-2">
+            <p className="text-2xl font-bold text-rose-600 mt-2">
               {formatMoney(
                 summary.discount
               )}
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-500">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+            <p className="text-slate-500">
               Thành tiền
             </p>
 
-            <p className="text-2xl font-bold text-blue-700 mt-2">
+            <p className="text-2xl font-bold text-sky-700 mt-2">
               {formatMoney(summary.total)}
             </p>
           </div>
         </div>
 
-        <section className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-5 border-b flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
               <h2 className="text-xl font-bold">
                 Chi tiết sản phẩm bán ra
               </h2>
 
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-slate-500 text-sm mt-1">
                 Hiển thị{" "}
                 {paginatedRows.length} /{" "}
                 {rows.length} dòng sản phẩm
               </p>
             </div>
 
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-slate-500">
               20 dòng / trang
             </p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1200px]">
-              <thead className="bg-gray-50">
+              <thead className="bg-slate-50">
                 <tr className="text-left">
                   <th className="p-4 w-[170px]">
                     Ngày
@@ -705,7 +705,7 @@ export default function ProductsReportPage() {
                 {paginatedRows.map((item) => (
                   <tr
                     key={item.id}
-                    className="border-t hover:bg-gray-50"
+                    className="border-t hover:bg-slate-50"
                   >
                     <td className="p-4 whitespace-nowrap">
                       {item.dateText}
@@ -716,7 +716,7 @@ export default function ProductsReportPage() {
                         {item.productName}
                       </div>
 
-                      <div className="mt-1 text-xs text-gray-500">
+                      <div className="mt-1 text-xs text-slate-500">
                         Mã:{" "}
                         {item.productCode ||
                           "---"}
@@ -733,17 +733,17 @@ export default function ProductsReportPage() {
                       )}
                     </td>
 
-                    <td className="p-4 text-right text-red-600 font-semibold">
+                    <td className="p-4 text-right text-rose-600 font-semibold">
                       {formatMoney(
                         item.discount
                       )}
                     </td>
 
-                    <td className="p-4 text-right text-orange-600 font-semibold">
+                    <td className="p-4 text-right text-amber-600 font-semibold">
                       {formatMoney(item.tax)}
                     </td>
 
-                    <td className="p-4 text-right text-blue-700 font-bold">
+                    <td className="p-4 text-right text-sky-700 font-bold">
                       {formatMoney(item.total)}
                     </td>
                   </tr>
@@ -753,7 +753,7 @@ export default function ProductsReportPage() {
                   <tr>
                     <td
                       colSpan={7}
-                      className="p-8 text-center text-gray-500"
+                      className="p-8 text-center text-slate-500"
                     >
                       Không có sản phẩm bán ra phù hợp
                     </td>
@@ -765,7 +765,7 @@ export default function ProductsReportPage() {
 
           {rows.length > 0 && (
             <div className="p-4 border-t flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-slate-500">
                 Trang {currentPage} /{" "}
                 {totalPages || 1}
               </p>
@@ -779,7 +779,7 @@ export default function ProductsReportPage() {
                       Math.max(page - 1, 1)
                     )
                   }
-                  className="px-4 py-2 rounded-lg border bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="px-4 py-2 rounded-lg border bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
                 >
                   Trước
                 </button>
@@ -791,7 +791,7 @@ export default function ProductsReportPage() {
                       onClick={() =>
                         setCurrentPage(1)
                       }
-                      className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-50"
+                      className="px-4 py-2 rounded-lg border bg-white hover:bg-slate-50"
                     >
                       1
                     </button>
@@ -811,8 +811,8 @@ export default function ProductsReportPage() {
                     }
                     className={`px-4 py-2 rounded-lg border font-semibold ${
                       currentPage === page
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white hover:bg-gray-50"
+                        ? "bg-sky-600 text-white border-blue-600"
+                        : "bg-white hover:bg-slate-50"
                     }`}
                   >
                     {page}
@@ -834,7 +834,7 @@ export default function ProductsReportPage() {
                           totalPages
                         )
                       }
-                      className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-50"
+                      className="px-4 py-2 rounded-lg border bg-white hover:bg-slate-50"
                     >
                       {totalPages}
                     </button>
@@ -854,7 +854,7 @@ export default function ProductsReportPage() {
                       )
                     )
                   }
-                  className="px-4 py-2 rounded-lg border bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="px-4 py-2 rounded-lg border bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
                 >
                   Sau
                 </button>

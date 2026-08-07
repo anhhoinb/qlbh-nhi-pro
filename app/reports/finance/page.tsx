@@ -845,16 +845,16 @@ export default function FinanceReportPage() {
   }, [filterType]);
 
   return (
-    <main className="min-h-screen bg-gray-100 p-5 text-black">
+    <main className="min-h-screen bg-slate-100 p-5 text-black">
       <div className="max-w-[1500px] mx-auto space-y-4">
 
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-blue-700">
+            <h1 className="text-3xl font-bold text-slate-800">
               Báo cáo tài chính
             </h1>
 
-            <p className="text-gray-500 mt-1">
+            <p className="text-slate-500 mt-1">
               Tổng hợp doanh thu, thanh toán, VAT và chiết khấu
             </p>
           </div>
@@ -865,7 +865,7 @@ export default function FinanceReportPage() {
               onChange={(e) =>
                 setFilterType(e.target.value)
               }
-              className="appearance-none border bg-white rounded-xl pl-4 pr-14 py-3 outline-none w-full cursor-pointer"
+              className="appearance-none border border-slate-300 bg-white rounded-xl pl-4 pr-14 py-3 outline-none w-full cursor-pointer focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
             >
               <option value="today">
                 Hôm nay
@@ -924,55 +924,55 @@ export default function FinanceReportPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
 
-          <div className="bg-white rounded-2xl shadow p-4 min-h-[95px]">
-            <p className="text-gray-500 text-sm">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[95px]">
+            <p className="text-slate-500 text-sm">
               Tổng doanh thu
             </p>
 
-            <p className="text-2xl font-bold text-blue-700 mt-2">
+            <p className="text-2xl font-bold text-sky-700 mt-2">
               {formatMoney(totalRevenue)}đ
             </p>
 
             {totalReturnedAmount > 0 && (
-              <p className="mt-2 text-xs font-semibold text-red-600">
+              <p className="mt-2 text-xs font-semibold text-rose-600">
                 Đã hoàn: {formatMoney(totalReturnedAmount)}đ
               </p>
             )}
           </div>
 
-          <div className="bg-white rounded-2xl shadow p-4 min-h-[95px]">
-            <p className="text-gray-500 text-sm">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[95px]">
+            <p className="text-slate-500 text-sm">
               Tiền mặt
             </p>
 
-            <p className="text-2xl font-bold text-green-600 mt-2">
+            <p className="text-2xl font-bold text-emerald-600 mt-2">
               {formatMoney(cashTotal)}đ
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow p-4 min-h-[95px]">
-            <p className="text-gray-500 text-sm">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[95px]">
+            <p className="text-slate-500 text-sm">
               Chuyển khoản / thẻ
             </p>
 
-            <p className="text-2xl font-bold text-purple-600 mt-2">
+            <p className="text-2xl font-bold text-violet-600 mt-2">
               {formatMoney(bankTotal)}đ
             </p>
           </div>
 
-<div className="bg-white rounded-2xl shadow p-4 min-h-[95px]">
-  <p className="text-gray-500 text-sm">
+<div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[95px]">
+  <p className="text-slate-500 text-sm">
     Số đơn hàng
   </p>
 
-  <p className="text-2xl font-bold text-orange-600 mt-2">
+  <p className="text-2xl font-bold text-amber-600 mt-2">
     {filteredOrders.filter(
   (order) => !isCancelledOrder(order)
 ).length}
   </p>
 
   <div className="mt-3 pt-3 border-t">
-    <p className="text-gray-500 text-sm">
+    <p className="text-slate-500 text-sm">
       Lãi tạm tính
     </p>
 
@@ -982,29 +982,29 @@ export default function FinanceReportPage() {
   </div>
 </div>
 
-<div className="bg-white rounded-2xl shadow p-4 min-h-[95px]">
-  <p className="text-gray-500 text-sm">
+<div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[95px]">
+  <p className="text-slate-500 text-sm">
     VAT & Chiết khấu
   </p>
 
   <div className="mt-4 space-y-3">
 
     <div className="flex justify-between items-center">
-      <span className="text-gray-600">
+      <span className="text-slate-600">
         VAT
       </span>
 
-      <strong className="text-blue-700">
+      <strong className="text-sky-700">
         {formatMoney(vatTotal)}đ
       </strong>
     </div>
 
     <div className="flex justify-between items-center">
-      <span className="text-gray-600">
+      <span className="text-slate-600">
         Chiết khấu
       </span>
 
-      <strong className="text-red-600">
+      <strong className="text-rose-600">
         {formatMoney(discountTotal)}đ
       </strong>
     </div>
@@ -1014,14 +1014,14 @@ export default function FinanceReportPage() {
 
         </div>
 
-        <div className="bg-white rounded-2xl shadow overflow-hidden">
-          <div className="p-5 border-b flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div>
               <h2 className="text-xl font-bold">
                 Danh sách đơn hàng
               </h2>
 
-              <p className="text-gray-500 mt-1">
+              <p className="text-slate-500 mt-1">
                 Hiển thị 15 đơn hàng mỗi trang
               </p>
             </div>
@@ -1034,8 +1034,8 @@ export default function FinanceReportPage() {
                 }
                 className={`px-4 py-2 rounded-xl font-semibold border ${
                   paymentFilter === "all"
-                    ? "bg-blue-700 text-white border-blue-700"
-                    : "bg-white text-gray-700 hover:bg-gray-100"
+                    ? "bg-sky-600 text-white border-sky-600"
+                    : "bg-white text-slate-700 hover:bg-slate-100"
                 }`}
               >
                 Tất cả
@@ -1048,8 +1048,8 @@ export default function FinanceReportPage() {
                 }
                 className={`px-4 py-2 rounded-xl font-semibold border ${
                   paymentFilter === "cash"
-                    ? "bg-green-600 text-white border-green-600"
-                    : "bg-white text-gray-700 hover:bg-gray-100"
+                    ? "bg-emerald-600 text-white border-emerald-600"
+                    : "bg-white text-slate-700 hover:bg-slate-100"
                 }`}
                 title="Lọc đơn tiền mặt"
               >
@@ -1063,8 +1063,8 @@ export default function FinanceReportPage() {
                 }
                 className={`px-4 py-2 rounded-xl font-semibold border ${
                   paymentFilter === "bank"
-                    ? "bg-purple-600 text-white border-purple-600"
-                    : "bg-white text-gray-700 hover:bg-gray-100"
+                    ? "bg-violet-600 text-white border-violet-600"
+                    : "bg-white text-slate-700 hover:bg-slate-100"
                 }`}
                 title="Lọc đơn chuyển khoản / thẻ"
               >
@@ -1075,7 +1075,7 @@ export default function FinanceReportPage() {
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1000px]">
-              <thead className="bg-gray-50">
+              <thead className="bg-slate-800 text-white">
                 <tr>
                   <th className="p-4 text-left">
                     STT
@@ -1170,7 +1170,7 @@ export default function FinanceReportPage() {
                           <tr
                             className={`border-t hover:bg-gray-50 ${
                               isExpanded
-                                ? "bg-blue-50/40"
+                                ? "bg-sky-50"
                                 : ""
                             }`}
                           >
@@ -1182,7 +1182,7 @@ export default function FinanceReportPage() {
                                     order
                                   )
                                 }
-                                className="mr-2 text-gray-500 hover:text-blue-700"
+                                className="mr-2 text-slate-500 hover:text-sky-700"
                                 title={
                                   isExpanded
                                     ? "Thu gọn"
@@ -1208,7 +1208,7 @@ export default function FinanceReportPage() {
                                     order
                                   )
                                 }
-                                className="font-bold text-blue-700 hover:underline"
+                                className="font-bold text-sky-700 hover:underline"
                               >
                                 {getOrderCode(order)}
                               </button>
@@ -1241,7 +1241,7 @@ export default function FinanceReportPage() {
                                   getPaymentMethodText(
                                     order
                                   ) === "Tiền mặt"
-                                    ? "bg-green-100 text-green-700"
+                                    ? "bg-emerald-100 text-emerald-700"
                                     : getPaymentMethodText(
                                         order
                                       ) ===
@@ -1250,13 +1250,13 @@ export default function FinanceReportPage() {
                                         order
                                       ) ===
                                         "Quẹt thẻ"
-                                    ? "bg-purple-100 text-purple-700"
+                                    ? "bg-violet-100 text-violet-700"
                                     : getPaymentMethodText(
                                         order
                                       ) ===
                                       "CK + TM"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : "bg-gray-100 text-gray-600"
+                                    ? "bg-sky-100 text-sky-700"
+                                    : "bg-slate-100 text-slate-600"
                                 }`}
                               >
                                 {getPaymentMethodText(
@@ -1269,10 +1269,10 @@ export default function FinanceReportPage() {
                               <span
                                 className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
                                   isReturnedOrder(order)
-                                    ? "bg-orange-100 text-orange-700"
+                                    ? "bg-amber-100 text-amber-700"
                                     : isPartiallyReturnedOrder(order)
                                     ? "bg-yellow-100 text-yellow-700"
-                                    : "bg-green-100 text-green-700"
+                                    : "bg-emerald-100 text-emerald-700"
                                 }`}
                               >
                                 {getOrderStatusText(order)}
@@ -1285,14 +1285,14 @@ export default function FinanceReportPage() {
                           </tr>
 
                           {isExpanded && (
-                            <tr className="border-t bg-blue-50/30">
+                            <tr className="border-t border-slate-200 bg-sky-50/50">
                               <td
                                 colSpan={7}
                                 className="p-0"
                               >
-                                <div className="m-3 rounded-xl border bg-white overflow-hidden">
+                                <div className="m-3 rounded-xl border border-slate-200 bg-white overflow-hidden">
 
-                                  <div className="px-4 py-3 bg-blue-700 text-white flex items-center justify-between">
+                                  <div className="px-4 py-3 bg-slate-800 text-white flex items-center justify-between">
                                     <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
                                       <strong className="text-base">
                                         Chi tiết: {getOrderCode(order)}
@@ -1336,9 +1336,9 @@ export default function FinanceReportPage() {
                                   </div>
 
                                   <div className="p-3">
-                                    <div className="overflow-x-auto rounded-xl border">
+                                    <div className="overflow-x-auto rounded-xl border border-slate-200">
                                       <table className="w-full min-w-[850px] text-sm">
-                                        <thead className="bg-gray-50">
+                                        <thead className="bg-slate-800 text-white">
                                           <tr>
                                             <th className="px-3 py-2 text-left">
                                               STT
@@ -1379,7 +1379,7 @@ export default function FinanceReportPage() {
                                             <tr>
                                               <td
                                                 colSpan={8}
-                                                className="px-3 py-5 text-center text-gray-500"
+                                                className="px-3 py-5 text-center text-slate-500"
                                               >
                                                 Không có sản phẩm trong đơn
                                               </td>
@@ -1469,9 +1469,9 @@ export default function FinanceReportPage() {
                                     </div>
 
                                     <div className="mt-3 flex justify-end">
-                                      <div className="w-full md:w-[430px] bg-gray-50 rounded-xl p-3 text-sm space-y-2">
+                                      <div className="w-full md:w-[430px] bg-slate-50 rounded-xl p-3 text-sm space-y-2">
                                         <div className="flex justify-between">
-                                          <span className="text-gray-600">
+                                          <span className="text-slate-600">
                                             Tổng tiền
                                           </span>
 
@@ -1484,7 +1484,7 @@ export default function FinanceReportPage() {
                                         </div>
 
                                         <div className="flex justify-between">
-                                          <span className="text-gray-600">
+                                          <span className="text-slate-600">
                                             VAT
                                           </span>
 
@@ -1497,7 +1497,7 @@ export default function FinanceReportPage() {
                                         </div>
 
                                         <div className="flex justify-between">
-                                          <span className="text-gray-600">
+                                          <span className="text-slate-600">
                                             Chiết khấu
                                           </span>
 
@@ -1510,7 +1510,7 @@ export default function FinanceReportPage() {
                                         </div>
 
                                         {getReturnedAmount(order) > 0 && (
-                                          <div className="flex justify-between text-red-600">
+                                          <div className="flex justify-between text-rose-600">
                                             <span>
                                               Tiền đã hoàn
                                             </span>
@@ -1525,11 +1525,11 @@ export default function FinanceReportPage() {
                                         )}
 
                                         <div className="border-t pt-2 flex justify-between text-base">
-                                          <span className="font-bold text-blue-700">
+                                          <span className="font-bold text-sky-700">
                                             Doanh thu còn lại
                                           </span>
 
-                                          <strong className="text-blue-700">
+                                          <strong className="text-sky-700">
                                             {formatMoney(
                                               getNetOrderTotal(order)
                                             )}
@@ -1539,7 +1539,7 @@ export default function FinanceReportPage() {
 
                                         <div className="grid grid-cols-2 gap-3">
                                           <div className="flex justify-between">
-                                            <span className="text-gray-600">
+                                            <span className="text-slate-600">
                                               Khách đưa
                                             </span>
 
@@ -1552,7 +1552,7 @@ export default function FinanceReportPage() {
                                           </div>
 
                                           <div className="flex justify-between">
-                                            <span className="text-gray-600">
+                                            <span className="text-slate-600">
                                               Tiền thừa
                                             </span>
 
@@ -1569,7 +1569,7 @@ export default function FinanceReportPage() {
                                           "CK + TM" && (
                                           <div className="border-t pt-2 grid grid-cols-2 gap-3">
                                             <div className="flex justify-between">
-                                              <span className="text-gray-600">
+                                              <span className="text-slate-600">
                                                 Tiền mặt
                                               </span>
 
@@ -1582,7 +1582,7 @@ export default function FinanceReportPage() {
                                             </div>
 
                                             <div className="flex justify-between">
-                                              <span className="text-gray-600">
+                                              <span className="text-slate-600">
                                                 Chuyển khoản
                                               </span>
 
@@ -1612,7 +1612,7 @@ export default function FinanceReportPage() {
             </table>
           </div>
 
-          <div className="p-5 border-t flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="p-5 border-t border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <p className="text-gray-500">
               Tổng đơn phù hợp:{" "}
               <strong className="text-black">
@@ -1632,7 +1632,7 @@ export default function FinanceReportPage() {
                   );
                   setExpandedOrderId(null);
                 }}
-                className="px-4 py-2 rounded-xl border bg-white disabled:opacity-40 hover:bg-gray-100"
+                className="px-4 py-2 rounded-xl border border-slate-300 bg-white disabled:opacity-40 hover:bg-slate-100"
               >
                 Trước
               </button>
@@ -1652,8 +1652,8 @@ export default function FinanceReportPage() {
                     }}
                     className={`px-4 py-2 rounded-xl border font-semibold ${
                       currentPage === page
-                        ? "bg-blue-700 text-white border-blue-700"
-                        : "bg-white hover:bg-gray-100"
+                        ? "bg-sky-600 text-white border-sky-600"
+                        : "bg-white hover:bg-slate-100"
                     }`}
                   >
                     {page}
@@ -1675,7 +1675,7 @@ export default function FinanceReportPage() {
                   );
                   setExpandedOrderId(null);
                 }}
-                className="px-4 py-2 rounded-xl border bg-white disabled:opacity-40 hover:bg-gray-100"
+                className="px-4 py-2 rounded-xl border border-slate-300 bg-white disabled:opacity-40 hover:bg-slate-100"
               >
                 Sau
               </button>

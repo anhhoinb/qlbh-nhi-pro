@@ -341,8 +341,8 @@ const valueB =
           className={
             sortConfig.key === key &&
             sortConfig.direction === "desc"
-              ? "text-blue-700"
-              : "text-gray-400"
+              ? "text-sky-700"
+              : "text-slate-400"
           }
         >
           ▲
@@ -352,8 +352,8 @@ const valueB =
           className={
             sortConfig.key === key &&
             sortConfig.direction === "asc"
-              ? "text-blue-700"
-              : "text-gray-400"
+              ? "text-sky-700"
+              : "text-slate-400"
           }
         >
           ▼
@@ -378,11 +378,11 @@ const valueB =
                 {getProductName(product)}
               </div>
 
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-slate-500">
                 SKU: {getProductSku(product)}
               </div>
 
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-slate-500">
                 Vị trí: {getProductLocation(product)}
               </div>
 
@@ -391,8 +391,8 @@ const valueB =
                 <span
                   className={`font-bold ${
                     getProductStock(product) === 0
-                      ? "text-red-600"
-                      : "text-orange-600"
+                      ? "text-rose-600"
+                      : "text-amber-600"
                   }`}
                 >
                   {getProductStock(product)}
@@ -401,7 +401,7 @@ const valueB =
             </div>
           ))
         ) : (
-          <p className="text-gray-500">
+          <p className="text-slate-500">
             {emptyText}
           </p>
         )}
@@ -417,7 +417,7 @@ const valueB =
       : [];
 
   return (
-    <main className="min-h-screen bg-gray-100 p-5 text-black">
+    <main className="min-h-screen bg-slate-100 p-5 text-black">
       <div className="max-w-[1500px] mx-auto space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
@@ -425,7 +425,7 @@ const valueB =
               Báo cáo tồn kho
             </h1>
 
-            <p className="text-gray-500 mt-1">
+            <p className="text-slate-500 mt-1">
               Theo dõi tồn kho, giá trị tồn, sản phẩm hết hàng và sản phẩm dưới định mức
             </p>
           </div>
@@ -434,14 +434,14 @@ const valueB =
 
   <button
     onClick={exportInventoryReport}
-    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold"
+    className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-semibold transition"
   >
     Xuất file Excel
   </button>
 
   <button
     onClick={loadProducts}
-    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold"
+    className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl font-semibold transition"
   >
     Tải lại báo cáo
   </button>
@@ -450,28 +450,28 @@ const valueB =
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-2xl shadow p-5">
-            <p className="text-gray-500 mb-2">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <p className="text-slate-500 mb-2">
               Tổng sản phẩm
             </p>
 
-            <p className="text-3xl font-bold text-blue-700">
+            <p className="text-3xl font-bold text-sky-700">
               {products.length}
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow p-5">
-            <p className="text-gray-500 mb-2">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <p className="text-slate-500 mb-2">
               Giá trị tồn kho
             </p>
 
-            <p className="text-3xl font-bold text-green-600">
+            <p className="text-3xl font-bold text-emerald-600">
               {formatMoney(inventoryValue)}đ
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow p-5 relative group">
-            <p className="text-gray-500 mb-2">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 relative group">
+            <p className="text-slate-500 mb-2">
               Sản phẩm hết hàng
             </p>
 
@@ -480,19 +480,19 @@ const valueB =
               onClick={() =>
                 setPopupType("out")
               }
-              className="text-3xl font-bold text-red-600 cursor-pointer"
+              className="text-3xl font-bold text-rose-600 cursor-pointer"
             >
               {outOfStockProducts.length}
             </button>
 
-            <p className="text-sm text-gray-500 mt-3">
+            <p className="text-sm text-slate-500 mt-3">
               {outOfStockProducts.length > 0
                 ? `${outOfStockProducts.length} sản phẩm hết hàng`
                 : "Không có sản phẩm hết hàng"}
             </p>
 
-            <div className="hidden group-hover:block absolute right-0 top-24 z-50 w-96 bg-white border rounded-2xl shadow-xl p-4">
-              <h3 className="font-bold text-red-600 mb-3">
+            <div className="hidden group-hover:block absolute right-0 top-24 z-50 w-96 bg-white border border-slate-200 rounded-2xl shadow-xl p-4">
+              <h3 className="font-bold text-rose-600 mb-3">
                 Danh sách sản phẩm hết hàng
               </h3>
 
@@ -503,8 +503,8 @@ const valueB =
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow p-5 relative group">
-            <p className="text-gray-500 mb-2">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 relative group">
+            <p className="text-slate-500 mb-2">
               Sản phẩm dưới định mức
             </p>
 
@@ -513,19 +513,19 @@ const valueB =
               onClick={() =>
                 setPopupType("low")
               }
-              className="text-3xl font-bold text-orange-600 cursor-pointer"
+              className="text-3xl font-bold text-amber-600 cursor-pointer"
             >
               {lowStockProducts.length}
             </button>
 
-            <p className="text-sm text-gray-500 mt-3">
+            <p className="text-sm text-slate-500 mt-3">
               {lowStockProducts.length > 0
                 ? `${lowStockProducts.length} sản phẩm còn từ 1 - 5`
                 : "Không có sản phẩm dưới định mức"}
             </p>
 
-            <div className="hidden group-hover:block absolute right-0 top-24 z-50 w-96 bg-white border rounded-2xl shadow-xl p-4">
-              <h3 className="font-bold text-orange-600 mb-3">
+            <div className="hidden group-hover:block absolute right-0 top-24 z-50 w-96 bg-white border border-slate-200 rounded-2xl shadow-xl p-4">
+              <h3 className="font-bold text-amber-600 mb-3">
                 Danh sách sản phẩm dưới định mức
               </h3>
 
@@ -537,19 +537,19 @@ const valueB =
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow p-5">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
             <div>
               <h2 className="text-xl font-bold">
                 Danh sách tồn kho
               </h2>
 
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-slate-500 text-sm mt-1">
                 Hiển thị 20 sản phẩm mỗi trang
               </p>
             </div>
 
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-slate-600">
               Tổng sản phẩm:{" "}
               <span className="font-bold text-black">
                 {products.length}
@@ -560,7 +560,7 @@ const valueB =
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b">
+                <tr className="bg-slate-100 border-b border-slate-200">
                   <th className="text-left p-3">
                     STT
                   </th>
@@ -587,7 +587,7 @@ const valueB =
                       onClick={() =>
                         handleSort("stock")
                       }
-                      className="inline-flex items-center justify-end font-bold hover:text-blue-700"
+                      className="inline-flex items-center justify-end font-bold hover:text-sky-300"
                     >
                       Tồn kho
                       {renderSortIcon("stock")}
@@ -600,7 +600,7 @@ const valueB =
                       onClick={() =>
                         handleSort("value")
                       }
-                      className="inline-flex items-center justify-end font-bold hover:text-blue-700"
+                      className="inline-flex items-center justify-end font-bold hover:text-sky-300"
                     >
                       Giá trị tồn
                       {renderSortIcon("value")}
@@ -635,7 +635,7 @@ const total =
                     return (
                       <tr
                         key={product.id || index}
-                        className="border-b hover:bg-gray-50"
+                        className="border-b border-slate-200 hover:bg-slate-50"
                       >
                         <td className="p-3">
                           {inventoryStartIndex +
@@ -662,7 +662,7 @@ const total =
                         <td
                           className={`p-3 text-right font-bold ${
                             isOut
-                              ? "text-red-600"
+                              ? "text-rose-600"
                               : isLow
                               ? "text-orange-600"
                               : "text-black"
@@ -671,21 +671,21 @@ const total =
                           {stock}
                         </td>
 
-                        <td className="p-3 text-right font-bold text-blue-700">
+                        <td className="p-3 text-right font-bold text-sky-700">
                           {formatMoney(total)}đ
                         </td>
 
                         <td className="p-3 text-center">
                           {isOut ? (
-                            <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-semibold">
+                            <span className="bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-xs font-semibold">
                               Hết hàng
                             </span>
                           ) : isLow ? (
-                            <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-semibold">
+                            <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-semibold">
                               Dưới định mức
                             </span>
                           ) : (
-                            <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
+                            <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold">
                               Bình thường
                             </span>
                           )}
@@ -699,7 +699,7 @@ const total =
                   <tr>
                     <td
                       colSpan={8}
-                      className="p-6 text-center text-gray-500"
+                      className="p-6 text-center text-slate-500"
                     >
                       Chưa có dữ liệu tồn kho
                     </td>
@@ -720,8 +720,8 @@ const total =
                 }
                 className={`px-4 py-2 rounded-xl font-semibold ${
                   inventoryPage === 1
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
+                    ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                    : "bg-sky-600 text-white hover:bg-sky-700"
                 }`}
               >
                 Trước
@@ -745,8 +745,8 @@ const total =
                 className={`px-4 py-2 rounded-xl font-semibold ${
                   inventoryPage ===
                   inventoryTotalPages
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
+                    ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                    : "bg-sky-600 text-white hover:bg-sky-700"
                 }`}
               >
                 Sau
@@ -758,7 +758,7 @@ const total =
 
       {popupType && (
         <div className="fixed inset-0 bg-black/40 z-[999] flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-3xl overflow-hidden">
             <div
               className={`px-6 py-4 text-white flex justify-between items-center ${
                 popupType === "out"
@@ -792,7 +792,7 @@ const total =
             <div className="p-5 max-h-[70vh] overflow-y-auto">
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="bg-gray-50 border-b">
+                  <tr className="bg-slate-100 border-b border-slate-200">
                     <th className="text-left p-3">
                       STT
                     </th>
@@ -823,7 +823,7 @@ const total =
                           product.id ||
                           index
                         }
-                        className="border-b hover:bg-gray-50"
+                        className="border-b border-slate-200 hover:bg-slate-50"
                       >
                         <td className="p-3">
                           {index + 1}
@@ -844,8 +844,8 @@ const total =
                         <td
                           className={`p-3 text-right font-bold ${
                             getProductStock(product) === 0
-                              ? "text-red-600"
-                              : "text-orange-600"
+                              ? "text-rose-600"
+                              : "text-amber-600"
                           }`}
                         >
                           {getProductStock(product)}
@@ -858,7 +858,7 @@ const total =
                     <tr>
                       <td
                         colSpan={5}
-                        className="p-6 text-center text-gray-500"
+                        className="p-6 text-center text-slate-500"
                       >
                         Không có sản phẩm nào
                       </td>
@@ -868,12 +868,12 @@ const total =
               </table>
             </div>
 
-            <div className="p-5 border-t flex justify-end">
+            <div className="p-5 border-t border-slate-200 bg-slate-50 flex justify-end">
               <button
                 onClick={() =>
                   setPopupType(null)
                 }
-                className="px-6 py-3 rounded-xl bg-gray-200 hover:bg-gray-300 font-semibold"
+                className="px-6 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold transition"
               >
                 Đóng
               </button>

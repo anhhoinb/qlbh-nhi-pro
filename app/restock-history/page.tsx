@@ -143,28 +143,28 @@ export default function RestockHistoryPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6 text-black">
+    <main className="min-h-screen bg-slate-100 p-6 text-black">
       <div className="max-w-[1400px] mx-auto space-y-6">
         <div>
-          <h1 className="text-4xl font-bold text-blue-700">
+          <h1 className="text-3xl font-bold text-slate-800">
             Lịch sử nhập hàng
           </h1>
 
-          <p className="text-gray-500 mt-2">
+          <p className="text-slate-500 mt-1">
             Danh sách đơn nhập hàng,
             đơn mới nhất sẽ hiển thị
             trên đầu.
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow overflow-hidden">
-          <div className="px-6 py-5 border-b flex items-center justify-between">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold">
                 Danh sách đơn nhập
               </h2>
 
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-slate-500 text-sm mt-1">
                 Click vào mũi tên để
                 xem chi tiết sản phẩm
                 trong đơn nhập.
@@ -173,7 +173,7 @@ export default function RestockHistoryPage() {
 
             <button
               onClick={loadHistory}
-              className="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-2xl font-semibold"
+              className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl font-semibold"
             >
               Tải lại
             </button>
@@ -181,25 +181,25 @@ export default function RestockHistoryPage() {
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1000px]">
-              <thead className="bg-blue-700 text-white">
+              <thead className="bg-slate-800 text-white">
                 <tr>
-                  <th className="p-4 text-left">
+                  <th className="px-4 py-3 text-left">
                     Mã đơn nhập
                   </th>
 
-                  <th className="p-4 text-left">
+                  <th className="px-4 py-3 text-left">
                     Tổng sản phẩm
                   </th>
 
-                  <th className="p-4 text-left">
+                  <th className="px-4 py-3 text-left">
                     Tổng số lượng
                   </th>
 
-                  <th className="p-4 text-left">
+                  <th className="px-4 py-3 text-left">
                     Ngày nhập
                   </th>
 
-                  <th className="p-4 text-center">
+                  <th className="px-4 py-3 text-center">
                     Chi tiết
                   </th>
                 </tr>
@@ -214,31 +214,31 @@ export default function RestockHistoryPage() {
 
                 return (
                   <tbody key={item.id}>
-                    <tr className="border-b hover:bg-gray-50">
-                      <td className="p-4 font-bold text-blue-700">
+                    <tr className="border-b border-slate-200 hover:bg-slate-50">
+                      <td className="px-4 py-3 font-bold text-sky-700">
                         {getRestockCode(
                           item
                         )}
                       </td>
 
-                      <td className="p-4 font-semibold">
+                      <td className="px-4 py-3 font-semibold text-slate-900">
                         {getItemCount(item)}
                       </td>
 
-                      <td className="p-4 text-green-600 font-bold">
+                      <td className="p-4 text-emerald-600 font-bold">
                         +
                         {getTotalQuantity(
                           item
                         )}
                       </td>
 
-                      <td className="p-4">
+                      <td className="px-4 py-3">
                         {formatDate(
                           item.createdAt
                         )}
                       </td>
 
-                      <td className="p-4 text-center">
+                      <td className="px-4 py-3 text-center">
                         <button
                           type="button"
                           onClick={() =>
@@ -248,7 +248,7 @@ export default function RestockHistoryPage() {
                                 : item.id
                             )
                           }
-                          className="bg-gray-100 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-bold"
+                          className="bg-slate-100 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-bold"
                         >
                           {isOpen
                             ? "▲"
@@ -261,10 +261,10 @@ export default function RestockHistoryPage() {
                       <tr>
                         <td
                           colSpan={5}
-                          className="bg-gray-50 p-5"
+                          className="bg-slate-50 p-5"
                         >
-                          <div className="rounded-2xl border bg-white overflow-hidden">
-                            <div className="px-5 py-3 bg-gray-100 font-bold">
+                          <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+                            <div className="px-5 py-3 bg-slate-100 font-bold">
                               Chi tiết sản
                               phẩm nhập
                             </div>
@@ -307,7 +307,7 @@ export default function RestockHistoryPage() {
                                   ) => (
                                     <tr
                                       key={`${item.id}-${product.productId}-${index}`}
-                                      className="border-b hover:bg-gray-50"
+                                      className="border-b border-slate-200 hover:bg-slate-50"
                                     >
                                       <td className="p-3 font-semibold">
                                         {product.productName ||
@@ -331,7 +331,7 @@ export default function RestockHistoryPage() {
                                         )}
                                       </td>
 
-                                      <td className="p-3 font-bold text-green-600">
+                                      <td className="p-3 font-bold text-emerald-600">
                                         +
                                         {Number(
                                           product.quantity ||
@@ -339,7 +339,7 @@ export default function RestockHistoryPage() {
                                         )}
                                       </td>
 
-                                      <td className="p-3 font-bold text-purple-700">
+                                      <td className="p-3 font-bold text-violet-700">
                                         {Number(
                                           product.afterStock ||
                                             0
@@ -363,7 +363,7 @@ export default function RestockHistoryPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="p-8 text-center text-gray-500"
+                      className="p-8 text-center text-slate-500"
                     >
                       Chưa có lịch sử
                       nhập hàng
