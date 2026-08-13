@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import {
   addDoc,
@@ -11,6 +11,7 @@ import {
   getDocs,
   serverTimestamp,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -80,7 +81,12 @@ function getUnitText(unit: Product["unit"]) {
 
 export default function CreateQuotationPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("id") || "";
+  const isEditMode = Boolean(editId);
 
+  const [editingQuotationCode, setEditingQuotationCode] = useState("");
+  const [loadingQuotation, setLoadingQuotation] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [items, setItems] = useState<QuotationItem[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -134,6 +140,110 @@ export default function CreateQuotationPage() {
 
     localStorage.setItem("pos_show_main_name", String(showMainName));
   }, [showMainName]);
+
+  useEffect(() => {
+    if (!editId) return;
+
+    const loadQuotationForEdit = async () => {
+      try {
+        setLoadingQuotation(true);
+
+        const quotationRef = doc(db, "quotations", editId);
+        const quotationSnap = await getDoc(quotationRef);
+
+        if (!quotationSnap.exists()) {
+          alert("Không tìm thấy báo giá cần sửa");
+          router.push("/quotations");
+          return;
+        }
+
+        const data: any = quotationSnap.data();
+
+        setEditingQuotationCode(
+          String(data.quotationCode || data.quotation_code || "")
+        );
+
+        if (data.quotationDate) {
+          setQuotationDate(String(data.quotationDate));
+        }
+
+        setValidDays(String(data.validDays || 3));
+
+        setBuyer({
+          companyName: String(data.buyer?.companyName || ""),
+          address: String(data.buyer?.address || ""),
+          taxCode: String(data.buyer?.taxCode || ""),
+          phone: String(data.buyer?.phone || ""),
+          email: String(data.buyer?.email || ""),
+        });
+
+        setDeliveryTime(
+          String(
+            data.terms?.deliveryTime ||
+              "Hàng được giao trong vòng 25 đến 30 ngày kể từ ngày thực hiện hợp đồng."
+          )
+        );
+
+        setWarrantyTime(
+          String(
+            data.terms?.warrantyTime ||
+              "Bảo hành 12 tháng đối với lỗi kỹ thuật do nhà sản xuất."
+          )
+        );
+
+        setShippingIncluded(Boolean(data.terms?.shippingIncluded));
+        setShippingNote(String(data.terms?.shippingNote || ""));
+
+        const oldItems = Array.isArray(data.items) ? data.items : [];
+
+        setItems(
+          oldItems.map((item: any, index: number) => {
+            const itemId = String(
+              item.id ||
+                item.productId ||
+                item.product_id ||
+                item.productCode ||
+                item.product_code ||
+                `quotation-item-${index}`
+            );
+
+            const name = String(item.name || item.productName || "");
+            const mainName = String(
+              item.main_name || item.mainName || name
+            );
+            const shortName = String(
+              item.short_name || item.shortName || mainName || name
+            );
+
+            return {
+              id: itemId,
+              name,
+              main_name: mainName,
+              short_name: shortName,
+              printName: String(
+                item.printName || shortName || mainName || name
+              ),
+              product_code: String(
+                item.product_code || item.productCode || ""
+              ),
+              unit: String(item.unit || "cái"),
+              quantity: Number(item.quantity || 1),
+              price: Number(item.price || 0),
+              tax: Number(item.tax || 0),
+              note: String(item.note || ""),
+            };
+          })
+        );
+      } catch (error) {
+        console.error("LOAD QUOTATION FOR EDIT ERROR:", error);
+        alert("Không tải được báo giá cần sửa");
+      } finally {
+        setLoadingQuotation(false);
+      }
+    };
+
+    loadQuotationForEdit();
+  }, [editId, router]);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -392,7 +502,13 @@ export default function CreateQuotationPage() {
     try {
       setSaving(true);
 
-      const quotationCode = await getNextQuotationCode();
+      const quotationCode = isEditMode
+        ? editingQuotationCode
+        : await getNextQuotationCode();
+
+      if (isEditMode && !quotationCode) {
+        throw new Error("Báo giá cũ không có mã báo giá");
+      }
 
       const quotationData = {
         quotationCode,
@@ -433,18 +549,31 @@ export default function CreateQuotationPage() {
         vatAmount,
         total,
         status: "draft",
-        createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
 
-      const docRef = await addDoc(
-        collection(db, "quotations"),
-        quotationData
-      );
+      let quotationId = editId;
+
+      if (isEditMode) {
+        await updateDoc(
+          doc(db, "quotations", editId),
+          quotationData
+        );
+      } else {
+        const docRef = await addDoc(
+          collection(db, "quotations"),
+          {
+            ...quotationData,
+            createdAt: serverTimestamp(),
+          }
+        );
+
+        quotationId = docRef.id;
+      }
 
       if (openPrint) {
         const printUrl = `/quotations/print?id=${encodeURIComponent(
-          docRef.id
+          quotationId
         )}&print=1`;
 
         if (printWindow) {
@@ -453,7 +582,11 @@ export default function CreateQuotationPage() {
           window.location.href = printUrl;
         }
       } else {
-        alert(`Đã lưu báo giá ${quotationCode}`);
+        alert(
+          isEditMode
+            ? `Đã cập nhật báo giá ${quotationCode}`
+            : `Đã lưu báo giá ${quotationCode}`
+        );
         router.push("/quotations");
       }
     } catch (error: any) {
@@ -464,7 +597,11 @@ export default function CreateQuotationPage() {
       console.error("SAVE QUOTATION ERROR:", error);
 
       alert(
-        `Không lưu được báo giá.\n\n${error?.code || ""}\n${
+        `${
+          isEditMode
+            ? "Không cập nhật được báo giá."
+            : "Không lưu được báo giá."
+        }\n\n${error?.code || ""}\n${
           error?.message || "Lỗi không xác định"
         }`
       );
@@ -473,17 +610,29 @@ export default function CreateQuotationPage() {
     }
   };
 
+  if (loadingQuotation) {
+    return (
+      <main className="min-h-screen bg-slate-100 p-5 text-black">
+        <div className="mx-auto max-w-[1500px] rounded-2xl bg-white p-10 text-center shadow-sm">
+          Đang tải báo giá...
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-100 p-5 text-black">
       <div className="mx-auto max-w-[1500px]">
         <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-slate-800">
-              Tạo báo giá
+              {isEditMode ? "Sửa báo giá" : "Tạo báo giá"}
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Nhập khách hàng thủ công và chọn sản phẩm cần báo giá
+              {isEditMode
+                ? `Đang chỉnh sửa ${editingQuotationCode || "báo giá"}`
+                : "Nhập khách hàng thủ công và chọn sản phẩm cần báo giá"}
             </p>
           </div>
 
@@ -511,7 +660,11 @@ export default function CreateQuotationPage() {
               onClick={() => saveQuotation(false)}
               className="rounded-xl bg-sky-600 px-5 py-2 font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
             >
-              {saving ? "Đang lưu..." : "Lưu báo giá"}
+              {saving
+                ? "Đang lưu..."
+                : isEditMode
+                ? "Lưu thay đổi"
+                : "Lưu báo giá"}
             </button>
 
             <button
@@ -520,7 +673,7 @@ export default function CreateQuotationPage() {
               onClick={() => saveQuotation(true)}
               className="rounded-xl bg-emerald-600 px-5 py-2 font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
             >
-              Lưu và in
+              {isEditMode ? "Lưu thay đổi và in" : "Lưu và in"}
             </button>
           </div>
         </div>

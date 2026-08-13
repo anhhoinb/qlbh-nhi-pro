@@ -342,6 +342,20 @@ export default function QuotationsPage() {
                           <button
                             type="button"
                             onClick={() =>
+                              router.push(
+                                `/quotations/create?id=${encodeURIComponent(
+                                  item.id
+                                )}`
+                              )
+                            }
+                            className="rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-600"
+                          >
+                            Sửa
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
                               window.open(
                                 `/quotations/print?id=${encodeURIComponent(
                                   item.id
