@@ -255,9 +255,40 @@ reader.readAsDataURL(file);
 
   const normalizeProductName = (value: any) => {
     return String(value || "")
+      .normalize("NFKC")
       .trim()
       .replace(/\s+/g, " ")
-      .toLowerCase();
+      .toLocaleLowerCase("vi-VN");
+  };
+
+  const getProductNameKeys = (item: any) => {
+    return [
+      item?.name,
+      item?.main_name,
+      item?.short_name,
+    ]
+      .map(normalizeProductName)
+      .filter(Boolean);
+  };
+
+  const hasDuplicateProductName = (
+    list: any[],
+    value: string,
+    excludeId?: string
+  ) => {
+    const normalized = normalizeProductName(value);
+
+    if (!normalized) return false;
+
+    return list.some((item: any) => {
+      if (excludeId && item.id === excludeId) {
+        return false;
+      }
+
+      return getProductNameKeys(item).includes(
+        normalized
+      );
+    });
   };
   const generateProductCode = () => {
   let max = 0;
@@ -369,26 +400,38 @@ reader.readAsDataURL(file);
   return;
 }
 
-const normalizedName = normalizeProductName(mainName);
 const normalizedCode = productCode.trim().toLowerCase();
 
-const duplicateName = products.find(
-  (item: any) =>
-    normalizeProductName(
-      item.main_name || item.name
-    ) === normalizedName
+// Đọc lại dữ liệu trực tiếp từ Firestore trước khi lưu
+// để không phụ thuộc vào danh sách products đang cache trên trình duyệt.
+const latestProductsSnapshot = await getDocs(
+  collection(db, "products")
 );
 
-if (duplicateName) {
+const latestProducts = latestProductsSnapshot.docs.map(
+  (docItem) => ({
+    id: docItem.id,
+    ...docItem.data(),
+  })
+);
+
+if (
+  hasDuplicateProductName(
+    latestProducts,
+    mainName
+  )
+) {
   alert(
     `Tên sản phẩm "${mainName.trim()}" đã tồn tại`
   );
   return;
 }
 
-const duplicateCode = products.find(
+const duplicateCode = latestProducts.find(
   (item: any) =>
-    item.product_code?.trim()?.toLowerCase() === normalizedCode
+    String(item.product_code || "")
+      .trim()
+      .toLowerCase() === normalizedCode
 );
 
 if (duplicateCode) {
@@ -582,18 +625,25 @@ if (duplicateCode) {
 
   try {
 
-    const normalizedEditName =
-      normalizeProductName(editMainName);
-
-    const duplicateName = products.find(
-      (item: any) =>
-        item.id !== editingProduct.id &&
-        normalizeProductName(
-          item.main_name || item.name
-        ) === normalizedEditName
+    const latestProductsSnapshot = await getDocs(
+      collection(db, "products")
     );
 
-    if (duplicateName) {
+    const latestProducts =
+      latestProductsSnapshot.docs.map(
+        (docItem) => ({
+          id: docItem.id,
+          ...docItem.data(),
+        })
+      );
+
+    if (
+      hasDuplicateProductName(
+        latestProducts,
+        editMainName,
+        editingProduct.id
+      )
+    ) {
       alert(
         `Tên sản phẩm "${editMainName.trim()}" đã tồn tại`
       );
@@ -606,7 +656,7 @@ if (duplicateCode) {
       .trim()
       .toUpperCase();
 
-    const duplicateCode = products.find(
+    const duplicateCode = latestProducts.find(
       (item: any) =>
         item.id !== editingProduct.id &&
         String(
@@ -831,10 +881,8 @@ if (duplicateCode) {
 let skipCount = 0;
 
 const existingNames = new Set(
-  products.map((item: any) =>
-    normalizeProductName(
-      item.main_name || item.name
-    )
+  products.flatMap((item: any) =>
+    getProductNameKeys(item)
   )
 );
 
