@@ -764,7 +764,10 @@ export default function CreateQuotationPage() {
                 </div>
               </div>
 
-              <div className="relative">
+              <div
+                className="relative"
+                onMouseLeave={() => setShowDropdown(false)}
+              >
                 <input
                   value={search}
                   onChange={(event) => {
