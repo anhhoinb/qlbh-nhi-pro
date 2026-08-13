@@ -226,6 +226,7 @@ useEffect(() => {
     useState({
       name: "",
       phone: "",
+      companyName: "",
       code: "",
       address: "",
       email: "",
@@ -1721,6 +1722,8 @@ const orderRef = await addDoc(
       selectedCustomer?.name || "",
     customerPhone:
       selectedCustomer?.phone || "",
+    customerCompanyName:
+      selectedCustomer?.companyName || "",
     customerCode:
       selectedCustomer?.code || "",
     customerAddress:
@@ -2359,10 +2362,15 @@ setTimeout(() => {
             String(customer.code || "")
               .toLowerCase();
 
+          const companyName =
+            String(customer.companyName || "")
+              .toLowerCase();
+
           return (
             name.includes(keyword) ||
             phone.includes(keyword) ||
-            code.includes(keyword)
+            code.includes(keyword) ||
+            companyName.includes(keyword)
           );
         });
 
@@ -2398,6 +2406,7 @@ setTimeout(() => {
       const customerData = {
         name: newCustomer.name.trim(),
         phone: newCustomer.phone.trim(),
+        companyName: newCustomer.companyName.trim(),
         code:
           newCustomer.code.trim() ||
           `KH${Date.now()}`,
@@ -2429,6 +2438,7 @@ setTimeout(() => {
       setNewCustomer({
         name: "",
         phone: "",
+        companyName: "",
         code: "",
         address: "",
         email: "",
@@ -3683,6 +3693,25 @@ const itemShortName =
                       })
                     }
                     placeholder="Ví dụ: 0987654321"
+                    className="w-full border border-slate-300 p-4 rounded-2xl outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
+                    Tên công ty
+                  </label>
+
+                  <input
+                    type="text"
+                    value={newCustomer.companyName}
+                    onChange={(e) =>
+                      setNewCustomer({
+                        ...newCustomer,
+                        companyName: e.target.value,
+                      })
+                    }
+                    placeholder="Ví dụ: Công ty TNHH ABC"
                     className="w-full border border-slate-300 p-4 rounded-2xl outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
