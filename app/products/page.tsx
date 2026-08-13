@@ -43,6 +43,31 @@ type InventoryMovement = {
 };
 
 export default function ProductsPage() {
+  const unitOptions = [
+    "Cái",
+    "Mét",
+    "Chiếc",
+    "Bộ",
+    "KG",
+    "Gram",
+    "Cuộn",
+    "Gói",
+    "Túi",
+    "Bịch",
+    "Bao",
+    "Viên",
+  ];
+
+  const filterUnitOptions = (keyword: string) => {
+    const normalized = keyword.trim().toLowerCase();
+
+    if (!normalized) return unitOptions;
+
+    return unitOptions.filter((item) =>
+      item.toLowerCase().startsWith(normalized)
+    );
+  };
+
   // ADD PRODUCT
   const [name, setName] = useState(""); // tương thích
   const [mainName, setMainName] = useState("");
@@ -55,6 +80,8 @@ export default function ProductsPage() {
   const [stock, setStock] = useState("");
   const [unit, setUnit] = useState("");
   const [tax, setTax] = useState("");
+  const [showUnitDropdown, setShowUnitDropdown] = useState(false);
+  const [showEditUnitDropdown, setShowEditUnitDropdown] = useState(false);
 
   // SHOW / HIDE ADD FORM
   const [showAddForm, setShowAddForm] = useState(false);
@@ -225,6 +252,13 @@ reader.readAsDataURL(file);
   const formatMoney = (value: any) => {
     return Number(value || 0).toLocaleString("vi-VN") + "đ";
   };
+
+  const normalizeProductName = (value: any) => {
+    return String(value || "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+  };
   const generateProductCode = () => {
   let max = 0;
 
@@ -335,16 +369,20 @@ reader.readAsDataURL(file);
   return;
 }
 
-const normalizedName = mainName.trim().toLowerCase();
+const normalizedName = normalizeProductName(mainName);
 const normalizedCode = productCode.trim().toLowerCase();
 
 const duplicateName = products.find(
   (item: any) =>
-    item.name?.trim()?.toLowerCase() === normalizedName
+    normalizeProductName(
+      item.main_name || item.name
+    ) === normalizedName
 );
 
 if (duplicateName) {
-  alert("Tên sản phẩm đã tồn tại");
+  alert(
+    `Tên sản phẩm "${mainName.trim()}" đã tồn tại`
+  );
   return;
 }
 
@@ -543,6 +581,24 @@ if (duplicateCode) {
   }
 
   try {
+
+    const normalizedEditName =
+      normalizeProductName(editMainName);
+
+    const duplicateName = products.find(
+      (item: any) =>
+        item.id !== editingProduct.id &&
+        normalizeProductName(
+          item.main_name || item.name
+        ) === normalizedEditName
+    );
+
+    if (duplicateName) {
+      alert(
+        `Tên sản phẩm "${editMainName.trim()}" đã tồn tại`
+      );
+      return;
+    }
 
     const normalizedCode = String(
       editProductCode || ""
@@ -776,7 +832,9 @@ let skipCount = 0;
 
 const existingNames = new Set(
   products.map((item: any) =>
-    String(item.name || "").trim().toLowerCase()
+    normalizeProductName(
+      item.main_name || item.name
+    )
   )
 );
 
@@ -805,7 +863,9 @@ const existingCodes = new Set(
         }
 
         const normalizedName =
-  productName.toLowerCase();
+          normalizeProductName(
+            row.main_name || productName
+          );
 
 const productCode = String(
   row.product_code || ""
@@ -1123,13 +1183,77 @@ successCount++;
                   Đơn vị <span className="text-red-500">*</span>
                 </label>
 
-                <input
-                  type="text"
-                  placeholder="VD: cái, bộ, mét..."
-                  className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Chọn hoặc nhập đơn vị..."
+                    autoComplete="off"
+                    className="w-full border border-slate-300 bg-white p-4 pr-10 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                    value={unit}
+                    onFocus={() => setShowUnitDropdown(true)}
+                    onChange={(e) => {
+                      setUnit(e.target.value);
+                      setShowUnitDropdown(true);
+                    }}
+                    onBlur={() => {
+                      window.setTimeout(() => {
+                        setShowUnitDropdown(false);
+                      }, 150);
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() =>
+                      setShowUnitDropdown((prev) => !prev)
+                    }
+                    className="absolute right-[7px] top-1/2 -translate-y-1/2 flex items-center justify-center"
+                    aria-label="Mở danh sách đơn vị"
+                  >
+                    <svg
+                      width="10"
+                      height="6"
+                      viewBox="0 0 10 6"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M1 1L5 5L9 1"
+                        stroke="black"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+
+                  {showUnitDropdown && (
+                    <div className="absolute left-0 top-full z-[100] mt-2 max-h-56 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
+                      {filterUnitOptions(unit).length > 0 ? (
+                        filterUnitOptions(unit).map((item) => (
+                          <button
+                            key={item}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setUnit(item);
+                              setShowUnitDropdown(false);
+                            }}
+                            className="block w-full px-4 py-2 text-left text-black hover:bg-sky-50"
+                          >
+                            {item}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-3 text-sm text-slate-500">
+                          Không có đơn vị phù hợp
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -1747,14 +1871,78 @@ successCount++;
                     Đơn vị
                   </label>
 
-                  <input
-                    type="text"
-                    className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-                    value={editUnit}
-                    onChange={(e) =>
-                      setEditUnit(e.target.value)
-                    }
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      autoComplete="off"
+                      className="w-full border border-slate-300 bg-white p-4 pr-10 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                      value={editUnit}
+                      onFocus={() =>
+                        setShowEditUnitDropdown(true)
+                      }
+                      onChange={(e) => {
+                        setEditUnit(e.target.value);
+                        setShowEditUnitDropdown(true);
+                      }}
+                      onBlur={() => {
+                        window.setTimeout(() => {
+                          setShowEditUnitDropdown(false);
+                        }, 150);
+                      }}
+                    />
+
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() =>
+                        setShowEditUnitDropdown((prev) => !prev)
+                      }
+                      className="absolute right-[7px] top-1/2 -translate-y-1/2 flex items-center justify-center"
+                      aria-label="Mở danh sách đơn vị"
+                    >
+                      <svg
+                        width="10"
+                        height="6"
+                        viewBox="0 0 10 6"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M1 1L5 5L9 1"
+                          stroke="black"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+
+                    {showEditUnitDropdown && (
+                      <div className="absolute left-0 top-full z-[100] mt-2 max-h-56 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
+                        {filterUnitOptions(editUnit).length > 0 ? (
+                          filterUnitOptions(editUnit).map((item) => (
+                            <button
+                              key={item}
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => {
+                                setEditUnit(item);
+                                setShowEditUnitDropdown(false);
+                              }}
+                              className="block w-full px-4 py-2 text-left text-black hover:bg-sky-50"
+                            >
+                              {item}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-sm text-slate-500">
+                            Không có đơn vị phù hợp
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -1835,6 +2023,7 @@ successCount++;
             </div>
           </div>
         )}
+
         {showStockHistory && editingProduct && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
             <div className="max-h-[88vh] w-full max-w-6xl overflow-hidden rounded-3xl bg-white shadow-2xl">
