@@ -508,6 +508,8 @@ if (!id) {
           size: ${
             paperSize === "K80"
               ? "80mm auto"
+              : paperSize === "A4"
+              ? "A4"
               : "A5"
           };
           margin: 6mm;
@@ -522,7 +524,9 @@ if (!id) {
         }}
         className={
           paperSize === "K80"
-            ? "print-box bg-white p-3 w-[80mm] text-[11px] text-black"
+            ? "print-box bg-white w-[80mm] p-[3.5mm] text-[12px] leading-[1.35] text-black"
+            : paperSize === "A4"
+            ? "print-box bg-white w-[198mm] min-h-[285mm] p-[8mm] text-black text-[13px]"
             : "print-box bg-white w-[136mm] min-h-[190mm] p-[8mm] text-black text-[12px]"
         }
       >
@@ -531,13 +535,25 @@ if (!id) {
           <div className="text-center">
 
             {showShopName && (
-              <div className="text-[22px] font-bold leading-none">
+              <div
+                className={`font-bold leading-none ${
+                  paperSize === "K80"
+                    ? "text-[20px]"
+                    : paperSize === "A4"
+                    ? "text-[26px]"
+                    : "text-[22px]"
+                }`}
+              >
                 {shopName}
               </div>
             )}
 
             {(showAddress || showPhone) && (
-              <div className="mt-1 text-[11px] flex items-center justify-center gap-1">
+              <div
+                className={`mt-1 flex items-center justify-center gap-1 ${
+                  paperSize === "K80" ? "text-[12px]" : "text-[11px]"
+                }`}
+              >
                 {showAddress && <span className="whitespace-pre-line">{address}</span>}
                 {showAddress && showPhone && <span>|</span>}
                 {showPhone && <span>Hotline: {phone}</span>}
@@ -551,7 +567,15 @@ if (!id) {
           <div className="mt-1 pt-1 text-center">
 
             {showTitle && (
-              <div className="text-[16px] font-bold">
+              <div
+                className={`font-bold ${
+                  paperSize === "K80"
+                    ? "text-[18px]"
+                    : paperSize === "A4"
+                    ? "text-[20px]"
+                    : "text-[16px]"
+                }`}
+              >
                 {isTemporary
   ? temporaryTitle
   : invoiceTitle}
@@ -559,7 +583,11 @@ if (!id) {
             )}
 
             {(showDate || showOrderCode) && (
-              <div className="mt-1 text-[11px] flex items-center justify-center gap-1">
+              <div
+                className={`mt-1 flex items-center justify-center gap-1 ${
+                  paperSize === "K80" ? "text-[12px]" : "text-[11px]"
+                }`}
+              >
                 {showDate && (
                   <span>
                     {formatDate(
@@ -587,7 +615,48 @@ if (!id) {
           </div>
         )}
 
-        <table className="w-full border-collapse mt-3 text-[10px]">
+        {paperSize === "K80" && (
+          <div className="mt-3 border-b border-dashed border-black pb-2 text-left text-[12px] leading-[1.4]">
+            <div>
+              <strong>Khách hàng:</strong>{" "}
+              <span className="font-normal">
+                {order.customerName ||
+                  order.customer?.name ||
+                  "Khách lẻ"}
+              </span>
+            </div>
+
+            <div className="mt-1">
+              <strong>Điện thoại:</strong>{" "}
+              <span className="font-normal">
+                {order.customerPhone ||
+                  order.customer?.phone ||
+                  "---"}
+              </span>
+            </div>
+
+            {(order.customerAddress ||
+              order.customer?.address) && (
+              <div className="mt-1">
+                <strong>Địa chỉ:</strong>{" "}
+                <span className="font-normal">
+                  {order.customerAddress ||
+                    order.customer?.address}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <table
+          className={`w-full border-collapse mt-3 ${
+            paperSize === "K80"
+              ? "text-[11px]"
+              : paperSize === "A4"
+              ? "text-[12px]"
+              : "text-[10px]"
+          }`}
+        >
 
          <thead className="border-y border-dashed border-black">
 
@@ -628,11 +697,11 @@ if (!id) {
                   key={index}
                 >
 
-                  <td className="border border border-dashed border-gray-300 px-1 py-2 text-center">
+                  <td className="border border border-dashed border-gray-300 px-1 py-[7px] text-center">
                     {index + 1}
                   </td>
 
-                  <td className="border border border-dashed border-gray-300 px-2 py-2">
+                  <td className="border border border-dashed border-gray-300 px-2 py-[7px]">
 
   <div>
     {getProductName(
@@ -641,7 +710,11 @@ if (!id) {
   </div>
 
   {showProductCode && (
-    <div className="text-[8px] text-gray-600 mt-[2px]">
+    <div
+      className={`mt-[2px] text-gray-600 ${
+        paperSize === "K80" ? "text-[10px]" : "text-[8px]"
+      }`}
+    >
       MSP:
       {" "}
       {product.product_code ||
@@ -654,13 +727,13 @@ if (!id) {
 
 </td>
 
-                  <td className="border border border-dashed border-gray-300 px-1 py-2 text-center">
+                  <td className="border border border-dashed border-gray-300 px-1 py-[7px] text-center">
                     {getProductQuantity(
                       product
                     )}
                   </td>
 
-                  <td className="border border border-dashed border-gray-300 px-2 py-2 text-right">
+                  <td className="border border border-dashed border-gray-300 px-2 py-[7px] text-right">
                     {formatMoney(
                       getProductPrice(
                         product
@@ -669,7 +742,7 @@ if (!id) {
                     đ
                   </td>
 
-                  <td className="border border border-dashed border-gray-300 px-2 py-2 text-right">
+                  <td className="border border border-dashed border-gray-300 px-2 py-[7px] text-right">
                     {formatMoney(
                       getProductTotal(
                         product
@@ -688,7 +761,15 @@ if (!id) {
 
         <div className="flex justify-end mt-3">
 
-          <div className="w-[230px] space-y-[1px] text-[10px]">
+          <div
+            className={`space-y-[1px] ${
+              paperSize === "K80"
+                ? "w-full text-[12px]"
+                : paperSize === "A4"
+                ? "w-[320px] text-[12px]"
+                : "w-[230px] text-[10px]"
+            }`}
+          >
 
             <div className="flex justify-between gap-2">
               <span className="pl-2">
@@ -739,7 +820,11 @@ if (!id) {
               </div>
             )}
 
-            <div className="flex justify-between text-[14px] font-bold border-t border-gray-300 pt-1 mt-1">
+            <div
+              className={`flex justify-between font-bold border-t border-gray-300 pt-1 mt-1 ${
+                paperSize === "K80" ? "text-[16px]" : paperSize === "A4" ? "text-[17px]" : "text-[14px]"
+              }`}
+            >
               <span className="pl-2">
                 Tổng cộng:
               </span>
@@ -793,7 +878,11 @@ if (!id) {
         </div>
 
         {(showThankYou || showSeeYou) && (
-          <div className="text-center mt-6 space-y-1 text-[11px]">
+          <div
+            className={`text-center mt-6 space-y-1 ${
+              paperSize === "K80" ? "text-[12px]" : "text-[11px]"
+            }`}
+          >
 
             {showThankYou && (
               <div className="whitespace-pre-line">

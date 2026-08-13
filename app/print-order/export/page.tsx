@@ -310,11 +310,24 @@ export default function PrintOrderPage() {
   const items =
     getItems(order);
 
-  const vatAmount = 4000;
+  // Tạm tính = tổng tiền hàng trước VAT
+  const subtotal = items.reduce(
+    (sum: number, product: any) =>
+      sum + getProductTotal(product),
+    0
+  );
 
-  const subtotal =
-    getGrandTotal(order) -
-    vatAmount;
+  // VAT = tổng thanh toán - tiền hàng.
+  // Cách này giữ đúng số tiền thực tế của đơn hàng,
+  // kể cả khi mỗi sản phẩm có mức VAT khác nhau.
+  const vatAmount = Math.max(
+    0,
+    getGrandTotal(order) - subtotal
+  );
+
+  // Chỉ hiển thị VAT trên phiếu xuất kho khi đơn hàng thực tế có tính VAT.
+  // Không dựa vào VAT mặc định của sản phẩm vì đơn bán có thể chọn "Chưa VAT".
+  const hasVat = vatAmount > 0;
 
   return (
 
@@ -562,10 +575,13 @@ export default function PrintOrderPage() {
                   </td>
 
                   <td className="border border-gray-400 p-1 text-center text-[10px]">
-                    {product.vat ||
-                      product.tax ||
-                      8}
-                    %
+                    {hasVat
+                      ? `${Number(
+                          product.vat ??
+                            product.tax ??
+                            0
+                        )}%`
+                      : ""}
                   </td>
 
                   <td className="border border-gray-400 p-1 text-right">
@@ -593,20 +609,20 @@ export default function PrintOrderPage() {
 
             </tr>
 
-            <tr>
+            {hasVat && (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="border border-gray-400 p-1 text-right"
+                >
+                  VAT
+                </td>
 
-              <td
-                colSpan={6}
-                className="border border-gray-400 p-1 text-right"
-              >
-                VAT
-              </td>
-
-              <td className="border border-gray-400 p-1 text-right">
-                {formatMoney(vatAmount)}
-              </td>
-
-            </tr>
+                <td className="border border-gray-400 p-1 text-right">
+                  {formatMoney(vatAmount)}
+                </td>
+              </tr>
+            )}
 
             <tr>
 

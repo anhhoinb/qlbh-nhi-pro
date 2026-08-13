@@ -10,7 +10,7 @@ type ActiveTemplate =
   | "delivery_note";
 
 type TitleAlign = "left" | "center";
-type PaperSize = "A5" | "K80";
+type PaperSize = "A4" | "A5" | "K80";
 type FontFamily = "Arial" | "Tahoma" | "Times New Roman";
 
 const DEFAULT_LOGO_MAX_WIDTH = 400;
@@ -89,7 +89,13 @@ export default function PrintTemplatePage() {
           setShowSeeYou(data.showSeeYou ?? true);
           setShowReceiver(data.showReceiver ?? true);
 
-          setPaperSize(data.paperSize === "K80" ? "K80" : "A5");
+          setPaperSize(
+            data.paperSize === "K80"
+              ? "K80"
+              : data.paperSize === "A4"
+              ? "A4"
+              : "A5"
+          );
           setTitleAlign(data.titleAlign === "left" ? "left" : "center");
           setTitleFontSize(Number(data.titleFontSize) || 18);
           setBodyFontSize(Number(data.bodyFontSize) || 12);
@@ -265,7 +271,19 @@ export default function PrintTemplatePage() {
     if (activeTemplate === "delivery_note") setDeliveryTitle(value);
   };
 
-  const previewWidth = paperSize === "K80" ? "80mm" : "136mm";
+  const previewWidth =
+    paperSize === "K80"
+      ? "80mm"
+      : paperSize === "A4"
+      ? "190mm"
+      : "136mm";
+
+  const previewMinHeight =
+    paperSize === "K80"
+      ? "auto"
+      : paperSize === "A4"
+      ? "277mm"
+      : "190mm";
   const previewTitleStyle = useMemo(
     () => ({
       textAlign: titleAlign as "left" | "center",
@@ -550,8 +568,9 @@ export default function PrintTemplatePage() {
                       value={paperSize}
                       onChange={(e) => setPaperSize(e.target.value as PaperSize)}
                     >
+                      <option value="K80">K80 - Máy in nhiệt 80mm</option>
                       <option value="A5">A5</option>
-                      <option value="K80">K80</option>
+                      <option value="A4">A4</option>
                     </select>
                   </Field>
 
@@ -616,7 +635,7 @@ export default function PrintTemplatePage() {
                     className="mx-auto bg-white p-5 text-black shadow"
                     style={{
                       width: previewWidth,
-                      minHeight: paperSize === "K80" ? "auto" : "190mm",
+                      minHeight: previewMinHeight,
                       fontFamily,
                       fontSize: `${bodyFontSize}px`,
                     }}
