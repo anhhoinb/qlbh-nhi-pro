@@ -1789,6 +1789,7 @@ list: cart.map(item => ({
 
     subtotal: subtotal,
     vatAmount: vatAmount,
+    useProductVat: useProductVat,
     discountType: discountType,
     discountValue: discountValue,
     discountCode: discountCode,

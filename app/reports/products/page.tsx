@@ -29,6 +29,8 @@ type OrderData = {
   status?: string;
   createdAt?: any;
   items?: OrderItem[];
+  useProductVat?: boolean;
+  vatAmount?: number;
 };
 
 type ProductReportRow = {
@@ -41,7 +43,9 @@ type ProductReportRow = {
   price: number;
   productMoney: number;
   discount: number;
-  tax: number;
+  taxRate: number;
+  taxAmount: number;
+  hasVat: boolean;
   total: number;
 };
 
@@ -296,18 +300,31 @@ export default function ProductsReportPage() {
               0
           );
 
-          const tax = Number(
-            item.vat || item.tax || 0
-          );
-
           const productMoney =
             quantity * price;
 
-          const total = Number(
-            item.total ||
-              item.amount ||
-              productMoney - discount + tax
+          // Đơn mới: đọc trực tiếp useProductVat.
+          // Đơn cũ: nếu chưa có field này thì fallback theo vatAmount > 0.
+          const hasVat =
+            typeof order.useProductVat === "boolean"
+              ? order.useProductVat
+              : Number(order.vatAmount || 0) > 0;
+
+          const taxRate = hasVat
+            ? Number(item.vat ?? item.tax ?? 0)
+            : 0;
+
+          const taxableAmount = Math.max(
+            productMoney - discount,
+            0
           );
+
+          const taxAmount = hasVat
+            ? taxableAmount * (taxRate / 100)
+            : 0;
+
+          const total =
+            taxableAmount + taxAmount;
 
           data.push({
             id: `${order.id}-${index}`,
@@ -329,7 +346,9 @@ export default function ProductsReportPage() {
             price,
             productMoney,
             discount,
-            tax,
+            taxRate,
+            taxAmount,
+            hasVat,
             total,
           });
         }
@@ -401,7 +420,7 @@ export default function ProductsReportPage() {
         result.productMoney +=
           item.productMoney;
         result.discount += item.discount;
-        result.tax += item.tax;
+        result.tax += item.taxAmount;
         result.total += item.total;
 
         return result;
@@ -435,7 +454,7 @@ export default function ProductsReportPage() {
       item.quantity,
       item.productMoney,
       item.discount,
-      item.tax,
+      item.hasVat ? `${item.taxRate}%` : "",
       item.total,
     ]);
 
@@ -740,7 +759,9 @@ export default function ProductsReportPage() {
                     </td>
 
                     <td className="p-4 text-right text-amber-600 font-semibold">
-                      {formatMoney(item.tax)}
+                      {item.hasVat
+                        ? `${item.taxRate}%`
+                        : ""}
                     </td>
 
                     <td className="p-4 text-right text-sky-700 font-bold">
