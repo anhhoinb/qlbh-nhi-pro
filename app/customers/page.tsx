@@ -61,6 +61,30 @@ export default function CustomersPage() {
       });
     });
 
+    const getCreatedTime = (value: any) => {
+      if (!value) return 0;
+
+      if (typeof value?.toDate === "function") {
+        return value.toDate().getTime();
+      }
+
+      if (value?.seconds) {
+        return Number(value.seconds) * 1000;
+      }
+
+      const date = new Date(value);
+
+      return Number.isNaN(date.getTime())
+        ? 0
+        : date.getTime();
+    };
+
+    data.sort(
+      (a, b) =>
+        getCreatedTime(b.createdAt) -
+        getCreatedTime(a.createdAt)
+    );
+
     setCustomers(data);
   };
 
@@ -293,6 +317,29 @@ export default function CustomersPage() {
     }
   };
 
+  const formatCustomerDate = (value: any) => {
+    if (!value) return "---";
+
+    const date =
+      typeof value?.toDate === "function"
+        ? value.toDate()
+        : value?.seconds
+        ? new Date(Number(value.seconds) * 1000)
+        : new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "---";
+    }
+
+    return date.toLocaleString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const handleReactivateCustomer = async () => {
     if (!editingCustomer?.id) return;
 
@@ -392,20 +439,24 @@ export default function CustomersPage() {
           <table className="w-full min-w-[1050px] table-fixed">
             <thead className="bg-slate-800 text-white">
               <tr>
-                <th className="px-4 py-3 text-left w-[40%]">
+                <th className="px-4 py-3 text-left w-[32%]">
                   Khách hàng
                 </th>
 
-                <th className="px-3 py-3 text-left w-[15%]">
+                <th className="px-3 py-3 text-left w-[14%]">
                   Liên hệ
                 </th>
 
-                <th className="px-3 py-3 text-left w-[15%]">
+                <th className="px-3 py-3 text-left w-[14%]">
                   Thông tin công ty
                 </th>
 
-                <th className="px-3 py-3 text-left w-[30%]">
+                <th className="px-3 py-3 text-left w-[26%]">
                   Địa chỉ
+                </th>
+
+                <th className="px-3 py-3 text-left w-[14%] whitespace-nowrap">
+                  Ngày thêm
                 </th>
               </tr>
             </thead>
@@ -416,7 +467,7 @@ export default function CustomersPage() {
                   key={item.id}
                   className="border-b border-slate-200 hover:bg-slate-50"
                 >
-                  <td className="px-4 py-3 align-top w-[40%]">
+                  <td className="px-4 py-3 align-top w-[32%]">
                     <div>
                       <div className="flex items-start gap-2">
                         <button
@@ -441,7 +492,7 @@ export default function CustomersPage() {
                     </div>
                   </td>
 
-                  <td className="px-3 py-3 align-top w-[15%]">
+                  <td className="px-3 py-3 align-top w-[14%]">
                     <p className="font-semibold text-slate-900 whitespace-nowrap">
                       {item.phone || "---"}
                     </p>
@@ -451,7 +502,7 @@ export default function CustomersPage() {
                     </p>
                   </td>
 
-                  <td className="px-3 py-3 align-top w-[15%]">
+                  <td className="px-3 py-3 align-top w-[14%]">
                     <p className="text-sm text-slate-500">
                       Mã số thuế
                     </p>
@@ -461,7 +512,7 @@ export default function CustomersPage() {
                     </p>
                   </td>
 
-                  <td className="px-3 py-3 align-top text-slate-700 w-[30%]">
+                  <td className="px-3 py-3 align-top text-slate-700 w-[26%]">
                     <p
                       className="overflow-hidden"
                       style={{
@@ -474,13 +525,17 @@ export default function CustomersPage() {
                       {item.address || "---"}
                     </p>
                   </td>
+
+                  <td className="px-3 py-3 align-top w-[14%] whitespace-nowrap text-sm text-slate-600">
+                    {formatCustomerDate(item.createdAt)}
+                  </td>
                 </tr>
               ))}
 
               {filteredCustomers.length === 0 && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     className="p-8 text-center text-slate-500"
                   >
                     Không có khách hàng phù hợp
