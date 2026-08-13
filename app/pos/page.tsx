@@ -2403,50 +2403,105 @@ setTimeout(() => {
         return;
       }
 
-      const customerData = {
-        name: newCustomer.name.trim(),
-        phone: newCustomer.phone.trim(),
-        companyName: newCustomer.companyName.trim(),
-        code:
-          newCustomer.code.trim() ||
-          `KH${Date.now()}`,
-        address: newCustomer.address.trim(),
-        email: newCustomer.email.trim(),
-        taxCode: newCustomer.taxCode.trim(),
-        createdAt: new Date(),
-      };
+      try {
+        const customerCode =
+          await runTransaction(
+            db,
+            async (transaction) => {
+              const counterRef =
+                doc(
+                  db,
+                  "settings",
+                  "customer_counter"
+                );
 
-      const docRef =
-        await addDoc(
-          collection(db, "customers"),
-          customerData
+              const counterSnap =
+                await transaction.get(
+                  counterRef
+                );
+
+              let nextNumber = 1;
+
+              if (counterSnap.exists()) {
+                nextNumber =
+                  Number(
+                    counterSnap.data()?.current || 0
+                  ) + 1;
+              }
+
+              transaction.set(
+                counterRef,
+                {
+                  current: nextNumber,
+                  updatedAt: serverTimestamp(),
+                },
+                {
+                  merge: true,
+                }
+              );
+
+              return `KH${String(
+                nextNumber
+              ).padStart(6, "0")}`;
+            }
+          );
+
+        const customerData = {
+          name: newCustomer.name.trim(),
+          phone: newCustomer.phone.trim(),
+          companyName:
+            newCustomer.companyName.trim(),
+          code: customerCode,
+          address:
+            newCustomer.address.trim(),
+          email:
+            newCustomer.email.trim(),
+          taxCode:
+            newCustomer.taxCode.trim(),
+          createdAt: serverTimestamp(),
+        };
+
+        const docRef =
+          await addDoc(
+            collection(db, "customers"),
+            customerData
+          );
+
+        const savedCustomer = {
+          id: docRef.id,
+          ...customerData,
+        };
+
+        updateCurrentOrder({
+          customer: savedCustomer,
+        });
+
+        setCustomerSearch(
+          `${newCustomer.name.trim()} - ${newCustomer.phone.trim()}`
         );
 
-      const savedCustomer = {
-        id: docRef.id,
-        ...customerData,
-      };
+        setNewCustomer({
+          name: "",
+          phone: "",
+          companyName: "",
+          code: "",
+          address: "",
+          email: "",
+          taxCode: "",
+        });
 
-      updateCurrentOrder({
-        customer: savedCustomer,
-      });
+        setShowCustomerForm(false);
+        setShowCustomerDropdown(false);
+      } catch (error) {
+        console.error(
+          "Lỗi khi thêm khách hàng:",
+          error
+        );
 
-      setCustomerSearch(
-        `${savedCustomer.name} - ${savedCustomer.phone}`
-      );
-
-      setNewCustomer({
-        name: "",
-        phone: "",
-        companyName: "",
-        code: "",
-        address: "",
-        email: "",
-        taxCode: "",
-      });
-
-      setShowCustomerForm(false);
-      setShowCustomerDropdown(false);
+        alert(
+          "Không thể thêm khách hàng. Vui lòng thử lại."
+        );
+      }
     };
 
   const filteredProducts =
