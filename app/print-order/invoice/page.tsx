@@ -205,6 +205,37 @@ const [isTemporary, setIsTemporary] =
     );
   };
 
+  const getVatRateLabel = (
+    item: any
+  ) => {
+    const rates = Array.from(
+      new Set(
+        getItems(item)
+          .map((product: any) =>
+            Number(
+              product?.tax ??
+                product?.vat ??
+                0
+            )
+          )
+          .filter(
+            (rate: number) =>
+              Number.isFinite(rate) &&
+              rate > 0
+          )
+      )
+    ) as number[];
+
+    if (rates.length === 0) {
+      return "";
+    }
+
+    return rates
+      .sort((a, b) => a - b)
+      .map((rate) => `${rate}%`)
+      .join(", ");
+  };
+
   const getDiscountAmount =
     (item: any) => {
       return Number(
@@ -615,8 +646,21 @@ if (!id) {
           </div>
         )}
 
-        {paperSize === "K80" && (
-          <div className="mt-3 border-b border-dashed border-black pb-2 text-left text-[12px] leading-[1.4]">
+        {(order.customerName ||
+          order.customer?.name ||
+          order.customerPhone ||
+          order.customer?.phone ||
+          order.customerCompanyName ||
+          order.customer?.companyName ||
+          order.customerTaxCode ||
+          order.customer?.taxCode ||
+          order.customerAddress ||
+          order.customer?.address) && (
+          <div
+            className={`mt-3 pb-2 text-left leading-[1.45] ${
+              paperSize === "K80" ? "text-[12px]" : "text-[11px]"
+            }`}
+          >
             <div>
               <strong>Khách hàng:</strong>{" "}
               <span className="font-normal">
@@ -626,14 +670,38 @@ if (!id) {
               </span>
             </div>
 
-            <div className="mt-1">
-              <strong>Điện thoại:</strong>{" "}
-              <span className="font-normal">
-                {order.customerPhone ||
-                  order.customer?.phone ||
-                  "---"}
-              </span>
-            </div>
+            {(order.customerCompanyName ||
+              order.customer?.companyName) && (
+              <div className="mt-1">
+                <strong>Công ty:</strong>{" "}
+                <span className="font-normal">
+                  {order.customerCompanyName ||
+                    order.customer?.companyName}
+                </span>
+              </div>
+            )}
+
+            {(order.customerPhone ||
+              order.customer?.phone) && (
+              <div className="mt-1">
+                <strong>Điện thoại:</strong>{" "}
+                <span className="font-normal">
+                  {order.customerPhone ||
+                    order.customer?.phone}
+                </span>
+              </div>
+            )}
+
+            {(order.customerTaxCode ||
+              order.customer?.taxCode) && (
+              <div className="mt-1">
+                <strong>MST:</strong>{" "}
+                <span className="font-normal">
+                  {order.customerTaxCode ||
+                    order.customer?.taxCode}
+                </span>
+              </div>
+            )}
 
             {(order.customerAddress ||
               order.customer?.address) && (
@@ -786,22 +854,27 @@ if (!id) {
               </strong>
             </div>
 
-            {showVat && (
-              <div className="flex justify-between gap-2">
-                <span className="pl-2">
-                  VAT:
-                </span>
+            {showVat &&
+              getVatAmount(order) > 0 && (
+                <div className="flex justify-between gap-2">
+                  <span className="pl-2">
+                    VAT
+                    {getVatRateLabel(order)
+                      ? ` (${getVatRateLabel(order)})`
+                      : ""}
+                    :
+                  </span>
 
-                <strong>
-                  {formatMoney(
-                    getVatAmount(
-                      order
-                    )
-                  )}
-                  đ
-                </strong>
-              </div>
-            )}
+                  <strong>
+                    {formatMoney(
+                      getVatAmount(
+                        order
+                      )
+                    )}
+                    đ
+                  </strong>
+                </div>
+              )}
 
             {showDiscount && (
               <div className="flex justify-between gap-2">
