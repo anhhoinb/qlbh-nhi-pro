@@ -6,6 +6,12 @@ import { db } from "@/lib/firebase";
 
 type OrderItem = {
   name?: string;
+  main_name?: string;
+  mainName?: string;
+  short_name?: string;
+  shortName?: string;
+  printName?: string;
+  print_name?: string;
   productName?: string;
   product_name?: string;
   sku?: string;
@@ -43,6 +49,7 @@ type ProductReportRow = {
   date: Date | null;
   dateText: string;
   productName: string;
+  productSecondaryName: string;
   productCode: string;
   productLocation: string;
   quantity: number;
@@ -338,11 +345,72 @@ export default function ProductsReportPage() {
             dateText: formatDate(
               order.createdAt
             ),
-            productName:
-              item.name ||
-              item.productName ||
-              item.product_name ||
-              "---",
+            productName: (() => {
+              const mainName =
+                item.main_name ||
+                item.mainName ||
+                item.name ||
+                item.productName ||
+                item.product_name ||
+                "";
+
+              const shortName =
+                item.short_name ||
+                item.shortName ||
+                "";
+
+              return (
+                item.printName ||
+                item.print_name ||
+                shortName ||
+                mainName ||
+                "---"
+              );
+            })(),
+            productSecondaryName: (() => {
+              const mainName =
+                item.main_name ||
+                item.mainName ||
+                item.name ||
+                item.productName ||
+                item.product_name ||
+                "";
+
+              const shortName =
+                item.short_name ||
+                item.shortName ||
+                "";
+
+              const displayedName =
+                item.printName ||
+                item.print_name ||
+                shortName ||
+                mainName ||
+                "";
+
+              const normalizeName = (value: any) =>
+                String(value || "")
+                  .trim()
+                  .toLocaleLowerCase("vi-VN");
+
+              if (
+                shortName &&
+                normalizeName(shortName) !==
+                  normalizeName(displayedName)
+              ) {
+                return shortName;
+              }
+
+              if (
+                mainName &&
+                normalizeName(mainName) !==
+                  normalizeName(displayedName)
+              ) {
+                return mainName;
+              }
+
+              return "";
+            })(),
             productCode:
               item.product_code ||
               item.productCode ||
@@ -463,7 +531,9 @@ export default function ProductsReportPage() {
 
     const csvRows = rows.map((item) => [
       item.dateText,
-      item.productName,
+      item.productSecondaryName
+        ? `${item.productName} | ${item.productSecondaryName}`
+        : item.productName,
       item.productCode,
       item.productLocation,
       item.quantity,
@@ -749,6 +819,12 @@ export default function ProductsReportPage() {
                       <div className="font-semibold text-gray-900">
                         {item.productName}
                       </div>
+
+                      {item.productSecondaryName && (
+                        <div className="mt-1 text-xs text-slate-500">
+                          {item.productSecondaryName}
+                        </div>
+                      )}
 
                       <div className="mt-1 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-slate-500">
                         <span>

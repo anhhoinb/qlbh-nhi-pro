@@ -20,6 +20,9 @@ export default function PrintTemplatePage() {
   const [phone, setPhone] =
     useState("0900 000 000");
 
+  const [shopTaxCode, setShopTaxCode] =
+    useState("");
+
   const [invoiceTitle, setInvoiceTitle] =
     useState("HÓA ĐƠN BÁN HÀNG");
 
@@ -35,6 +38,12 @@ export default function PrintTemplatePage() {
   const [paperSize, setPaperSize] =
     useState("A5");
 
+  const [bodyFontSize, setBodyFontSize] =
+    useState(13);
+
+  const [editingTemplate, setEditingTemplate] =
+    useState<"invoice" | "temporary" | null>(null);
+
   const [showShopName, setShowShopName] =
     useState(true);
 
@@ -42,6 +51,9 @@ export default function PrintTemplatePage() {
     useState(true);
 
   const [showPhone, setShowPhone] =
+    useState(true);
+
+  const [showTaxCode, setShowTaxCode] =
     useState(true);
 
   const [showTitle, setShowTitle] =
@@ -107,6 +119,10 @@ export default function PrintTemplatePage() {
               data.phone || "0900 000 000"
             );
 
+            setShopTaxCode(
+              data.shopTaxCode || data.taxCode || ""
+            );
+
             setInvoiceTitle(
               data.invoiceTitle ||
                 "HÓA ĐƠN BÁN HÀNG"
@@ -131,6 +147,10 @@ export default function PrintTemplatePage() {
               data.paperSize || "A5"
             );
 
+            setBodyFontSize(
+              Number(data.bodyFontSize) || 13
+            );
+
             setShowShopName(
               data.showShopName ?? true
             );
@@ -141,6 +161,10 @@ export default function PrintTemplatePage() {
 
             setShowPhone(
               data.showPhone ?? true
+            );
+
+            setShowTaxCode(
+              data.showTaxCode ?? true
             );
 
             setShowTitle(
@@ -216,6 +240,9 @@ export default function PrintTemplatePage() {
             phone:
               phone.trim(),
 
+            shopTaxCode:
+              shopTaxCode.trim(),
+
             invoiceTitle:
               invoiceTitle.trim(),
 
@@ -231,9 +258,12 @@ export default function PrintTemplatePage() {
             paperSize:
               paperSize || "A5",
 
+            bodyFontSize,
+
             showShopName,
             showAddress,
             showPhone,
+            showTaxCode,
             showTitle,
             showDate,
             showOrderCode,
@@ -243,7 +273,7 @@ export default function PrintTemplatePage() {
             showCustomerPaid,
             showChange,
             showThankYou,
-            showSeeYou,
+            showSeeYou: false,
 
             updatedAt:
               new Date(),
@@ -531,260 +561,552 @@ export default function PrintTemplatePage() {
     );
   }
 
+  const currentTitle =
+    editingTemplate === "temporary"
+      ? temporaryTitle
+      : invoiceTitle;
+
+  const setCurrentTitle = (value: string) => {
+    if (editingTemplate === "temporary") {
+      setTemporaryTitle(value);
+      return;
+    }
+
+    setInvoiceTitle(value);
+  };
+
+  const previewWidth =
+    paperSize === "K80"
+      ? "80mm"
+      : paperSize === "A4"
+      ? "185mm"
+      : "136mm";
+
   return (
     <main className="min-h-screen bg-gray-100 p-6">
+      <div className="mx-auto max-w-7xl">
+        {editingTemplate === null ? (
+          <>
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold text-blue-700">
+                Đơn bán hàng
+              </h1>
 
-      <div className="max-w-5xl mx-auto">
-
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
-
-          <div>
-
-            <h1 className="text-4xl font-bold text-blue-700">
-              Đơn bán hàng
-            </h1>
-
-            <p className="text-gray-600 mt-2">
-              Cấu hình mẫu đơn bán hàng.
-            </p>
-
-          </div>
-
-        </div>
-
-        <div className="bg-white rounded-3xl shadow p-6 space-y-5">
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-
-            <div>
-              <label className="block mb-2 font-semibold text-black">
-                Tên shop
-              </label>
-
-              <input
-                type="text"
-                className="w-full border p-4 rounded-2xl text-black"
-                value={shopName}
-                onChange={(e) =>
-                  setShopName(
-                    e.target.value
-                  )
-                }
-              />
+              <p className="mt-2 text-gray-600">
+                Chọn mẫu cần chỉnh sửa.
+              </p>
             </div>
 
-            <div>
-              <label className="block mb-2 font-semibold text-black">
-                Địa chỉ
-              </label>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                      Mẫu bán hàng
+                    </div>
 
-              <textarea
-                rows={3}
-                className="w-full border p-4 rounded-2xl text-black resize-y"
-                value={address}
-                onChange={(e) =>
-                  setAddress(
-                    e.target.value
-                  )
-                }
-              />
-            </div>
+                    <h2 className="mt-2 text-2xl font-bold text-black">
+                      {invoiceTitle || "HÓA ĐƠN BÁN HÀNG"}
+                    </h2>
 
-            <div>
-              <label className="block mb-2 font-semibold text-black">
-                Hotline
-              </label>
+                    <div className="mt-3 flex flex-wrap gap-2 text-sm text-gray-500">
+                      <span className="rounded-full bg-gray-100 px-3 py-1">
+                        Khổ {paperSize}
+                      </span>
 
-              <input
-                type="text"
-                className="w-full border p-4 rounded-2xl text-black"
-                value={phone}
-                onChange={(e) =>
-                  setPhone(
-                    e.target.value
-                  )
-                }
-              />
-            </div>
+                      {paperSize === "K80" && (
+                        <span className="rounded-full bg-gray-100 px-3 py-1">
+                          Chữ {bodyFontSize}px
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-          </div>
-
-          <div className="border-t pt-5">
-
-            <label className="block mb-2 font-semibold text-black">
-              Tiêu đề đơn bán hàng
-            </label>
-
-            <input
-              type="text"
-              className="w-full border p-4 rounded-2xl text-black"
-              value={invoiceTitle}
-              onChange={(e) =>
-                setInvoiceTitle(
-                  e.target.value
-                )
-              }
-            />
-
-          </div>
-
-          <div className="border-t pt-5">
-
-            <label className="block mb-2 font-semibold text-black">
-              Tiêu đề phiếu tạm tính
-            </label>
-
-            <input
-              type="text"
-              className="w-full border p-4 rounded-2xl text-black"
-              value={temporaryTitle}
-              onChange={(e) =>
-                setTemporaryTitle(
-                  e.target.value
-                )
-              }
-            />
-
-          </div>
-
-          <div className="border-t pt-5">
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-              <div>
-                <label className="block mb-2 font-semibold text-black">
-                  Lời cảm ơn
-                </label>
-
-                <textarea
-                  rows={4}
-                  className="w-full border p-4 rounded-2xl text-black resize-y"
-                  value={thankYouText}
-                  onChange={(e) =>
-                    setThankYouText(
-                      e.target.value
-                    )
-                  }
-                />
+                  <button
+                    type="button"
+                    onClick={() => setEditingTemplate("invoice")}
+                    className="shrink-0 rounded-xl bg-blue-700 px-5 py-2.5 font-semibold text-white hover:bg-blue-800"
+                  >
+                    Sửa
+                  </button>
+                </div>
               </div>
 
-              <div>
-                <label className="block mb-2 font-semibold text-black">
-                  Dòng hẹn gặp lại
-                </label>
+              <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-amber-600">
+                      Phiếu tạm tính
+                    </div>
 
-                <textarea
-                  rows={4}
-                  className="w-full border p-4 rounded-2xl text-black resize-y"
-                  value={seeYouText}
-                  onChange={(e) =>
-                    setSeeYouText(
-                      e.target.value
-                    )
-                  }
-                />
+                    <h2 className="mt-2 text-2xl font-bold text-black">
+                      {temporaryTitle || "PHIẾU TẠM TÍNH"}
+                    </h2>
+
+                    <div className="mt-3 flex flex-wrap gap-2 text-sm text-gray-500">
+                      <span className="rounded-full bg-gray-100 px-3 py-1">
+                        Khổ {paperSize}
+                      </span>
+
+                      {paperSize === "K80" && (
+                        <span className="rounded-full bg-gray-100 px-3 py-1">
+                          Chữ {bodyFontSize}px
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditingTemplate("temporary")}
+                    className="shrink-0 rounded-xl bg-blue-700 px-5 py-2.5 font-semibold text-white hover:bg-blue-800"
+                  >
+                    Sửa
+                  </button>
+                </div>
               </div>
-
             </div>
-
-          </div>
-
-          <div className="border-t pt-5">
-
-            <label className="block mb-2 font-semibold text-black">
-              Khổ giấy
-            </label>
-
-            <select
-              className="w-full md:w-80 border p-4 rounded-2xl text-black"
-              value={paperSize}
-              onChange={(e) =>
-                setPaperSize(
-                  e.target.value
-                )
-              }
-            >
-              <option value="A5">
-                A5
-              </option>
-
-              <option value="K80">
-                K80
-              </option>
-            </select>
-
-          </div>
-
-          <div className="border-t pt-5">
-
-            <h2 className="text-2xl font-bold text-black mb-4">
-              Hiển thị trên hóa đơn
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-
-              {[
-                ["Hiện tên shop", showShopName, setShowShopName],
-                ["Hiện địa chỉ", showAddress, setShowAddress],
-                ["Hiện Hotline", showPhone, setShowPhone],
-                ["Hiện tiêu đề hóa đơn", showTitle, setShowTitle],
-                ["Hiện ngày giờ", showDate, setShowDate],
-                ["Hiện mã đơn", showOrderCode, setShowOrderCode],
-                ["Hiện mã sản phẩm (MSP)", showProductCode, setShowProductCode],
-                ["Hiện VAT", showVat, setShowVat],
-                ["Hiện giảm giá", showDiscount, setShowDiscount],
-                ["Hiện khách trả", showCustomerPaid, setShowCustomerPaid],
-                ["Hiện tiền thừa", showChange, setShowChange],
-                ["Hiện lời cảm ơn", showThankYou, setShowThankYou],
-                ["Hiện hẹn gặp lại", showSeeYou, setShowSeeYou],
-              ].map(([label, checked, setter]: any) => (
-                <label
-                  key={label}
-                  className="flex items-center justify-between gap-3 rounded-2xl border p-4 text-black cursor-pointer"
+          </>
+        ) : (
+          <>
+            <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setEditingTemplate(null)}
+                  className="mb-2 text-sm font-semibold text-blue-700 hover:underline"
                 >
-                  <span className="font-medium">
-                    {label}
-                  </span>
+                  ← Quay lại danh sách mẫu
+                </button>
 
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(e) =>
-                      setter(e.target.checked)
-                    }
-                    className="w-5 h-5"
-                  />
-                </label>
-              ))}
+                <h1 className="text-3xl font-bold text-blue-700">
+                  Chỉnh sửa {editingTemplate === "temporary" ? "phiếu tạm tính" : "hóa đơn bán hàng"}
+                </h1>
+              </div>
 
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={printTestTemplate}
+                  className="rounded-xl border border-green-600 bg-white px-5 py-2.5 font-semibold text-green-700 hover:bg-green-50"
+                >
+                  In thử
+                </button>
+
+                <button
+                  type="button"
+                  onClick={saveTemplate}
+                  className="rounded-xl bg-blue-700 px-5 py-2.5 font-semibold text-white hover:bg-blue-800"
+                >
+                  Lưu thay đổi
+                </button>
+              </div>
             </div>
 
-          </div>
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(460px,1.1fr)]">
+              <section className="rounded-3xl bg-white p-5 shadow-sm">
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-xl font-bold text-black">
+                      Nội dung mẫu
+                    </h2>
 
-          <div className="flex justify-end gap-4 border-t pt-5">
+                    <p className="mt-1 text-sm text-gray-500">
+                      Các thay đổi được xem trước ngay bên phải.
+                    </p>
+                  </div>
 
-            <button
-              type="button"
-              onClick={printTestTemplate}
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-2xl font-semibold"
-            >
-              In thử mẫu
-            </button>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-black">
+                        Tiêu đề
+                      </label>
 
-            <button
-              type="button"
-              onClick={saveTemplate}
-              className="bg-blue-700 hover:bg-blue-800 text-white px-8 py-4 rounded-2xl font-semibold"
-            >
-              Lưu mẫu in
-            </button>
+                      <input
+                        type="text"
+                        value={currentTitle}
+                        onChange={(e) => setCurrentTitle(e.target.value)}
+                        className="w-full rounded-xl border px-3 py-2.5 text-sm text-black outline-none focus:border-blue-500"
+                      />
+                    </div>
 
-          </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-black">
+                        MST
+                      </label>
 
-        </div>
+                      <input
+                        type="text"
+                        value={shopTaxCode}
+                        onChange={(e) => setShopTaxCode(e.target.value)}
+                        placeholder="Mã số thuế cửa hàng"
+                        className="w-full rounded-xl border px-3 py-2.5 text-sm text-black outline-none focus:border-blue-500"
+                      />
+                    </div>
 
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-black">
+                        Tên shop
+                      </label>
+
+                      <input
+                        type="text"
+                        value={shopName}
+                        onChange={(e) => setShopName(e.target.value)}
+                        className="w-full rounded-xl border px-3 py-2.5 text-sm text-black outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-black">
+                        Hotline
+                      </label>
+
+                      <input
+                        type="text"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full rounded-xl border px-3 py-2.5 text-sm text-black outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="mb-1 block text-xs font-semibold text-black">
+                        Địa chỉ
+                      </label>
+
+                      <textarea
+                        rows={2}
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className="w-full resize-y rounded-xl border px-3 py-2.5 text-sm text-black outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1.5 block text-sm font-semibold text-black">
+                        Khổ giấy
+                      </label>
+
+                      <select
+                        value={paperSize}
+                        onChange={(e) => setPaperSize(e.target.value)}
+                        className="w-full rounded-xl border bg-white p-3 text-black outline-none"
+                      >
+                        <option value="K80">K80</option>
+                        <option value="A5">A5</option>
+                        <option value="A4">A4</option>
+                      </select>
+                    </div>
+
+                    {paperSize === "K80" && (
+                      <div>
+                        <label className="mb-1.5 block text-sm font-semibold text-black">
+                          Cỡ chữ K80
+                        </label>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setBodyFontSize((value) =>
+                                Math.max(10, value - 1)
+                              )
+                            }
+                            className="h-11 w-11 rounded-xl border text-xl font-bold text-black hover:bg-gray-50"
+                          >
+                            −
+                          </button>
+
+                          <div className="flex h-11 min-w-[78px] items-center justify-center rounded-xl border bg-gray-50 px-3 font-bold text-black">
+                            {bodyFontSize}px
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setBodyFontSize((value) =>
+                                Math.min(18, value + 1)
+                              )
+                            }
+                            className="h-11 w-11 rounded-xl border text-xl font-bold text-black hover:bg-gray-50"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="md:col-span-2">
+                      <label className="mb-1.5 block text-sm font-semibold text-black">
+                        Lời cảm ơn
+                      </label>
+
+                      <textarea
+                        rows={2}
+                        value={thankYouText}
+                        onChange={(e) => setThankYouText(e.target.value)}
+                        className="w-full resize-y rounded-xl border p-3 text-black outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <h3 className="mb-3 text-base font-bold text-black">
+                      Hiển thị trên hóa đơn
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {[
+                        ["Tên shop", showShopName, setShowShopName],
+                        ["Địa chỉ", showAddress, setShowAddress],
+                        ["Hotline", showPhone, setShowPhone],
+                        ["MST", showTaxCode, setShowTaxCode],
+                        ["Tiêu đề", showTitle, setShowTitle],
+                        ["Ngày giờ", showDate, setShowDate],
+                        ["Mã đơn", showOrderCode, setShowOrderCode],
+                        ["Mã SP", showProductCode, setShowProductCode],
+                        ["VAT", showVat, setShowVat],
+                        ["Giảm giá", showDiscount, setShowDiscount],
+                        ["Khách trả", showCustomerPaid, setShowCustomerPaid],
+                        ["Tiền thừa", showChange, setShowChange],
+                        ["Lời cảm ơn", showThankYou, setShowThankYou],
+                      ].map(([label, checked, setter]: any) => (
+                        <label
+                          key={label}
+                          className="flex min-w-0 cursor-pointer items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-xs text-black hover:bg-gray-50"
+                        >
+                          <span className="truncate font-medium">
+                            {label}
+                          </span>
+
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => setter(e.target.checked)}
+                            className="h-4 w-4 shrink-0"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-3xl bg-white p-5 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-black">
+                      Xem trước
+                    </h2>
+
+                    <p className="mt-1 text-sm text-gray-500">
+                      Mô phỏng bố cục khi in.
+                    </p>
+                  </div>
+
+                  <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-600">
+                    {paperSize}
+                  </span>
+                </div>
+
+                <div className="overflow-auto rounded-2xl bg-gray-100 p-4">
+                  <div
+                    className="mx-auto overflow-hidden bg-white text-black shadow"
+                    style={{
+                      width: previewWidth,
+                      maxWidth: "100%",
+                      minHeight:
+                        paperSize === "K80"
+                          ? "auto"
+                          : paperSize === "A4"
+                          ? "262mm"
+                          : "185mm",
+                      padding:
+                        paperSize === "K80"
+                          ? "3mm"
+                          : paperSize === "A4"
+                          ? "12mm"
+                          : "8mm",
+                      fontSize:
+                        paperSize === "K80"
+                          ? `${bodyFontSize}px`
+                          : paperSize === "A4"
+                          ? "13px"
+                          : "12px",
+                      lineHeight: 1.4,
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    {(showShopName || showAddress || showPhone) && (
+                      <div className="text-center">
+                        {showShopName && (
+                          <div className="text-[1.35em] font-bold">
+                            {shopName || "Tên shop"}
+                          </div>
+                        )}
+
+                        {(showAddress || showPhone || showTaxCode) && (
+                          <div className="mt-1 text-[0.9em]">
+                            {paperSize === "K80" ? (
+                              <div>
+                                {showAddress && <span>{address || "Địa chỉ"}</span>}
+                                {showAddress && (showPhone || showTaxCode) && <span> | </span>}
+                                {showPhone && <span>Hotline: {phone || "---"}</span>}
+                                {showPhone && showTaxCode && <span> | </span>}
+                                {showTaxCode && (
+                                  <span>MST: {shopTaxCode || "---"}</span>
+                                )}
+                              </div>
+                            ) : (
+                              <>
+                                {showAddress && (
+                                  <div>{address || "Địa chỉ"}</div>
+                                )}
+
+                                {(showPhone || showTaxCode) && (
+                                  <div className="mt-1">
+                                    {showPhone && (
+                                      <span>Hotline: {phone || "---"}</span>
+                                    )}
+                                    {showPhone && showTaxCode && <span> | </span>}
+                                    {showTaxCode && (
+                                      <span>MST: {shopTaxCode || "---"}</span>
+                                    )}
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {showTitle && (
+                      <div className="mt-3 text-center text-[1.3em] font-bold">
+                        {currentTitle || "TIÊU ĐỀ"}
+                      </div>
+                    )}
+
+                    {(showDate || showOrderCode) && (
+                      <div className="mt-1 text-center text-[0.85em]">
+                        {showDate && <span>15/08/2026 23:30</span>}
+                        {showDate && showOrderCode && <span> | </span>}
+                        {showOrderCode && <span>Mã đơn: SON00132</span>}
+                      </div>
+                    )}
+
+                    <div className="mt-3 text-left text-[0.9em]">
+                      <div>
+                        <strong>Khách hàng:</strong> Nguyễn Văn A
+                      </div>
+                      <div className="mt-1">
+                        <strong>Điện thoại:</strong> 0901234567
+                      </div>
+                    </div>
+
+                    <table className="mt-3 w-full table-fixed border-collapse text-[0.85em]">
+                      <colgroup>
+                        <col style={{ width: "8%" }} />
+                        <col style={{ width: "54%" }} />
+                        <col style={{ width: "10%" }} />
+                        <col style={{ width: "28%" }} />
+                      </colgroup>
+
+                      <thead className="border-y border-dashed border-black">
+                        <tr>
+                          <th className="px-1 py-1 text-center">STT</th>
+                          <th className="px-1 py-1 text-left">Sản phẩm</th>
+                          <th className="px-1 py-1 text-center">SL</th>
+                          <th className="px-1 py-1 text-right">Thành tiền</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        <tr className="border-b border-dashed border-gray-300">
+                          <td className="px-1 py-2 text-center align-top">1</td>
+
+                          <td className="min-w-0 px-1 py-2 align-top">
+                            <div className="break-words whitespace-normal">
+                              Module điều khiển động cơ DC
+                            </div>
+
+                            {showProductCode && (
+                              <div className="mt-0.5 break-words text-[0.8em] text-gray-500">
+                                MSP: A21
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="px-1 py-2 text-center align-top">1</td>
+
+                          <td className="px-1 py-2 text-right align-top whitespace-nowrap">
+                            45.000đ
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <div
+                      className={`ml-auto mt-3 w-full space-y-1 text-[0.9em] ${
+                        paperSize === "K80"
+                          ? "max-w-full"
+                          : paperSize === "A4"
+                          ? "max-w-[280px]"
+                          : "max-w-[240px]"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <span className="shrink-0">Tạm tính:</span>
+                        <strong className="whitespace-nowrap">45.000đ</strong>
+                      </div>
+
+                      {showVat && (
+                        <div className="flex items-start justify-between gap-4">
+                          <span className="shrink-0">VAT (8%):</span>
+                          <strong className="whitespace-nowrap">3.600đ</strong>
+                        </div>
+                      )}
+
+                      {showDiscount && (
+                        <div className="flex items-start justify-between gap-4">
+                          <span className="shrink-0">Giảm giá:</span>
+                          <strong className="whitespace-nowrap">0đ</strong>
+                        </div>
+                      )}
+
+                      <div className="flex items-start justify-between gap-4 border-t pt-1 text-[1.15em] font-bold">
+                        <span className="shrink-0">Tổng cộng:</span>
+                        <span className="whitespace-nowrap">48.600đ</span>
+                      </div>
+
+                      {showCustomerPaid && (
+                        <div className="flex justify-between">
+                          <span>Khách trả:</span>
+                          <strong>48.600đ</strong>
+                        </div>
+                      )}
+
+                      {showChange && (
+                        <div className="flex justify-between">
+                          <span>Tiền thừa:</span>
+                          <strong>0đ</strong>
+                        </div>
+                      )}
+                    </div>
+
+                    {showThankYou && (
+                      <div className="mt-6 whitespace-pre-line text-center text-[0.9em]">
+                        {thankYouText}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+            </div>
+          </>
+        )}
       </div>
-
     </main>
   );
 }

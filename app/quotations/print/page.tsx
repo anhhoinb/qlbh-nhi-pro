@@ -290,13 +290,40 @@ function QuotationPrintContent() {
     quotation?.total ??
     subtotal + vatAmount;
 
-  const vatRates = Array.from(
-    new Set(
-      items.map((item) =>
-        Number(item.tax || 0)
-      )
-    )
-  ).filter((rate) => rate > 0);
+  const vatBreakdown = useMemo(() => {
+    const breakdown = new Map<number, number>();
+
+    items.forEach((item) => {
+      const rate = toNumber(item.tax);
+
+      if (rate <= 0) {
+        return;
+      }
+
+      const lineSubtotal =
+        toNumber(item.quantity) *
+        toNumber(item.price);
+
+      const lineVat =
+        lineSubtotal * (rate / 100);
+
+      breakdown.set(
+        rate,
+        (breakdown.get(rate) || 0) + lineVat
+      );
+    });
+
+    return Array.from(breakdown.entries())
+      .map(([rate, amount]) => ({
+        rate,
+        amount,
+      }))
+      .filter(({ amount }) => amount > 0)
+      .sort((a, b) => a.rate - b.rate);
+  }, [items]);
+
+  const vatRates =
+    vatBreakdown.map(({ rate }) => rate);
 
   const quotationDate =
     quotation?.createdAt?.toDate?.() ??
@@ -504,21 +531,39 @@ function QuotationPrintContent() {
        * Sau khi chèn dòng, các phần phía dưới được dời xuống tương ứng.
        */
       const subtotalRow = firstProductRow + exportItems.length;
-      const vatRow = subtotalRow + 1;
-      const totalRow = subtotalRow + 2;
-      const spacerRow = subtotalRow + 3;
-      const noteTitleRow = subtotalRow + 4;
-      const validityRow = subtotalRow + 5;
-      const deliveryTitleRow = subtotalRow + 6;
-      const shippingRow = subtotalRow + 7;
-      const shippingNoteRow = subtotalRow + 8;
-      const deliveryRow = subtotalRow + 9;
-      const warrantyRow = subtotalRow + 10;
+      const vatRowCount = Math.max(vatBreakdown.length, 1);
+      const extraVatRows = Math.max(vatRowCount - 1, 0);
+
+      if (extraVatRows > 0) {
+        worksheet.insertRows(
+          subtotalRow + 2,
+          Array.from({ length: extraVatRows }, () => []),
+          "i"
+        );
+      }
+
+      const firstVatRow = subtotalRow + 1;
+      const totalRow = firstVatRow + vatRowCount;
+      const spacerRow = totalRow + 1;
+      const noteTitleRow = totalRow + 2;
+      const validityRow = totalRow + 3;
+      const deliveryTitleRow = totalRow + 4;
+      const shippingRow = totalRow + 5;
+      const shippingNoteRow = totalRow + 6;
+      const deliveryRow = totalRow + 7;
+      const warrantyRow = totalRow + 8;
 
       /*
        * Đảm bảo vùng tổng tiền vẫn được merge đúng sau khi chèn dòng.
        */
-      [subtotalRow, vatRow, totalRow].forEach((rowNumber) => {
+      [
+        subtotalRow,
+        ...Array.from(
+          { length: vatRowCount },
+          (_, index) => firstVatRow + index
+        ),
+        totalRow,
+      ].forEach((rowNumber) => {
         try {
           worksheet.unMergeCells(`A${rowNumber}:G${rowNumber}`);
         } catch {
@@ -537,29 +582,50 @@ function QuotationPrintContent() {
         result: subtotal,
       };
 
-      const vatText =
-        vatRates.length > 0
-          ? `Thuế VAT (${vatRates.join("%, ")}%):`
-          : "Thuế VAT (0%):";
+      if (vatBreakdown.length > 0) {
+        vatBreakdown.forEach(
+          ({ rate, amount }, index) => {
+            const rowNumber =
+              firstVatRow + index;
 
-      worksheet.getCell(`A${vatRow}`).value = vatText;
-      worksheet.getCell(`H${vatRow}`).value = {
-        formula:
-          vatRates.length === 1
-            ? `H${subtotalRow}*${vatRates[0]}%`
-            : `${vatAmount}`,
-        result: vatAmount,
-      };
+            worksheet.getCell(
+              `A${rowNumber}`
+            ).value = `VAT (${rate}%):`;
+
+            worksheet.getCell(
+              `H${rowNumber}`
+            ).value = amount;
+
+            worksheet.getCell(
+              `H${rowNumber}`
+            ).numFmt = "#,##0";
+          }
+        );
+      } else {
+        worksheet.getCell(
+          `A${firstVatRow}`
+        ).value = "VAT (0%):";
+
+        worksheet.getCell(
+          `H${firstVatRow}`
+        ).value = 0;
+
+        worksheet.getCell(
+          `H${firstVatRow}`
+        ).numFmt = "#,##0";
+      }
 
       worksheet.getCell(`A${totalRow}`).value =
         "Tổng cộng sau thuế:";
+
       worksheet.getCell(`H${totalRow}`).value = {
-        formula: `H${subtotalRow}+H${vatRow}`,
+        formula: `H${subtotalRow}+SUM(H${firstVatRow}:H${
+          firstVatRow + vatRowCount - 1
+        })`,
         result: total,
       };
 
       worksheet.getCell(`H${subtotalRow}`).numFmt = "#,##0";
-      worksheet.getCell(`H${vatRow}`).numFmt = "#,##0";
       worksheet.getCell(`H${totalRow}`).numFmt = "#,##0";
 
       /*
@@ -640,9 +706,9 @@ function QuotationPrintContent() {
        * Ngân hàng và chữ ký.
        * Các dòng này cũng tự dịch xuống khi thêm sản phẩm.
        */
-      const bankOwnerRow = subtotalRow + 15;
-      const bankAccountRow = subtotalRow + 16;
-      const signatureRow = subtotalRow + 18;
+      const bankOwnerRow = totalRow + 13;
+      const bankAccountRow = totalRow + 14;
+      const signatureRow = totalRow + 16;
       const buyerSignatureBlankRow = signatureRow + 1;
       const sellerSignatureBlankRow = signatureRow + 2;
 
@@ -668,7 +734,7 @@ function QuotationPrintContent() {
       /*
        * Dòng tiêu đề Thanh toán cần merge để không bị cắt còn chữ "Thanh".
        */
-      const paymentTitleRow = subtotalRow + 10;
+      const paymentTitleRow = totalRow + 8;
 
       try {
         worksheet.unMergeCells(`A${paymentTitleRow}:I${paymentTitleRow}`);
@@ -980,6 +1046,10 @@ ${exportError.message}`
                 Đơn Giá
               </th>
 
+              <th className="col-vat">
+                VAT
+              </th>
+
               <th className="col-total">
                 Thành Tiền
               </th>
@@ -1040,6 +1110,12 @@ ${exportError.message}`
                       )}
                     </td>
 
+                    <td className="center">
+                      {toNumber(item.tax) > 0
+                        ? `${toNumber(item.tax)}%`
+                        : ""}
+                    </td>
+
                     <td className="money">
                       {formatMoney(
                         lineSubtotal
@@ -1056,7 +1132,7 @@ ${exportError.message}`
 
             <tr className="summary-row">
               <td
-                colSpan={5}
+                colSpan={6}
                 className="summary-label"
               >
                 Tiền hàng trước thuế:
@@ -1071,30 +1147,29 @@ ${exportError.message}`
               <td />
             </tr>
 
-            <tr className="summary-row">
-              <td
-  colSpan={5}
-  className="summary-label"
->
-  Thuế VAT
-  {vatRates.length > 0
-    ? ` (${vatRates.join("%, ")}%)`
-    : " (0%)"}
-  :
-</td>
+            {vatBreakdown.map(({ rate, amount }) => (
+              <tr
+                key={`vat-${rate}`}
+                className="summary-row"
+              >
+                <td
+                  colSpan={6}
+                  className="summary-label"
+                >
+                  VAT ({rate}%):
+                </td>
 
-              <td className="money summary-value">
-                {formatMoney(
-                  vatAmount
-                )}
-              </td>
+                <td className="money summary-value">
+                  {formatMoney(amount)}
+                </td>
 
-              <td />
-            </tr>
+                <td />
+              </tr>
+            ))}
 
             <tr className="summary-row total-row">
               <td
-                colSpan={5}
+                colSpan={6}
                 className="summary-label"
               >
                 Tổng cộng sau thuế:
@@ -1474,7 +1549,7 @@ ${exportError.message}`
         }
 
         .col-product {
-          width: 77mm;
+          width: 65mm;
         }
 
         .col-unit {
@@ -1487,6 +1562,11 @@ ${exportError.message}`
 
         .col-price {
           width: 19mm;
+        }
+
+        .col-vat {
+          width: 11mm;
+          text-align: center;
         }
 
         .col-total {

@@ -28,6 +28,9 @@ export default function InvoicePage() {
   const [phone, setPhone] =
     useState("0900 000 000");
 
+  const [shopTaxCode, setShopTaxCode] =
+    useState("");
+
   const [invoiceTitle, setInvoiceTitle] =
     useState("HÓA ĐƠN BÁN HÀNG");
 
@@ -46,6 +49,9 @@ const [isTemporary, setIsTemporary] =
   const [paperSize, setPaperSize] =
     useState("A5");
 
+  const [bodyFontSize, setBodyFontSize] =
+    useState(13);
+
   const [showShopName, setShowShopName] =
     useState(true);
 
@@ -53,6 +59,9 @@ const [isTemporary, setIsTemporary] =
     useState(true);
 
   const [showPhone, setShowPhone] =
+    useState(true);
+
+  const [showTaxCode, setShowTaxCode] =
     useState(true);
 
   const [showTitle, setShowTitle] =
@@ -205,35 +214,44 @@ const [isTemporary, setIsTemporary] =
     );
   };
 
-  const getVatRateLabel = (
+  const getVatBreakdown = (
     item: any
   ) => {
-    const rates = Array.from(
-      new Set(
-        getItems(item)
-          .map((product: any) =>
-            Number(
-              product?.tax ??
-                product?.vat ??
-                0
-            )
-          )
-          .filter(
-            (rate: number) =>
-              Number.isFinite(rate) &&
-              rate > 0
-          )
-      )
-    ) as number[];
+    const breakdown = new Map<number, number>();
 
-    if (rates.length === 0) {
-      return "";
-    }
+    getItems(item).forEach((product: any) => {
+      const rate = Number(
+        product?.tax ??
+          product?.vat ??
+          product?.vatRate ??
+          product?.taxRate ??
+          0
+      );
 
-    return rates
-      .sort((a, b) => a - b)
-      .map((rate) => `${rate}%`)
-      .join(", ");
+      if (!Number.isFinite(rate) || rate <= 0) {
+        return;
+      }
+
+      const lineSubtotal =
+        getProductQuantity(product) *
+        getProductPrice(product);
+
+      const vatAmount =
+        lineSubtotal * rate / 100;
+
+      breakdown.set(
+        rate,
+        (breakdown.get(rate) || 0) + vatAmount
+      );
+    });
+
+    return Array.from(breakdown.entries())
+      .map(([rate, amount]) => ({
+        rate,
+        amount,
+      }))
+      .filter((row) => row.amount > 0)
+      .sort((a, b) => a.rate - b.rate);
   };
 
   const getDiscountAmount =
@@ -331,6 +349,10 @@ setIsTemporary(temporary);
                 "0900 000 000"
             );
 
+            setShopTaxCode(
+              data.shopTaxCode || data.taxCode || ""
+            );
+
             setInvoiceTitle(
               data.invoiceTitle ||
                 "HÓA ĐƠN BÁN HÀNG"
@@ -356,9 +378,14 @@ setIsTemporary(temporary);
                 "A5"
             );
 
+            setBodyFontSize(
+              Number(data.bodyFontSize) || 13
+            );
+
             setShowShopName(data.showShopName ?? true);
             setShowAddress(data.showAddress ?? true);
             setShowPhone(data.showPhone ?? true);
+            setShowTaxCode(data.showTaxCode ?? true);
             setShowTitle(data.showTitle ?? true);
             setShowDate(data.showDate ?? true);
             setShowOrderCode(data.showOrderCode ?? true);
@@ -519,6 +546,9 @@ if (!id) {
   const items =
     getItems(order);
 
+  const vatBreakdown =
+    getVatBreakdown(order);
+
   return (
     <main className="min-h-screen bg-white">
 
@@ -552,17 +582,20 @@ if (!id) {
       <div
         style={{
           margin: "0 auto",
+          ...(paperSize === "K80"
+            ? { fontSize: `${bodyFontSize}px` }
+            : {}),
         }}
         className={
           paperSize === "K80"
-            ? "print-box bg-white w-[80mm] p-[3.5mm] text-[12px] leading-[1.35] text-black"
+            ? "print-box bg-white w-[80mm] p-[3mm] leading-[1.4] text-black"
             : paperSize === "A4"
             ? "print-box bg-white w-[198mm] min-h-[285mm] p-[8mm] text-black text-[13px]"
             : "print-box bg-white w-[136mm] min-h-[190mm] p-[8mm] text-black text-[12px]"
         }
       >
 
-        {(showShopName || showAddress || showPhone) && (
+        {(showShopName || showAddress || showPhone || showTaxCode) && (
           <div className="text-center">
 
             {showShopName && (
@@ -579,15 +612,45 @@ if (!id) {
               </div>
             )}
 
-            {(showAddress || showPhone) && (
+            {(showAddress || showPhone || showTaxCode) && (
               <div
-                className={`mt-1 flex items-center justify-center gap-1 ${
-                  paperSize === "K80" ? "text-[12px]" : "text-[11px]"
+                className={`mt-1 ${
+                  paperSize === "K80"
+                    ? "text-[1em]"
+                    : "text-[11px]"
                 }`}
               >
-                {showAddress && <span className="whitespace-pre-line">{address}</span>}
-                {showAddress && showPhone && <span>|</span>}
-                {showPhone && <span>Hotline: {phone}</span>}
+                {paperSize === "K80" ? (
+                  <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
+                    {showAddress && (
+                      <span className="whitespace-pre-line">{address}</span>
+                    )}
+                    {showAddress && (showPhone || showTaxCode) && <span>|</span>}
+                    {showPhone && <span>Hotline: {phone}</span>}
+                    {showPhone && showTaxCode && <span>|</span>}
+                    {showTaxCode && (
+                      <span>MST: {shopTaxCode || "---"}</span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    {showAddress && (
+                      <div className="whitespace-pre-line">
+                        {address}
+                      </div>
+                    )}
+
+                    {(showPhone || showTaxCode) && (
+                      <div className="mt-1">
+                        {showPhone && <span>Hotline: {phone}</span>}
+                        {showPhone && showTaxCode && <span> | </span>}
+                        {showTaxCode && (
+                          <span>MST: {shopTaxCode || "---"}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -616,7 +679,7 @@ if (!id) {
             {(showDate || showOrderCode) && (
               <div
                 className={`mt-1 flex items-center justify-center gap-1 ${
-                  paperSize === "K80" ? "text-[12px]" : "text-[11px]"
+                  paperSize === "K80" ? "text-[1em]" : "text-[11px]"
                 }`}
               >
                 {showDate && (
@@ -654,11 +717,13 @@ if (!id) {
           order.customer?.companyName ||
           order.customerTaxCode ||
           order.customer?.taxCode ||
+          order.customerEmail ||
+          order.customer?.email ||
           order.customerAddress ||
           order.customer?.address) && (
           <div
             className={`mt-3 pb-2 text-left leading-[1.45] ${
-              paperSize === "K80" ? "text-[12px]" : "text-[11px]"
+              paperSize === "K80" ? "text-[1em]" : "text-[11px]"
             }`}
           >
             <div>
@@ -692,6 +757,17 @@ if (!id) {
               </div>
             )}
 
+            {(order.customerEmail ||
+              order.customer?.email) && (
+              <div className="mt-1">
+                <strong>Email:</strong>{" "}
+                <span className="font-normal break-all">
+                  {order.customerEmail ||
+                    order.customer?.email}
+                </span>
+              </div>
+            )}
+
             {(order.customerTaxCode ||
               order.customer?.taxCode) && (
               <div className="mt-1">
@@ -719,7 +795,7 @@ if (!id) {
         <table
           className={`w-full border-collapse mt-3 ${
             paperSize === "K80"
-              ? "text-[11px]"
+              ? "text-[0.96em]"
               : paperSize === "A4"
               ? "text-[12px]"
               : "text-[10px]"
@@ -780,7 +856,7 @@ if (!id) {
   {showProductCode && (
     <div
       className={`mt-[2px] text-gray-600 ${
-        paperSize === "K80" ? "text-[10px]" : "text-[8px]"
+        paperSize === "K80" ? "text-[0.85em]" : "text-[8px]"
       }`}
     >
       MSP:
@@ -832,7 +908,7 @@ if (!id) {
           <div
             className={`space-y-[1px] ${
               paperSize === "K80"
-                ? "w-full text-[12px]"
+                ? "w-full text-[1em]"
                 : paperSize === "A4"
                 ? "w-[320px] text-[12px]"
                 : "w-[230px] text-[10px]"
@@ -855,26 +931,20 @@ if (!id) {
             </div>
 
             {showVat &&
-              getVatAmount(order) > 0 && (
-                <div className="flex justify-between gap-2">
+              vatBreakdown.map(({ rate, amount }) => (
+                <div
+                  key={rate}
+                  className="flex justify-between gap-2"
+                >
                   <span className="pl-2">
-                    VAT
-                    {getVatRateLabel(order)
-                      ? ` (${getVatRateLabel(order)})`
-                      : ""}
-                    :
+                    VAT ({rate}%):
                   </span>
 
                   <strong>
-                    {formatMoney(
-                      getVatAmount(
-                        order
-                      )
-                    )}
-                    đ
+                    {formatMoney(amount)}đ
                   </strong>
                 </div>
-              )}
+              ))}
 
             {showDiscount && (
               <div className="flex justify-between gap-2">
@@ -895,7 +965,7 @@ if (!id) {
 
             <div
               className={`flex justify-between font-bold border-t border-gray-300 pt-1 mt-1 ${
-                paperSize === "K80" ? "text-[16px]" : paperSize === "A4" ? "text-[17px]" : "text-[14px]"
+                paperSize === "K80" ? "text-[1.3em]" : paperSize === "A4" ? "text-[17px]" : "text-[14px]"
               }`}
             >
               <span className="pl-2">
@@ -953,7 +1023,7 @@ if (!id) {
         {(showThankYou || showSeeYou) && (
           <div
             className={`text-center mt-6 space-y-1 ${
-              paperSize === "K80" ? "text-[12px]" : "text-[11px]"
+              paperSize === "K80" ? "text-[1em]" : "text-[11px]"
             }`}
           >
 

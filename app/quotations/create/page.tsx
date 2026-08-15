@@ -375,14 +375,42 @@ export default function CreateQuotationPage() {
     );
   }, [items]);
 
-  const vatAmount = useMemo(() => {
-    return items.reduce((sum, item) => {
+  const vatBreakdown = useMemo(() => {
+    const breakdown = new Map<number, number>();
+
+    items.forEach((item) => {
+      const rate = Number(item.tax || 0);
+
+      if (!Number.isFinite(rate) || rate <= 0) {
+        return;
+      }
+
       const lineSubtotal =
         Number(item.quantity || 0) * Number(item.price || 0);
 
-      return sum + lineSubtotal * (Number(item.tax || 0) / 100);
-    }, 0);
+      const lineVat = lineSubtotal * (rate / 100);
+
+      breakdown.set(
+        rate,
+        (breakdown.get(rate) || 0) + lineVat
+      );
+    });
+
+    return Array.from(breakdown.entries())
+      .map(([rate, amount]) => ({
+        rate,
+        amount,
+      }))
+      .filter((row) => row.amount > 0)
+      .sort((a, b) => a.rate - b.rate);
   }, [items]);
+
+  const vatAmount = useMemo(() => {
+    return vatBreakdown.reduce(
+      (sum, row) => sum + row.amount,
+      0
+    );
+  }, [vatBreakdown]);
 
   const total = subtotal + vatAmount;
 
@@ -1118,10 +1146,15 @@ export default function CreateQuotationPage() {
                     <span>Tiền hàng:</span>
                     <strong>{formatMoney(subtotal)}đ</strong>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Thuế VAT:</span>
-                    <strong>{formatMoney(vatAmount)}đ</strong>
-                  </div>
+                  {vatBreakdown.map(({ rate, amount }) => (
+                    <div
+                      key={rate}
+                      className="flex justify-between"
+                    >
+                      <span>VAT ({rate}%):</span>
+                      <strong>{formatMoney(amount)}đ</strong>
+                    </div>
+                  ))}
                   <div className="flex justify-between border-t border-slate-200 pt-3 text-xl font-bold text-rose-600">
                     <span>Tổng cộng:</span>
                     <span>{formatMoney(total)}đ</span>
