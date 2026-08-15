@@ -214,6 +214,27 @@ const [isTemporary, setIsTemporary] =
     );
   };
 
+  const hasAppliedVat = (item: any) => {
+    // Ưu tiên các cờ VAT nếu POS có lưu.
+    const explicitFlag =
+      item?.applyVat ??
+      item?.applyVAT ??
+      item?.includeVat ??
+      item?.includeVAT ??
+      item?.vatEnabled ??
+      item?.taxEnabled ??
+      item?.withVat ??
+      item?.hasVat;
+
+    if (explicitFlag !== undefined && explicitFlag !== null) {
+      return explicitFlag === true;
+    }
+
+    // Với đơn cũ chưa có cờ VAT: chỉ coi là có tính VAT
+    // khi chính đơn hàng đã lưu số tiền VAT > 0.
+    return getVatAmount(item) > 0;
+  };
+
   const getVatBreakdown = (
     item: any
   ) => {
@@ -314,6 +335,9 @@ const type =
 const temporary =
   type === "temporary";
 
+const requestedPaper =
+  (params.get("paper") || "").toUpperCase();
+
 setIsTemporary(temporary);
 
           const templateRef =
@@ -374,8 +398,11 @@ setIsTemporary(temporary);
             );
 
             setPaperSize(
-              data.paperSize ||
-                "A5"
+              requestedPaper === "K80" ||
+              requestedPaper === "A5" ||
+              requestedPaper === "A4"
+                ? requestedPaper
+                : data.paperSize || "A5"
             );
 
             setBodyFontSize(
@@ -396,6 +423,14 @@ setIsTemporary(temporary);
             setShowChange(data.showChange ?? true);
             setShowThankYou(data.showThankYou ?? true);
             setShowSeeYou(data.showSeeYou ?? true);
+          }
+
+          if (
+            requestedPaper === "K80" ||
+            requestedPaper === "A5" ||
+            requestedPaper === "A4"
+          ) {
+            setPaperSize(requestedPaper);
           }
 
           if (temporary) {
@@ -563,6 +598,14 @@ if (!id) {
           .print-box {
             box-shadow: none !important;
           }
+
+          .print-paper-a4,
+          .print-paper-a5 {
+            width: 100% !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+            margin: 0 auto !important;
+          }
         }
 
         @page {
@@ -590,8 +633,8 @@ if (!id) {
           paperSize === "K80"
             ? "print-box bg-white w-[80mm] p-[3mm] leading-[1.4] text-black"
             : paperSize === "A4"
-            ? "print-box bg-white w-[198mm] min-h-[285mm] p-[8mm] text-black text-[13px]"
-            : "print-box bg-white w-[136mm] min-h-[190mm] p-[8mm] text-black text-[12px]"
+            ? "print-box print-paper-a4 bg-white w-[198mm] min-h-[285mm] p-[8mm] text-black text-[13px]"
+            : "print-box print-paper-a5 bg-white w-[136mm] min-h-[190mm] p-[8mm] text-black text-[12px]"
         }
       >
 
@@ -806,23 +849,23 @@ if (!id) {
 
             <tr className="border-b border-dashed border-black">
 
-              <th className="py-1 text-left">
+              <th className="w-[8%] py-1 text-center">
                 STT
               </th>
 
-              <th className="py-1 text-left">
+              <th className="w-[48%] py-1 text-left">
                 Sản phẩm
               </th>
 
-              <th className="py-1 text-left">
+              <th className="w-[10%] py-1 text-center">
                 SL
               </th>
 
-              <th className="py-1 text-left">
+              <th className="w-[16%] py-1 text-right">
                 Giá
               </th>
 
-              <th className="py-1 text-left">
+              <th className="w-[18%] py-1 text-right">
                 Thành tiền
               </th>
 
@@ -931,6 +974,7 @@ if (!id) {
             </div>
 
             {showVat &&
+              hasAppliedVat(order) &&
               vatBreakdown.map(({ rate, amount }) => (
                 <div
                   key={rate}

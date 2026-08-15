@@ -161,6 +161,9 @@ export default function OrdersReportPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [openOrderId, setOpenOrderId] = useState("");
 
+  const [printPaperOrder, setPrintPaperOrder] =
+    useState<OrderData | null>(null);
+
   const itemsPerPage = 20;
 
   const toNumber = (value: any) => {
@@ -1249,12 +1252,7 @@ export default function OrdersReportPage() {
   <button
     type="button"
     onClick={() =>
-      window.open(
-  `/print-order/invoice?id=${
-    order.id || order.orderCode
-  }`,
-  "_blank"
-)
+      setPrintPaperOrder(order)
     }
     className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-xl font-semibold transition"
   >
@@ -1583,6 +1581,76 @@ export default function OrdersReportPage() {
           )}
         </section>
       </div>
+
+      {printPaperOrder && (
+        <div
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 p-4"
+          onClick={() =>
+            setPrintPaperOrder(null)
+          }
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <div className="mb-4">
+              <h3 className="text-xl font-bold text-slate-800">
+                Chọn khổ in
+              </h3>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Mã đơn: {getOrderCode(printPaperOrder)}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              {["K80", "A5", "A4"].map((paper) => (
+                <button
+                  key={paper}
+                  type="button"
+                  onClick={() => {
+                    const orderId =
+                      printPaperOrder.id ||
+                      printPaperOrder.orderCode ||
+                      printPaperOrder.order_code ||
+                      "";
+
+                    window.open(
+                      `/print-order/invoice?id=${encodeURIComponent(
+                        orderId
+                      )}&paper=${paper}`,
+                      "_blank"
+                    );
+
+                    setPrintPaperOrder(null);
+                  }}
+                  className={`rounded-xl border px-4 py-4 text-center font-bold transition ${
+                    paper === "K80"
+                      ? "border-sky-300 bg-sky-50 text-sky-700 hover:bg-sky-100"
+                      : paper === "A5"
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                      : "border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100"
+                  }`}
+                >
+                  {paper}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setPrintPaperOrder(null)
+              }
+              className="mt-4 w-full rounded-xl bg-slate-100 px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-200"
+            >
+              Hủy
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
