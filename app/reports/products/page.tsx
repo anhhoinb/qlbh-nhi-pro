@@ -11,6 +11,11 @@ type OrderItem = {
   sku?: string;
   code?: string;
   productCode?: string;
+  product_code?: string;
+  productLocation?: string;
+  product_location?: string;
+  location?: string;
+  position?: string;
   quantity?: number;
   qty?: number;
   price?: number;
@@ -39,6 +44,7 @@ type ProductReportRow = {
   dateText: string;
   productName: string;
   productCode: string;
+  productLocation: string;
   quantity: number;
   price: number;
   productMoney: number;
@@ -338,9 +344,16 @@ export default function ProductsReportPage() {
               item.product_name ||
               "---",
             productCode:
-              item.sku ||
-              item.code ||
+              item.product_code ||
               item.productCode ||
+              item.code ||
+              item.sku ||
+              "---",
+            productLocation:
+              item.product_location ||
+              item.productLocation ||
+              item.location ||
+              item.position ||
               "---",
             quantity,
             price,
@@ -440,6 +453,7 @@ export default function ProductsReportPage() {
       "Ngày",
       "Tên sản phẩm",
       "Mã sản phẩm",
+      "Vị trí",
       "Số lượng hàng bán",
       "Tiền hàng",
       "Chiết khấu sản phẩm",
@@ -451,6 +465,7 @@ export default function ProductsReportPage() {
       item.dateText,
       item.productName,
       item.productCode,
+      item.productLocation,
       item.quantity,
       item.productMoney,
       item.discount,
@@ -735,10 +750,20 @@ export default function ProductsReportPage() {
                         {item.productName}
                       </div>
 
-                      <div className="mt-1 text-xs text-slate-500">
-                        Mã:{" "}
-                        {item.productCode ||
-                          "---"}
+                      <div className="mt-1 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-slate-500">
+                        <span>
+                          Mã:{" "}
+                          <span className="font-medium text-slate-600">
+                            {item.productCode || "---"}
+                          </span>
+                        </span>
+
+                        <span>
+                          Vị trí:{" "}
+                          <span className="font-medium text-slate-600">
+                            {item.productLocation || "---"}
+                          </span>
+                        </span>
                       </div>
                     </td>
 
