@@ -25,6 +25,9 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] =
     useState<any>(null);
 
+  const [copiedCustomerField, setCopiedCustomerField] =
+    useState("");
+
   const [selectedOrderIds, setSelectedOrderIds] =
     useState<string[]>([]);
 
@@ -82,6 +85,29 @@ export default function OrdersPage() {
     }
   };
 
+  const copyCustomerInfo = async (
+    value: any,
+    fieldName: string
+  ) => {
+    const textValue = String(value || "").trim();
+
+    if (!textValue || textValue === "---") {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(textValue);
+      setCopiedCustomerField(fieldName);
+
+      window.setTimeout(() => {
+        setCopiedCustomerField("");
+      }, 1200);
+    } catch (error) {
+      console.error("COPY ERROR:", error);
+      alert("Không thể sao chép nội dung");
+    }
+  };
+
   const getCustomerName = (item: any) => {
     if (typeof item.customer_name === "object") {
       return item.customer_name?.name || "---";
@@ -111,6 +137,23 @@ export default function OrdersPage() {
     return (
       item.customer_phone ||
       item.phone ||
+      ""
+    );
+  };
+
+  const getCustomerEmail = (item: any) => {
+    if (typeof item.customer === "object") {
+      return (
+        item.customer?.email ||
+        item.customer?.customerEmail ||
+        ""
+      );
+    }
+
+    return (
+      item.customerEmail ||
+      item.customer_email ||
+      item.email ||
       ""
     );
   };
@@ -151,13 +194,93 @@ export default function OrdersPage() {
     );
   };
 
-  const getProductName = (product: any) => {
+  const getProductMainName = (product: any) => {
     return (
+      product.main_name ||
+      product.mainName ||
       product.name ||
       product.productName ||
       product.product_name ||
       "---"
     );
+  };
+
+  const getProductShortName = (product: any) => {
+    return (
+      product.short_name ||
+      product.shortName ||
+      product.name ||
+      product.productName ||
+      product.product_name ||
+      "---"
+    );
+  };
+
+  const getProductDisplayNames = (product: any) => {
+    const mainName = getProductMainName(product);
+    const shortName = getProductShortName(product);
+
+    // POS đã lưu printName theo lựa chọn lúc bán:
+    // - Tên bán => short_name
+    // - Tên đầy đủ => main_name
+    const savedPrintName = String(
+      product.printName ||
+        product.print_name ||
+        ""
+    ).trim();
+
+    const primaryName =
+      savedPrintName ||
+      shortName ||
+      mainName ||
+      "---";
+
+    const normalizedPrimary = String(primaryName)
+      .trim()
+      .toLocaleLowerCase("vi-VN");
+
+    const normalizedMain = String(mainName)
+      .trim()
+      .toLocaleLowerCase("vi-VN");
+
+    const normalizedShort = String(shortName)
+      .trim()
+      .toLocaleLowerCase("vi-VN");
+
+    let secondaryName = "";
+
+    if (
+      normalizedPrimary === normalizedMain &&
+      normalizedShort &&
+      normalizedShort !== normalizedMain
+    ) {
+      secondaryName = shortName;
+    } else if (
+      normalizedPrimary === normalizedShort &&
+      normalizedMain &&
+      normalizedMain !== normalizedShort
+    ) {
+      secondaryName = mainName;
+    } else if (
+      normalizedMain &&
+      normalizedMain !== normalizedPrimary
+    ) {
+      secondaryName = mainName;
+    } else if (
+      normalizedShort &&
+      normalizedShort !== normalizedPrimary
+    ) {
+      secondaryName = shortName;
+    }
+
+    return {
+      primaryName,
+      secondaryName,
+    };
+  };
+
+  const getProductName = (product: any) => {
+    return getProductDisplayNames(product).primaryName;
   };
 
   const getProductSku = (product: any) => {
@@ -2059,27 +2182,84 @@ export default function OrdersPage() {
                       <span className="text-slate-500">
                         Khách hàng
                       </span>
-                      <span className="font-semibold text-right">
-                        {getCustomerName(selectedOrder)}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          copyCustomerInfo(
+                            getCustomerName(selectedOrder),
+                            "name"
+                          )
+                        }
+                        className="font-semibold text-right cursor-copy hover:text-sky-700 hover:underline"
+                        title="Nhấn để sao chép"
+                      >
+                        {copiedCustomerField === "name"
+                          ? "Đã sao chép"
+                          : getCustomerName(selectedOrder)}
+                      </button>
                     </div>
 
                     <div className="flex justify-between gap-4">
                       <span className="text-slate-500">
                         Số điện thoại
                       </span>
-                      <span className="font-semibold text-right">
-                        {getCustomerPhone(selectedOrder) || "---"}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          copyCustomerInfo(
+                            getCustomerPhone(selectedOrder),
+                            "phone"
+                          )
+                        }
+                        className="font-semibold text-right cursor-copy hover:text-sky-700 hover:underline"
+                        title="Nhấn để sao chép"
+                      >
+                        {copiedCustomerField === "phone"
+                          ? "Đã sao chép"
+                          : getCustomerPhone(selectedOrder) || "---"}
+                      </button>
+                    </div>
+
+                    <div className="flex justify-between gap-4">
+                      <span className="text-slate-500">
+                        Email
                       </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          copyCustomerInfo(
+                            getCustomerEmail(selectedOrder),
+                            "email"
+                          )
+                        }
+                        className="font-semibold text-right break-all cursor-copy hover:text-sky-700 hover:underline"
+                        title="Nhấn để sao chép"
+                      >
+                        {copiedCustomerField === "email"
+                          ? "Đã sao chép"
+                          : getCustomerEmail(selectedOrder) || "---"}
+                      </button>
                     </div>
 
                     <div className="flex justify-between gap-4">
                       <span className="text-slate-500">
                         Địa chỉ
                       </span>
-                      <span className="font-semibold text-right">
-                        {getCustomerAddress(selectedOrder) || "---"}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          copyCustomerInfo(
+                            getCustomerAddress(selectedOrder),
+                            "address"
+                          )
+                        }
+                        className="max-w-[70%] font-semibold text-right cursor-copy hover:text-sky-700 hover:underline"
+                        title="Nhấn để sao chép"
+                      >
+                        {copiedCustomerField === "address"
+                          ? "Đã sao chép"
+                          : getCustomerAddress(selectedOrder) || "---"}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -2208,9 +2388,26 @@ export default function OrdersPage() {
                           </td>
 
                           <td className="p-3">
-                            <div className="font-semibold">
-                              {getProductName(product)}
-                            </div>
+                            {(() => {
+                              const {
+                                primaryName,
+                                secondaryName,
+                              } = getProductDisplayNames(product);
+
+                              return (
+                                <div>
+                                  <div className="font-semibold text-slate-900">
+                                    {primaryName}
+                                  </div>
+
+                                  {secondaryName && (
+                                    <div className="mt-1 text-xs text-slate-500">
+                                      {secondaryName}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </td>
 
                           <td className="p-3 text-slate-700">
