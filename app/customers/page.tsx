@@ -1071,12 +1071,60 @@ export default function CustomersPage() {
                               "---"}
                           </td>
 
-                          <td className="px-4 py-3 font-semibold">
-                            {item.printName ||
-                              item.short_name ||
-                              item.main_name ||
-                              item.name ||
-                              "---"}
+                          <td className="px-4 py-3">
+                            {(() => {
+                              const displayedName =
+                                item.printName ||
+                                item.short_name ||
+                                item.main_name ||
+                                item.name ||
+                                "---";
+
+                              const mainName =
+                                item.main_name ||
+                                item.mainName ||
+                                item.name ||
+                                "";
+
+                              const shortName =
+                                item.short_name ||
+                                item.shortName ||
+                                "";
+
+                              const normalizeName = (value: any) =>
+                                String(value || "").trim().toLocaleLowerCase("vi-VN");
+
+                              const displayedNormalized =
+                                normalizeName(displayedName);
+
+                              let secondaryName = "";
+
+                              if (
+                                shortName &&
+                                normalizeName(shortName) !== displayedNormalized
+                              ) {
+                                secondaryName = shortName;
+                              } else if (
+                                mainName &&
+                                normalizeName(mainName) !== displayedNormalized
+                              ) {
+                                secondaryName = mainName;
+                              }
+
+                              return (
+                                <div>
+                                  <div className="font-semibold text-slate-900">
+                                    {displayedName}
+                                  </div>
+
+                                  {secondaryName && (
+                                    <div className="mt-1 text-xs font-normal text-slate-500">
+                                      {secondaryName}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </td>
 
                           <td className="px-4 py-3 text-center">
