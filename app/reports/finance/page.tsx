@@ -13,7 +13,17 @@ type OrderItem = {
   id?: string;
   name?: string;
   productName?: string;
+  product_name?: string;
   title?: string;
+  main_name?: string;
+  mainName?: string;
+  full_name?: string;
+  fullName?: string;
+  short_name?: string;
+  shortName?: string;
+  sell_name?: string;
+  sellName?: string;
+  printName?: string;
   sku?: string;
   code?: string;
   quantity?: number;
@@ -240,6 +250,78 @@ export default function FinanceReportPage() {
       order.items ||
       order.products ||
       []
+    );
+  };
+
+  const getItemPrimaryName = (
+    item: OrderItem
+  ) => {
+    return (
+      item.printName ||
+      item.name ||
+      item.productName ||
+      item.product_name ||
+      item.title ||
+      item.short_name ||
+      item.shortName ||
+      item.sell_name ||
+      item.sellName ||
+      item.main_name ||
+      item.mainName ||
+      item.full_name ||
+      item.fullName ||
+      "---"
+    );
+  };
+
+  const getItemFullName = (
+    item: OrderItem
+  ) => {
+    return (
+      item.main_name ||
+      item.mainName ||
+      item.full_name ||
+      item.fullName ||
+      ""
+    );
+  };
+
+  const getItemSellName = (
+    item: OrderItem
+  ) => {
+    return (
+      item.short_name ||
+      item.shortName ||
+      item.sell_name ||
+      item.sellName ||
+      ""
+    );
+  };
+
+  const getItemSecondaryName = (
+    item: OrderItem
+  ) => {
+    const primaryName =
+      getItemPrimaryName(item).trim();
+
+    const normalizedPrimary =
+      primaryName.toLocaleLowerCase("vi-VN");
+
+    const candidates = [
+      getItemSellName(item),
+      getItemFullName(item),
+    ];
+
+    return (
+      candidates.find((name) => {
+        const value = String(name || "").trim();
+
+        return (
+          value &&
+          value.toLocaleLowerCase("vi-VN") !==
+            normalizedPrimary
+        );
+      }) || ""
     );
   };
 
@@ -1422,11 +1504,19 @@ export default function FinanceReportPage() {
                                                       {itemIndex + 1}
                                                     </td>
 
-                                                    <td className="px-3 py-2 font-semibold">
-                                                      {item.name ||
-                                                        item.productName ||
-                                                        item.title ||
-                                                        "---"}
+                                                    <td className="px-3 py-2">
+                                                      <div className="font-semibold leading-5">
+                                                        {getItemPrimaryName(item)}
+                                                      </div>
+
+                                                      {getItemSecondaryName(item) && (
+                                                        <div
+                                                          className="mt-0.5 text-xs leading-4 text-slate-500"
+                                                          title={getItemSecondaryName(item)}
+                                                        >
+                                                          {getItemSecondaryName(item)}
+                                                        </div>
+                                                      )}
                                                     </td>
 
                                                     <td className="px-3 py-2">

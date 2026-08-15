@@ -55,6 +55,37 @@ export default function InventoryReportPage() {
     );
   };
 
+  const getProductSecondaryName = (product: any) => {
+    const primaryName = String(
+      getProductName(product) || ""
+    )
+      .trim()
+      .toLocaleLowerCase("vi-VN");
+
+    const candidates = [
+      product.short_name,
+      product.shortName,
+      product.sell_name,
+      product.sellName,
+      product.main_name,
+      product.mainName,
+      product.full_name,
+      product.fullName,
+    ];
+
+    return (
+      candidates.find((value) => {
+        const name = String(value || "").trim();
+
+        return (
+          name &&
+          name.toLocaleLowerCase("vi-VN") !==
+            primaryName
+        );
+      }) || ""
+    );
+  };
+
   const getProductSku = (product: any) => {
     return (
       product.product_code ||
@@ -378,6 +409,12 @@ const valueB =
                 {getProductName(product)}
               </div>
 
+              {getProductSecondaryName(product) && (
+                <div className="mt-0.5 text-xs text-slate-500">
+                  {getProductSecondaryName(product)}
+                </div>
+              )}
+
               <div className="text-sm text-slate-500">
                 SKU: {getProductSku(product)}
               </div>
@@ -643,8 +680,16 @@ const total =
                             1}
                         </td>
 
-                        <td className="p-3 font-semibold">
-                          {getProductName(product)}
+                        <td className="p-3">
+                          <div className="font-semibold text-slate-900">
+                            {getProductName(product)}
+                          </div>
+
+                          {getProductSecondaryName(product) && (
+                            <div className="mt-1 text-xs font-normal text-slate-500">
+                              {getProductSecondaryName(product)}
+                            </div>
+                          )}
                         </td>
 
                         <td className="p-3">
@@ -829,8 +874,16 @@ const total =
                           {index + 1}
                         </td>
 
-                        <td className="p-3 font-semibold">
-                          {getProductName(product)}
+                        <td className="p-3">
+                          <div className="font-semibold text-slate-900">
+                            {getProductName(product)}
+                          </div>
+
+                          {getProductSecondaryName(product) && (
+                            <div className="mt-1 text-xs font-normal text-slate-500">
+                              {getProductSecondaryName(product)}
+                            </div>
+                          )}
                         </td>
 
                         <td className="p-3">

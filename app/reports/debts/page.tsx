@@ -19,9 +19,11 @@ export default function DebtReportPage() {
     const [selectedDebt, setSelectedDebt] =
   useState<any>(null);
     const [products, setProducts] =
-  useState([
+  useState<any[]>([
     {
       name: "",
+      main_name: "",
+      short_name: "",
       qty: 1,
       price: 0,
     },
@@ -31,6 +33,12 @@ export default function DebtReportPage() {
   inventoryProducts,
   setInventoryProducts,
 ] = useState<any[]>([]);
+
+  const [productSearch, setProductSearch] =
+    useState<Record<number, string>>({});
+
+  const [openProductDropdown, setOpenProductDropdown] =
+    useState<number | null>(null);
 
 useEffect(() => {
 
@@ -57,10 +65,14 @@ console.log(
   const [newDebt, setNewDebt] =
     useState({
       customer: "",
+      phone: "",
+      address: "",
       type: "customer",
       total: "",
       paid: "",
-      createdDate: "",
+      createdDate: new Date()
+        .toISOString()
+        .slice(0, 10),
       dueDate: "",
       note: "",
     });
@@ -194,6 +206,12 @@ loadDebts();
       customer:
         newDebt.customer,
 
+      phone:
+        newDebt.phone,
+
+      address:
+        newDebt.address,
+
       total: Number(
         newDebt.total
       ),
@@ -229,16 +247,22 @@ await addDoc(
 
     setNewDebt({
       customer: "",
+      phone: "",
+      address: "",
       type: "customer",
       total: "",
       paid: "",
-      createdDate: "",
+      createdDate: new Date()
+        .toISOString()
+        .slice(0, 10),
       dueDate: "",
       note: "",
     });
 setProducts([
   {
     name: "",
+    main_name: "",
+    short_name: "",
     qty: 1,
     price: 0,
   },
@@ -246,6 +270,350 @@ setProducts([
 
     setShowAddDebt(false);
   };
+
+  const getInventoryProductName = (product: any) => {
+    return (
+      product.short_name ||
+      product.shortName ||
+      product.sell_name ||
+      product.sellName ||
+      product.main_name ||
+      product.mainName ||
+      product.name ||
+      product.productName ||
+      ""
+    );
+  };
+
+  const getInventoryProductFullName = (product: any) => {
+    return (
+      product.main_name ||
+      product.mainName ||
+      product.full_name ||
+      product.fullName ||
+      product.name ||
+      ""
+    );
+  };
+
+  const getInventoryProductSellName = (product: any) => {
+    return (
+      product.short_name ||
+      product.shortName ||
+      product.sell_name ||
+      product.sellName ||
+      product.name ||
+      ""
+    );
+  };
+
+  const getInventoryProductCode = (product: any) => {
+    return (
+      product.product_code ||
+      product.productCode ||
+      product.sku ||
+      product.code ||
+      ""
+    );
+  };
+
+  const getInventoryDisplayPrimary = (product: any) => {
+    return (
+      product.short_name ||
+      product.shortName ||
+      product.sell_name ||
+      product.sellName ||
+      product.name ||
+      product.productName ||
+      product.product_name ||
+      product.main_name ||
+      product.mainName ||
+      product.full_name ||
+      product.fullName ||
+      "Sản phẩm"
+    );
+  };
+
+  const getInventoryDisplaySecondary = (product: any) => {
+    const primary = String(
+      getInventoryDisplayPrimary(product)
+    )
+      .trim()
+      .toLocaleLowerCase("vi-VN");
+
+    const candidates = [
+      product.main_name,
+      product.mainName,
+      product.full_name,
+      product.fullName,
+      product.short_name,
+      product.shortName,
+      product.sell_name,
+      product.sellName,
+      product.name,
+      product.productName,
+      product.product_name,
+    ];
+
+    return (
+      candidates.find((value) => {
+        const name = String(value || "").trim();
+
+        return (
+          name &&
+          name.toLocaleLowerCase("vi-VN") !== primary
+        );
+      }) || ""
+    );
+  };
+
+  const getFilteredInventoryProducts = (index: number) => {
+    const keyword = String(
+      productSearch[index] ?? products[index]?.name ?? ""
+    )
+      .trim()
+      .toLocaleLowerCase("vi-VN");
+
+    const filtered = inventoryProducts.filter((product: any) => {
+      if (!keyword) return true;
+
+      const searchable = [
+        product.name,
+        product.productName,
+        product.product_name,
+        product.main_name,
+        product.mainName,
+        product.full_name,
+        product.fullName,
+        product.short_name,
+        product.shortName,
+        product.sell_name,
+        product.sellName,
+        product.product_code,
+        product.productCode,
+        product.sku,
+        product.code,
+      ]
+        .map((value) =>
+          String(value || "")
+            .toLocaleLowerCase("vi-VN")
+        )
+        .join(" ");
+
+      return searchable.includes(keyword);
+    });
+
+    return filtered.slice(0, 15);
+  };
+
+  const selectDebtProduct = (
+    index: number,
+    selected: any
+  ) => {
+    const selectedCode =
+      getInventoryProductCode(selected);
+
+    const selectedName =
+      getInventoryProductName(selected);
+
+    const existingIndex =
+      products.findIndex((item: any, itemIndex: number) => {
+        if (itemIndex === index) {
+          return false;
+        }
+
+        const itemCode = String(
+          item.product_code ||
+          item.productCode ||
+          item.sku ||
+          item.code ||
+          ""
+        ).trim();
+
+        const itemName = String(
+          item.name || ""
+        )
+          .trim()
+          .toLocaleLowerCase("vi-VN");
+
+        const targetName = String(selectedName)
+          .trim()
+          .toLocaleLowerCase("vi-VN");
+
+        if (selectedCode && itemCode) {
+          return itemCode === selectedCode;
+        }
+
+        return Boolean(
+          targetName &&
+          itemName === targetName
+        );
+      });
+
+    if (existingIndex >= 0) {
+      const clone = [...products];
+
+      clone[existingIndex] = {
+        ...clone[existingIndex],
+        qty:
+          Number(clone[existingIndex].qty || 0) + 1,
+      };
+
+      clone.splice(index, 1);
+
+      setProducts(
+        clone.length
+          ? clone
+          : [
+              {
+                name: "",
+                main_name: "",
+                short_name: "",
+                qty: 1,
+                price: 0,
+              },
+            ]
+      );
+
+      setProductSearch((prev) => {
+        const next = { ...prev };
+        delete next[index];
+        return next;
+      });
+
+      setOpenProductDropdown(null);
+      return;
+    }
+
+    const clone = [...products];
+
+    clone[index] = {
+      ...clone[index],
+      name: selectedName,
+      main_name: getInventoryProductFullName(selected),
+      short_name: getInventoryProductSellName(selected),
+      product_code: selectedCode,
+      price: Number(
+        selected.price ||
+        selected.sellPrice ||
+        selected.salePrice ||
+        0
+      ),
+    };
+
+    setProducts(clone);
+
+    setProductSearch((prev) => ({
+      ...prev,
+      [index]: selectedName,
+    }));
+
+    setOpenProductDropdown(null);
+  };
+
+  const getDebtProductDisplayPrimary = (item: any) => {
+    return (
+      item.printName ||
+      item.name ||
+      item.short_name ||
+      item.shortName ||
+      item.main_name ||
+      item.mainName ||
+      "Sản phẩm"
+    );
+  };
+
+  const getDebtProductDisplaySecondary = (item: any) => {
+    const primary = String(
+      getDebtProductDisplayPrimary(item)
+    )
+      .trim()
+      .toLocaleLowerCase("vi-VN");
+
+    const candidates = [
+      item.main_name,
+      item.mainName,
+      item.full_name,
+      item.fullName,
+      item.short_name,
+      item.shortName,
+      item.sell_name,
+      item.sellName,
+    ];
+
+    return (
+      candidates.find((value) => {
+        const name = String(value || "").trim();
+
+        return (
+          name &&
+          name.toLocaleLowerCase("vi-VN") !== primary
+        );
+      }) || ""
+    );
+  };
+
+  const getDebtProductPrimaryName = (item: any) => {
+    return (
+      item.printName ||
+      item.name ||
+      item.productName ||
+      item.product_name ||
+      item.short_name ||
+      item.shortName ||
+      item.sell_name ||
+      item.sellName ||
+      item.main_name ||
+      item.mainName ||
+      item.full_name ||
+      item.fullName ||
+      "Sản phẩm"
+    );
+  };
+
+  const getDebtProductSecondaryName = (item: any) => {
+    const primary =
+      getDebtProductPrimaryName(item)
+        .trim()
+        .toLocaleLowerCase("vi-VN");
+
+    const candidates = [
+      item.short_name,
+      item.shortName,
+      item.sell_name,
+      item.sellName,
+      item.main_name,
+      item.mainName,
+      item.full_name,
+      item.fullName,
+    ];
+
+    return (
+      candidates.find((value) => {
+        const name = String(value || "").trim();
+
+        return (
+          name &&
+          name.toLocaleLowerCase("vi-VN") !== primary
+        );
+      }) || ""
+    );
+  };
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && showAddDebt) {
+        setShowAddDebt(false);
+        setOpenProductDropdown(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [showAddDebt]);
 
   const collectDebt = async (
   debt:any
@@ -612,7 +980,7 @@ debt.firestoreId
         >
 
           <div
-            className="bg-white p-7 rounded-2xl w-full max-w-2xl"
+            className="bg-white p-5 rounded-2xl w-full max-w-6xl max-h-[92vh] overflow-y-auto"
             onClick={(e) =>
               e.stopPropagation()
             }
@@ -622,358 +990,551 @@ debt.firestoreId
               Thêm công nợ
             </h2>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pb-2">
 
-              <input
-                placeholder="Tên khách hàng / NCC *"
-                value={
-                  newDebt.customer
-                }
-                onChange={(e) =>
-                  setNewDebt({
-                    ...newDebt,
-                    customer:
-                      e.target.value,
-                  })
-                }
-                className="border border-slate-300 p-4 rounded-xl"
-              />
+              <section className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-700">
+                  Thông tin khách hàng công nợ
+                </h3>
 
-              <select
-                value={
-                  newDebt.type
-                }
-                onChange={(e) =>
-                  setNewDebt({
-                    ...newDebt,
-                    type:
-                      e.target.value,
-                  })
-                }
-                className="border border-slate-300 p-4 rounded-xl"
-              >
+                <div className="space-y-2">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-600">
+                      Tên khách hàng / NCC *
+                    </label>
 
-                <option value="customer">
-                  Công nợ khách hàng
-                </option>
+                    <input
+                      placeholder="Nhập tên khách hàng / NCC"
+                      value={newDebt.customer}
+                      onChange={(e) =>
+                        setNewDebt({
+                          ...newDebt,
+                          customer: e.target.value,
+                        })
+                      }
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                    />
+                  </div>
 
-                <option value="supplier">
-                  Công nợ NCC
-                </option>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-600">
+                        Số điện thoại
+                      </label>
 
-              </select>
+                      <input
+                        placeholder="Số điện thoại"
+                        value={newDebt.phone}
+                        onChange={(e) =>
+                          setNewDebt({
+                            ...newDebt,
+                            phone: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                      />
+                    </div>
 
-              <input
-  placeholder="Tổng tiền tự tính"
-  value={
-    formatMoney(
-      productsTotal
-    )
-  }
-  readOnly
-  className="border border-slate-300 p-4 rounded-xl bg-slate-100"
-/>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-600">
+                        Loại công nợ
+                      </label>
 
-              <input
-                placeholder="Đã thanh toán"
-                value={
-                  newDebt.paid
-                }
-                onChange={(e) =>
-                  setNewDebt({
-                    ...newDebt,
-                    paid:
-                      e.target.value,
-                  })
-                }
-                className="border border-slate-300 p-4 rounded-xl"
-              />
+                      <select
+                        value={newDebt.type}
+                        onChange={(e) =>
+                          setNewDebt({
+                            ...newDebt,
+                            type: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                      >
+                        <option value="customer">
+                          Công nợ khách hàng
+                        </option>
 
-              <div className="col-span-2">
+                        <option value="supplier">
+                          Công nợ NCC
+                        </option>
+                      </select>
+                    </div>
+                  </div>
 
-                <label className="text-sm text-slate-500 block mb-2">
-                  Còn nợ
-                </label>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-600">
+                      Địa chỉ
+                    </label>
 
-                <div className="border rounded-2xl p-4 bg-slate-100 font-semibold text-rose-600">
-
-                  {formatMoney(
-                    autoRemaining
-                  )}đ
-
+                    <textarea
+                      rows={2}
+                      placeholder="Địa chỉ khách hàng / NCC"
+                      value={newDebt.address}
+                      onChange={(e) =>
+                        setNewDebt({
+                          ...newDebt,
+                          address: e.target.value,
+                        })
+                      }
+                      className="w-full resize-y rounded-xl border border-slate-300 p-3"
+                    />
+                  </div>
                 </div>
+              </section>
 
-              </div>
+              <section className="rounded-xl border border-slate-200 bg-white p-3">
+                <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-700">
+                  Thông tin công nợ
+                </h3>
 
-              <div>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-600">
+                        Tổng tiền
+                      </label>
 
-                <label className="text-sm text-slate-500 mb-2 block">
-                  Ngày tạo
-                </label>
+                      <input
+                        placeholder="Tổng tiền tự tính"
+                        value={formatMoney(productsTotal)}
+                        readOnly
+                        className="w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2"
+                      />
+                    </div>
 
-                <input
-                  type="date"
-                  value={
-                    newDebt.createdDate
-                  }
-                  onChange={(e) =>
-                    setNewDebt({
-                      ...newDebt,
-                      createdDate:
-                        e.target.value,
-                    })
-                  }
-                  className="border border-slate-300 p-4 rounded-xl w-full"
-                />
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-600">
+                        Đã thanh toán
+                      </label>
 
-              </div>
+                      <input
+                        placeholder="Đã thanh toán"
+                        value={newDebt.paid}
+                        onChange={(e) =>
+                          setNewDebt({
+                            ...newDebt,
+                            paid: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                      />
+                    </div>
 
-              <div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-600">
+                        Còn nợ
+                      </label>
 
-                <label className="text-sm text-slate-500 mb-2 block">
-                  Hạn thanh toán
-                </label>
+                      <div className="w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 font-semibold text-rose-600">
+                        {formatMoney(autoRemaining)}đ
+                      </div>
+                    </div>
+                  </div>
 
-                <input
-                  type="date"
-                  value={
-                    newDebt.dueDate
-                  }
-                  onChange={(e) =>
-                    setNewDebt({
-                      ...newDebt,
-                      dueDate:
-                        e.target.value,
-                    })
-                  }
-                  className="border border-slate-300 p-4 rounded-xl w-full"
-                />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-600">
+                        Ngày tạo
+                      </label>
 
-              </div>
+                      <input
+                        type="date"
+                        value={newDebt.createdDate}
+                        onChange={(e) =>
+                          setNewDebt({
+                            ...newDebt,
+                            createdDate: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-600">
+                        Hạn thanh toán
+                      </label>
+
+                      <input
+                        type="date"
+                        value={newDebt.dueDate}
+                        onChange={(e) =>
+                          setNewDebt({
+                            ...newDebt,
+                            dueDate: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-600">
+                      Ghi chú
+                    </label>
+
+                    <textarea
+                      rows={2}
+                      placeholder="Ghi chú"
+                      value={newDebt.note}
+                      onChange={(e) =>
+                        setNewDebt({
+                          ...newDebt,
+                          note: e.target.value,
+                        })
+                      }
+                      className="w-full resize-y rounded-xl border border-slate-300 p-3"
+                    />
+                  </div>
+                </div>
+              </section>
+
 <div className="col-span-2">
 
-  <label className="font-medium mb-3 block">
-    Danh sách sản phẩm
-  </label>
+  <div className="mb-2">
+    <label className="font-medium">
+      Danh sách sản phẩm
+    </label>
+  </div>
 
-  {products.map((item, index) => (
+  <div className="relative mb-3">
+    <input
+      id="debt-product-search"
+      placeholder="Tìm theo tên bán, tên đầy đủ hoặc mã SP..."
+      value={productSearch[-1] || ""}
+      onFocus={() => setOpenProductDropdown(-1)}
+      onChange={(e) => {
+        setProductSearch((prev) => ({
+          ...prev,
+          [-1]: e.target.value,
+        }));
+        setOpenProductDropdown(-1);
+      }}
+      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 pr-10 outline-none focus:border-sky-500"
+    />
 
-    <div
-      key={index}
-      className="grid grid-cols-[3fr_1fr_1fr_1fr_60px] gap-3 mb-4 items-end"
+    <button
+      type="button"
+      onClick={() =>
+        setOpenProductDropdown(
+          openProductDropdown === -1 ? null : -1
+        )
+      }
+      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg text-slate-500 hover:bg-slate-100"
     >
+      ▾
+    </button>
 
-      <div>
+    {openProductDropdown === -1 && (
+      <div className="absolute left-0 right-0 top-full z-[90] mt-1 max-h-80 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+        {(() => {
+          const keyword = String(productSearch[-1] || "")
+            .trim()
+            .toLocaleLowerCase("vi-VN");
 
-        <label className="text-xs text-slate-500 mb-1 block">
-          Sản phẩm
-        </label>
+          const list = inventoryProducts
+            .filter((product: any) => {
+              if (!keyword) return true;
 
-        <input
-  list={`product-list-${index}`}
-  placeholder="Tên SP"
-  value={item.name}
-  onChange={(e) => {
+              const searchable = [
+                product.name,
+                product.productName,
+                product.product_name,
+                product.main_name,
+                product.mainName,
+                product.full_name,
+                product.fullName,
+                product.short_name,
+                product.shortName,
+                product.sell_name,
+                product.sellName,
+                product.product_code,
+                product.productCode,
+                product.sku,
+                product.code,
+              ]
+                .map((value) =>
+                  String(value || "")
+                    .toLocaleLowerCase("vi-VN")
+                )
+                .join(" ");
 
-  const clone =
-    [...products];
+              return searchable.includes(keyword);
+            })
+            .slice(0, 15);
 
-  const selected =
-    inventoryProducts.find(
-      (p:any) =>
-
-        p.name ===
-        e.target.value
-    );
-
-  clone[index].name =
-    e.target.value;
-
-  if (selected) {
-
-    clone[index].price =
-      Number(
-        selected.price || 0
-      );
-
-  }
-
-  setProducts(
-    clone
-  );
-
-}}
-  className="border border-slate-300 p-3 rounded-xl w-full"
-/>
-
-        <datalist
-  id={`product-list-${index}`}
->
-
-  {inventoryProducts.map(
-    (product:any)=>(
-
-      <option
-        key={
-          product.id ||
-          product.product_code
-        }
-
-        value={
-          product.name ||
-          ""
-        }
-
-      />
-
-    )
-  )}
-
-</datalist>
-
-      </div>
-
-      <div>
-
-        <label className="text-xs text-slate-500 mb-1 block">
-          SL
-        </label>
-
-        <input
-          type="number"
-          value={item.qty}
-          onChange={(e) => {
-
-            const clone =
-              [...products];
-
-            clone[index].qty =
-              Number(
-                e.target.value
-              );
-
-            setProducts(clone);
-
-          }}
-          className="border border-slate-300 p-3 rounded-xl w-full"
-        />
-
-      </div>
-
-      <div>
-
-        <label className="text-xs text-slate-500 mb-1 block">
-          Đơn giá
-        </label>
-
-        <input
-          type="number"
-          value={item.price}
-          onChange={(e) => {
-
-            const clone =
-              [...products];
-
-            clone[index].price =
-              Number(
-                e.target.value
-              );
-
-            setProducts(clone);
-
-          }}
-          className="border border-slate-300 p-3 rounded-xl w-full"
-        />
-
-      </div>
-
-      <div>
-
-        <label className="text-xs text-slate-500 mb-1 block">
-          Thành tiền
-        </label>
-
-        <div className="border rounded-xl p-3 bg-slate-100">
-
-          {formatMoney(
-            item.qty *
-            item.price
-          )}đ
-
-        </div>
-
-      </div>
-
-      <button
-        type="button"
-        onClick={() => {
-
-          const clone =
-            products.filter(
-              (_, i) =>
-                i !== index
+          if (list.length === 0) {
+            return (
+              <div className="p-3 text-sm text-slate-500">
+                Không tìm thấy sản phẩm
+              </div>
             );
+          }
 
-          setProducts(
-            clone.length
-              ? clone
-              : [
-                  {
-                    name: "",
-                    qty: 1,
-                    price: 0,
-                  },
-                ]
-          );
+          return list.map((product: any) => {
+            const primary = getInventoryDisplayPrimary(product);
+            const secondary = getInventoryDisplaySecondary(product);
+            const code = getInventoryProductCode(product);
 
-        }}
-        className="h-11 w-11 rounded-xl bg-rose-500 text-white text-lg"
-      >
+            return (
+              <button
+                key={product.id || code || primary}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
 
-        ✕
+                  const selectedCode = code;
+                  const selectedName = primary;
+                  const selectedSellName =
+                    getInventoryProductSellName(product);
+                  const selectedFullName =
+                    getInventoryProductFullName(product);
 
-      </button>
+                  const existingIndex =
+                    products.findIndex((item: any) => {
+                      const itemCode = String(
+                        item.product_code ||
+                        item.productCode ||
+                        item.sku ||
+                        item.code ||
+                        ""
+                      ).trim();
 
-    </div>
+                      const itemName = String(item.name || "")
+                        .trim()
+                        .toLocaleLowerCase("vi-VN");
 
-  ))}
+                      const targetName = String(selectedName)
+                        .trim()
+                        .toLocaleLowerCase("vi-VN");
 
-  <button
-    type="button"
-    onClick={() =>
-      setProducts([
-        ...products,
-        {
-          name: "",
-          qty: 1,
-          price: 0,
-        },
-      ])
-    }
-    className="bg-slate-200 px-4 py-2 rounded-xl"
-  >
-    + Thêm sản phẩm
-  </button>
+                      if (selectedCode && itemCode) {
+                        return itemCode === selectedCode;
+                      }
+
+                      return Boolean(
+                        targetName &&
+                        itemName === targetName
+                      );
+                    });
+
+                  if (existingIndex >= 0) {
+                    const clone = [...products];
+                    clone[existingIndex] = {
+                      ...clone[existingIndex],
+                      qty:
+                        Number(clone[existingIndex].qty || 0) + 1,
+                    };
+                    setProducts(clone);
+                  } else {
+                    const cleaned = products.filter(
+                      (item: any) =>
+                        String(item.name || "").trim() ||
+                        Number(item.price || 0) > 0
+                    );
+
+                    setProducts([
+                      ...cleaned,
+                      {
+                        name: selectedName,
+                        main_name: selectedFullName,
+                        short_name: selectedSellName,
+                        printName: selectedName,
+                        product_code: selectedCode,
+                        qty: 1,
+                        price: Number(
+                          product.price ||
+                          product.sellPrice ||
+                          product.salePrice ||
+                          0
+                        ),
+                      },
+                    ]);
+                  }
+
+                  setProductSearch((prev) => ({
+                    ...prev,
+                    [-1]: "",
+                  }));
+                  setOpenProductDropdown(null);
+
+                  setTimeout(() => {
+                    const input =
+                      document.getElementById(
+                        "debt-product-search"
+                      ) as HTMLInputElement | null;
+
+                    input?.focus();
+                  }, 0);
+                }}
+                className="w-full border-b border-slate-100 px-3 py-2.5 text-left hover:bg-sky-50"
+              >
+                <div className="font-semibold text-slate-800">
+                  {primary || "Sản phẩm"}
+                </div>
+
+                {secondary && (
+                  <div className="mt-0.5 text-xs text-slate-500">
+                    {secondary}
+                  </div>
+                )}
+
+                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                  {code && <span>Mã: {code}</span>}
+                  <span>
+                    Giá: {formatMoney(
+                      Number(
+                        product.price ||
+                        product.sellPrice ||
+                        product.salePrice ||
+                        0
+                      )
+                    )}đ
+                  </span>
+                </div>
+              </button>
+            );
+          });
+        })()}
+      </div>
+    )}
+  </div>
+
+  <div className="overflow-hidden rounded-xl border border-slate-200">
+    <table className="w-full text-sm">
+      <thead className="bg-slate-100 text-slate-700">
+        <tr>
+          <th className="px-3 py-2 text-left">Sản phẩm</th>
+          <th className="px-3 py-2 text-center w-24">SL</th>
+          <th className="px-3 py-2 text-right w-36">Đơn giá</th>
+          <th className="px-3 py-2 text-right w-36">Thành tiền</th>
+          <th className="px-3 py-2 text-center w-16"></th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {products
+          .filter((item: any) =>
+            String(item.name || "").trim()
+          )
+          .map((item, index) => (
+            <tr
+              key={`${item.product_code || item.name}-${index}`}
+              className="border-t border-slate-200"
+            >
+              <td className="px-3 py-1.5">
+                <div className="font-semibold leading-5">
+                  {getDebtProductDisplayPrimary(item)}
+                </div>
+
+                {getDebtProductDisplaySecondary(item) && (
+                  <div className="mt-0.5 text-xs leading-4 text-slate-500">
+                    {getDebtProductDisplaySecondary(item)}
+                  </div>
+                )}
+
+                {item.product_code && (
+                  <div className="text-xs text-slate-400">
+                    Mã: {item.product_code}
+                  </div>
+                )}
+              </td>
+
+              <td className="px-3 py-1.5">
+                <input
+                  type="number"
+                  min="1"
+                  value={item.qty}
+                  onChange={(e) => {
+                    const clone = [...products];
+                    clone[index] = {
+                      ...clone[index],
+                      qty: Math.max(
+                        1,
+                        Number(e.target.value || 1)
+                      ),
+                    };
+                    setProducts(clone);
+                  }}
+                  className="w-full rounded-lg border border-slate-300 px-2 py-2 text-center"
+                />
+              </td>
+
+              <td className="px-3 py-1.5">
+                <input
+                  type="number"
+                  value={item.price}
+                  onChange={(e) => {
+                    const clone = [...products];
+                    clone[index] = {
+                      ...clone[index],
+                      price: Number(e.target.value || 0),
+                    };
+                    setProducts(clone);
+                  }}
+                  className="w-full rounded-lg border border-slate-300 px-2 py-2 text-right"
+                />
+              </td>
+
+              <td className="px-3 py-2 text-right font-semibold">
+                {formatMoney(
+                  Number(item.qty || 0) *
+                  Number(item.price || 0)
+                )}đ
+              </td>
+
+              <td className="px-3 py-1.5 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const clone = products.filter(
+                      (_item, i) => i !== index
+                    );
+
+                    setProducts(
+                      clone.length
+                        ? clone
+                        : [
+                            {
+                              name: "",
+                              main_name: "",
+                              short_name: "",
+                              qty: 1,
+                              price: 0,
+                            },
+                          ]
+                    );
+                  }}
+                  className="h-9 w-9 rounded-lg bg-rose-500 text-white"
+                >
+                  ✕
+                </button>
+              </td>
+            </tr>
+          ))}
+
+        {products.filter((item: any) =>
+          String(item.name || "").trim()
+        ).length === 0 && (
+          <tr>
+            <td
+              colSpan={5}
+              className="px-3 py-5 text-center text-slate-500"
+            >
+              Chưa chọn sản phẩm
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
 
 </div>
-              <textarea
-                placeholder="Ghi chú"
-                value={
-                  newDebt.note
-                }
-                onChange={(e) =>
-                  setNewDebt({
-                    ...newDebt,
-                    note:
-                      e.target.value,
-                  })
-                }
-                className="border border-slate-300 p-4 rounded-xl col-span-2 h-24"
-              />
 
             </div>
 
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="sticky bottom-0 -mx-7 -mb-7 mt-6 flex justify-end gap-3 border-t border-slate-200 bg-white px-7 py-4">
 
               <button
                 onClick={() =>
@@ -1031,6 +1592,22 @@ debt.firestoreId
         <b>
           {" "}
           {selectedDebt.customer}
+        </b>
+      </div>
+
+      <div>
+        SĐT:
+        <b>
+          {" "}
+          {selectedDebt.phone || "---"}
+        </b>
+      </div>
+
+      <div className="col-span-2">
+        Địa chỉ:
+        <b>
+          {" "}
+          {selectedDebt.address || "---"}
         </b>
       </div>
 
@@ -1095,7 +1672,18 @@ debt.firestoreId
 
 <td className="p-3">
 
-{item.name}
+  <div className="font-semibold leading-5">
+    {getDebtProductPrimaryName(item)}
+  </div>
+
+  {getDebtProductSecondaryName(item) && (
+    <div
+      className="mt-0.5 text-xs leading-4 text-slate-500"
+      title={getDebtProductSecondaryName(item)}
+    >
+      {getDebtProductSecondaryName(item)}
+    </div>
+  )}
 
 </td>
 

@@ -8,6 +8,15 @@ type OrderItem = {
   name?: string;
   productName?: string;
   product_name?: string;
+  main_name?: string;
+  mainName?: string;
+  full_name?: string;
+  fullName?: string;
+  short_name?: string;
+  shortName?: string;
+  sell_name?: string;
+  sellName?: string;
+  printName?: string;
   sku?: string;
   code?: string;
   quantity?: number;
@@ -253,10 +262,58 @@ export default function OrdersReportPage() {
 
   const getItemName = (item: OrderItem) => {
     return (
+      item.printName ||
       item.name ||
       item.productName ||
       item.product_name ||
+      item.short_name ||
+      item.shortName ||
+      item.sell_name ||
+      item.sellName ||
+      item.main_name ||
+      item.mainName ||
+      item.full_name ||
+      item.fullName ||
       "Sản phẩm"
+    );
+  };
+
+  const getItemFullName = (item: OrderItem) => {
+    return (
+      item.main_name ||
+      item.mainName ||
+      item.full_name ||
+      item.fullName ||
+      ""
+    );
+  };
+
+  const getItemSellName = (item: OrderItem) => {
+    return (
+      item.short_name ||
+      item.shortName ||
+      item.sell_name ||
+      item.sellName ||
+      ""
+    );
+  };
+
+  const getItemSecondaryName = (item: OrderItem) => {
+    const primaryName = getItemName(item).trim();
+    const fullName = getItemFullName(item).trim();
+    const sellName = getItemSellName(item).trim();
+
+    // Tên đang được lưu/in ở POS là dòng chính.
+    // Dòng phụ ưu tiên tên còn lại, và không lặp lại nếu hai tên giống nhau.
+    const candidates = [sellName, fullName];
+
+    return (
+      candidates.find(
+        (name) =>
+          name &&
+          name.toLocaleLowerCase("vi-VN") !==
+            primaryName.toLocaleLowerCase("vi-VN")
+      ) || ""
     );
   };
 
@@ -1365,8 +1422,17 @@ export default function OrdersReportPage() {
                                             {getItemName(item)}
                                           </div>
 
+                                          {getItemSecondaryName(item) && (
+                                            <div
+                                              className="mt-0.5 text-xs text-slate-500 leading-4"
+                                              title={getItemSecondaryName(item)}
+                                            >
+                                              {getItemSecondaryName(item)}
+                                            </div>
+                                          )}
+
                                           {getItemCode(item) && (
-                                            <div className="text-xs text-slate-500 leading-4 truncate max-w-[260px]">
+                                            <div className="text-xs text-slate-400 leading-4 truncate max-w-[320px]">
                                               Mã: {getItemCode(item)}
                                             </div>
                                           )}
