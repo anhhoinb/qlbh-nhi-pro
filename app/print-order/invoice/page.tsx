@@ -1041,18 +1041,22 @@ if (!id) {
               {(showDate || showOrderCode) && (
                 <div className="invoice-meta">
                   {showOrderCode && (
-                    <div>
+                    <span>
                       Mã đơn:{" "}
                       <strong>
                         {getOrderCode(order)}
                       </strong>
-                    </div>
+                    </span>
+                  )}
+
+                  {showOrderCode && showDate && (
+                    <span> | </span>
                   )}
 
                   {showDate && (
-                    <div>
+                    <span>
                       {formatDate(order.createdAt)}
-                    </div>
+                    </span>
                   )}
                 </div>
               )}
