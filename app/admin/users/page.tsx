@@ -76,6 +76,8 @@ const [editForm, setEditForm] =
     name: "",
     role: "Nhân viên",
     active: true,
+    password: "",
+    confirmPassword: "",
   });
 
 const [savingEdit, setSavingEdit] =
@@ -113,6 +115,45 @@ const [deletingUser, setDeletingUser] =
   useEffect(() => {
     loadUsers();
   }, []);
+
+  // Đóng popup bằng phím ESC
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+
+      // Ưu tiên đóng popup đang nằm trên cùng
+      if (editOpen) {
+        if (!savingEdit && !deletingUser) {
+          closeEditUser();
+        }
+        return;
+      }
+
+      if (permissionOpen) {
+        setPermissionOpen(false);
+        return;
+      }
+
+      if (open) {
+        if (!creatingUser) {
+          setOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [
+    open,
+    permissionOpen,
+    editOpen,
+    creatingUser,
+    savingEdit,
+    deletingUser,
+  ]);
 
   async function loadUsers() {
     try {
@@ -266,6 +307,8 @@ const [deletingUser, setDeletingUser] =
       name: user.name || "",
       role: user.role || "Nhân viên",
       active: user.active !== false,
+      password: "",
+      confirmPassword: "",
     });
 
     setEditOpen(true);
@@ -281,6 +324,8 @@ const [deletingUser, setDeletingUser] =
       name: "",
       role: "Nhân viên",
       active: true,
+      password: "",
+      confirmPassword: "",
     });
   };
 
@@ -292,6 +337,21 @@ const [deletingUser, setDeletingUser] =
     if (!name) {
       alert("Vui lòng nhập tên nhân viên");
       return;
+    }
+
+    const password = editForm.password.trim();
+    const confirmPassword = editForm.confirmPassword.trim();
+
+    if (password || confirmPassword) {
+      if (password.length < 6) {
+        alert("Mật khẩu mới phải có ít nhất 6 ký tự");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert("Mật khẩu nhập lại không khớp");
+        return;
+      }
     }
 
     try {
@@ -309,6 +369,7 @@ const [deletingUser, setDeletingUser] =
             name,
             role: editForm.role,
             active: editForm.active,
+            ...(password ? { password } : {}),
           }),
         }
       );
@@ -986,6 +1047,52 @@ const [deletingUser, setDeletingUser] =
 
                 <p className="mt-1 text-xs text-gray-500">
                   Email đăng nhập không thay đổi tại form này.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Mật khẩu mới
+                  </label>
+
+                  <input
+                    type="password"
+                    value={editForm.password}
+                    placeholder="Để trống nếu không đổi"
+                    autoComplete="new-password"
+                    onChange={(event) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        password: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-2xl border p-4 outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Nhập lại mật khẩu mới
+                  </label>
+
+                  <input
+                    type="password"
+                    value={editForm.confirmPassword}
+                    placeholder="Nhập lại mật khẩu"
+                    autoComplete="new-password"
+                    onChange={(event) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        confirmPassword: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-2xl border p-4 outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <p className="md:col-span-2 -mt-2 text-xs text-gray-500">
+                  Để trống cả hai ô nếu không muốn thay đổi mật khẩu.
                 </p>
               </div>
 

@@ -22,6 +22,10 @@ export default function InventoryPage() {
   const [popupType, setPopupType] =
     useState<"out" | "low" | null>(null);
 
+  // PAGINATION
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
+
   const loadProducts = async () => {
     setLoading(true);
 
@@ -140,6 +144,95 @@ export default function InventoryPage() {
 
   const popupColor = "bg-slate-800";
 
+  // PAGINATION
+  const totalPages = Math.max(
+    1,
+    Math.ceil(products.length / itemsPerPage)
+  );
+
+  const startIndex =
+    (currentPage - 1) * itemsPerPage;
+
+  const paginatedProducts =
+    products.slice(
+      startIndex,
+      startIndex + itemsPerPage
+    );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  // EXPORT EXCEL (.XLS)
+  const exportInventoryToExcel = () => {
+    if (products.length === 0) {
+      alert("Chưa có sản phẩm để xuất file");
+      return;
+    }
+
+    const rows = products.map((item, index) => {
+      const stock = Number(item.stock || 0);
+      const capitalPrice = Number(item.capital_price || 0);
+      const inventoryValue = stock * capitalPrice;
+
+      return `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${String(item.main_name || item.name || "").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</td>
+          <td>${String(item.short_name || "").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</td>
+          <td>${String(item.product_code || "").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</td>
+          <td>${Number(item.price || 0)}</td>
+          ${canViewCostPrice ? `<td>${capitalPrice}</td>` : ""}
+          <td>${stock}</td>
+          ${canViewCostPrice ? `<td>${inventoryValue}</td>` : ""}
+          <td>${getStockStatus(stock).label}</td>
+        </tr>
+      `;
+    }).join("");
+
+    const html = `
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+        </head>
+        <body>
+          <table border="1">
+            <thead>
+              <tr>
+                <th>STT</th>
+                <th>Tên chính</th>
+                <th>Tên phụ</th>
+                <th>Mã sản phẩm</th>
+                <th>Giá bán</th>
+                ${canViewCostPrice ? "<th>Giá vốn</th>" : ""}
+                <th>Tồn kho</th>
+                ${canViewCostPrice ? "<th>Tổng tồn</th>" : ""}
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob(
+      ["\uFEFF", html],
+      { type: "application/vnd.ms-excel;charset=utf-8;" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `danh-sach-ton-kho-${Date.now()}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <main className="min-h-screen bg-slate-100 p-6 text-black">
       <div className="max-w-[1400px] mx-auto space-y-5">
@@ -154,12 +247,23 @@ export default function InventoryPage() {
             </p>
           </div>
 
-          <button
-            onClick={loadProducts}
-            className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl font-semibold transition"
-          >
-            Tải lại tồn kho
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={exportInventoryToExcel}
+              className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-semibold transition"
+            >
+              Xuất Excel
+            </button>
+
+            <button
+              type="button"
+              onClick={loadProducts}
+              className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl font-semibold transition"
+            >
+              Tải lại tồn kho
+            </button>
+          </div>
         </div>
 
         <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 ${
@@ -281,7 +385,7 @@ export default function InventoryPage() {
                 </thead>
 
                 <tbody>
-                  {products.map((item) => {
+                  {paginatedProducts.map((item) => {
                     const stock =
                       Number(item.stock || 0);
 
@@ -299,8 +403,17 @@ export default function InventoryPage() {
                         key={item.id}
                         className="border-b border-slate-200 hover:bg-slate-50"
                       >
-                        <td className="px-4 py-3 font-semibold text-slate-900">
-                          {item.name || "---"}
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-slate-900">
+                              {item.main_name || item.name || "---"}
+                            </span>
+                            {item.short_name && (
+                              <span className="text-sm text-slate-500 mt-0.5">
+                                {item.short_name}
+                              </span>
+                            )}
+                          </div>
                         </td>
 
                         <td className="px-4 py-3 text-sky-700 font-medium">
@@ -356,6 +469,101 @@ export default function InventoryPage() {
                 </tbody>
               </table>
             </div>
+
+            {products.length > 0 && (
+              <div className="px-5 py-4 border-t border-slate-200 bg-slate-50 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+                  <span>
+                    Hiển thị{" "}
+                    <span className="font-semibold text-slate-900">
+                      {startIndex + 1}
+                    </span>
+                    {" "}đến{" "}
+                    <span className="font-semibold text-slate-900">
+                      {Math.min(
+                        startIndex + itemsPerPage,
+                        products.length
+                      )}
+                    </span>
+                    {" "}trong tổng{" "}
+                    <span className="font-semibold text-slate-900">
+                      {products.length}
+                    </span>
+                    {" "}sản phẩm
+                  </span>
+
+                  <label className="flex items-center gap-2">
+                    <span>Hiển thị:</span>
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="border border-slate-300 bg-white rounded-xl px-3 py-2 text-slate-800 outline-none focus:border-sky-500"
+                    >
+                      <option value={15}>15 sản phẩm</option>
+                      <option value={50}>50 sản phẩm</option>
+                      <option value={100}>100 sản phẩm</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={currentPage === 1}
+                    onClick={() =>
+                      setCurrentPage((prev) =>
+                        Math.max(prev - 1, 1)
+                      )
+                    }
+                    className={`px-4 py-2 rounded-xl font-semibold ${
+                      currentPage === 1
+                        ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                        : "bg-white border border-slate-300 hover:bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    Trước
+                  </button>
+
+                  {Array.from(
+                    { length: totalPages },
+                    (_, index) => index + 1
+                  ).map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`min-w-10 px-3 py-2 rounded-xl font-semibold ${
+                        currentPage === page
+                          ? "bg-sky-600 text-white"
+                          : "bg-white border border-slate-300 hover:bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    disabled={currentPage === totalPages}
+                    onClick={() =>
+                      setCurrentPage((prev) =>
+                        Math.min(prev + 1, totalPages)
+                      )
+                    }
+                    className={`px-4 py-2 rounded-xl font-semibold ${
+                      currentPage === totalPages
+                        ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                        : "bg-white border border-slate-300 hover:bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -441,8 +649,17 @@ export default function InventoryPage() {
                             {index + 1}
                           </td>
 
-                          <td className="p-3 font-semibold">
-                            {item.name || "---"}
+                          <td className="p-3">
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-slate-900">
+                                {item.main_name || item.name || "---"}
+                              </span>
+                              {item.short_name && (
+                                <span className="text-xs text-slate-500 mt-0.5">
+                                  {item.short_name}
+                                </span>
+                              )}
+                            </div>
                           </td>
 
                           <td className="p-3 text-sky-700">

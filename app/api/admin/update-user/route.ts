@@ -18,6 +18,9 @@ export async function POST(request: Request) {
       body?.role || "Nhân viên"
     ).trim();
     const active = body?.active !== false;
+    const password = String(
+      body?.password || ""
+    ).trim();
 
     if (!uid) {
       return NextResponse.json(
@@ -43,9 +46,22 @@ export async function POST(request: Request) {
       );
     }
 
+    if (password && password.length < 6) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Mật khẩu mới phải có ít nhất 6 ký tự",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
     await adminAuth.updateUser(uid, {
       displayName: name,
       disabled: !active,
+      ...(password ? { password } : {}),
     });
 
     await adminDb
@@ -67,6 +83,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       uid,
+      passwordChanged: Boolean(password),
     });
   } catch (error: any) {
     console.error(
@@ -83,6 +100,13 @@ export async function POST(request: Request) {
     ) {
       message =
         "Không tìm thấy tài khoản trong Firebase Authentication";
+    }
+
+    if (
+      error?.code === "auth/invalid-password"
+    ) {
+      message =
+        "Mật khẩu không hợp lệ. Mật khẩu phải có ít nhất 6 ký tự";
     }
 
     return NextResponse.json(

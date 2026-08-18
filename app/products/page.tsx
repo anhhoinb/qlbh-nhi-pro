@@ -89,7 +89,7 @@ export default function ProductsPage() {
   // SEARCH + PAGINATION
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const [itemsPerPage, setItemsPerPage] = useState(15);
 
   // DATA
   const [loading, setLoading] = useState(true);
@@ -128,6 +128,45 @@ export default function ProductsPage() {
     top: 0,
     left: 0,
   });
+
+  // CLOSE POPUPS WITH ESC
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+
+      if (showStockHistory) {
+        setShowStockHistory(false);
+        return;
+      }
+
+      if (editingProduct) {
+        setEditingProduct(null);
+        setShowStockHistory(false);
+        setStockHistory([]);
+        return;
+      }
+
+      if (showAddForm) {
+        setShowAddForm(false);
+        return;
+      }
+
+      if (showColumnSettings) {
+        setShowColumnSettings(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscapeKey);
+
+    return () => {
+      document.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, [
+    showStockHistory,
+    editingProduct,
+    showAddForm,
+    showColumnSettings,
+  ]);
 
   useEffect(() => {
   const handleClickOutside = (
@@ -251,6 +290,19 @@ reader.readAsDataURL(file);
   // FORMAT MONEY
   const formatMoney = (value: any) => {
     return Number(value || 0).toLocaleString("vi-VN") + "đ";
+  };
+
+  // FORMAT MONEY INPUT: 5000 -> 5.000
+  const formatMoneyInput = (value: string) => {
+    const digits = String(value || "").replace(/\D/g, "");
+
+    if (!digits) return "";
+
+    return Number(digits).toLocaleString("vi-VN");
+  };
+
+  const getRawMoneyInput = (value: string) => {
+    return String(value || "").replace(/\D/g, "");
   };
 
   const normalizeProductName = (value: any) => {
@@ -725,6 +777,37 @@ if (duplicateCode) {
     alert("Cập nhật thất bại");
   }
 };
+
+  // COPY PRODUCT
+  const copyProduct = (item: any) => {
+    const copiedMainName = String(
+      item.main_name || item.name || ""
+    ).trim();
+
+    setName(
+      copiedMainName ? `${copiedMainName} - Bản sao` : ""
+    );
+    setMainName(
+      copiedMainName ? `${copiedMainName} - Bản sao` : ""
+    );
+    setShortName(item.short_name || "");
+    setProductCode(generateProductCode());
+    setProductLocation(item.product_location || "");
+    setPrice(String(item.price || 0));
+    setImportPrice(String(item.import_price || 0));
+    setCapitalPrice(String(item.capital_price || 0));
+    setStock(String(item.stock || 0));
+    setUnit(
+      typeof item.unit === "string"
+        ? item.unit
+        : item.unit?.name || "cái"
+    );
+    setTax(String(item.tax || 0));
+    setImagePreview(item.imageUrl || "");
+    setImageFile(null);
+    setShowUnitDropdown(false);
+    setShowAddForm(true);
+  };
 
   // DELETE PRODUCT
   const deleteProduct = async (id: string) => {
@@ -1661,6 +1744,14 @@ successCount++;
                         </button>
                       )}
 
+                      <button
+                        type="button"
+                        onClick={() => copyProduct(item)}
+                        className="bg-sky-500 hover:bg-sky-600 text-white px-3 py-2 rounded-xl text-sm"
+                      >
+                        Sao chép
+                      </button>
+
                       {canDeleteProduct && (
   <button
     type="button"
@@ -1691,9 +1782,10 @@ successCount++;
         </div>
 
         {/* PAGINATION */}
-        {filteredProducts.length > itemsPerPage && (
-          <div className="bg-white mt-5 p-4 rounded-3xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="text-sm text-slate-600">
+        {filteredProducts.length > 0 && (
+          <div className="bg-white mt-5 p-4 rounded-3xl shadow-sm border border-slate-200 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
+              <div className="text-sm text-slate-600">
               Hiển thị{" "}
               <span className="font-semibold text-black">
                 {startIndex + 1}
@@ -1710,8 +1802,27 @@ successCount++;
                 {filteredProducts.length}
               </span>
               {" "}sản phẩm
+              </div>
+
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <span>Hiển thị</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="border border-slate-300 bg-white px-3 py-2 rounded-xl text-black outline-none focus:border-sky-500"
+                >
+                  <option value={15}>15</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span>sản phẩm / trang</span>
+              </div>
             </div>
 
+            {totalPages > 1 && (
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
@@ -1765,6 +1876,7 @@ successCount++;
                 Sau
               </button>
             </div>
+            )}
           </div>
         )}
 
@@ -1856,11 +1968,12 @@ successCount++;
                   </label>
 
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-                    value={editPrice}
+                    value={formatMoneyInput(editPrice)}
                     onChange={(e) =>
-                      setEditPrice(e.target.value)
+                      setEditPrice(getRawMoneyInput(e.target.value))
                     }
                   />
                 </div>
@@ -1873,11 +1986,12 @@ successCount++;
       </label>
 
       <input
-        type="number"
+        type="text"
+        inputMode="numeric"
         className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-        value={editImportPrice}
+        value={formatMoneyInput(editImportPrice)}
         onChange={(e) =>
-          setEditImportPrice(e.target.value)
+          setEditImportPrice(getRawMoneyInput(e.target.value))
         }
       />
     </div>
@@ -1888,11 +2002,12 @@ successCount++;
       </label>
 
       <input
-        type="number"
+        type="text"
+        inputMode="numeric"
         className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-        value={editCapitalPrice}
+        value={formatMoneyInput(editCapitalPrice)}
         onChange={(e) =>
-          setEditCapitalPrice(e.target.value)
+          setEditCapitalPrice(getRawMoneyInput(e.target.value))
         }
       />
     </div>

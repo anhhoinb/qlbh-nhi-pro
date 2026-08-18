@@ -98,6 +98,46 @@ export default function CustomersPage() {
     loadCustomers();
   }, []);
 
+  // Đóng popup bằng phím ESC
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+
+      // Ưu tiên đóng popup nằm trên cùng trước
+      if (selectedOrder) {
+        setSelectedOrder(null);
+        return;
+      }
+
+      if (editingCustomer) {
+        if (!savingEdit && !deletingCustomer) {
+          closeEditCustomer();
+        }
+        return;
+      }
+
+      if (showAddModal) {
+        if (!saving) {
+          resetNewCustomer();
+          setShowAddModal(false);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [
+    selectedOrder,
+    editingCustomer,
+    showAddModal,
+    saving,
+    savingEdit,
+    deletingCustomer,
+  ]);
+
   const filteredCustomers = customers.filter((item) => {
     const keyword = search.toLowerCase();
     const matchesStatus =
@@ -577,9 +617,14 @@ export default function CustomersPage() {
                   className="border-b border-slate-200 hover:bg-slate-50"
                 >
                   <td className="px-3 py-3 align-top w-[12%]">
-                    <div className="font-semibold text-slate-700 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => openCustomerHistory(item)}
+                      className="font-semibold text-sky-700 hover:text-sky-800 hover:underline whitespace-nowrap"
+                      title="Bấm để xem lịch sử mua hàng"
+                    >
                       {item.code || "---"}
-                    </div>
+                    </button>
 
                     <div className="mt-1 text-xs text-slate-500 whitespace-nowrap">
                       {formatCustomerDate(item.createdAt)}
@@ -620,12 +665,15 @@ export default function CustomersPage() {
                     </div>
                   </td>
 
-                  <td className="px-3 py-3 align-top w-[13%]">
+                  <td className="px-3 py-3 align-top w-[13%] overflow-hidden">
                     <p className="font-semibold text-slate-900 whitespace-nowrap">
                       {item.phone || "---"}
                     </p>
 
-                    <p className="text-sm text-sky-700 mt-1">
+                    <p
+                      className="mt-1 block w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-sky-700"
+                      title={item.email || ""}
+                    >
                       {item.email || "Chưa có email"}
                     </p>
                   </td>
