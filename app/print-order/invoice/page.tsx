@@ -648,21 +648,20 @@ if (!id) {
         }
 
         .invoice-header {
-          display: flex;
-          justify-content: space-between;
-          gap: 24px;
-          align-items: flex-start;
+          display: block;
           border-bottom: 2px solid #111;
           padding-bottom: 14px;
+          text-align: center;
         }
 
         .shop-block {
-          width: 56%;
+          width: 100%;
+          text-align: center;
         }
 
         .title-block {
-          width: 44%;
-          text-align: right;
+          width: 100%;
+          text-align: center;
         }
 
         .shop-name {
@@ -687,22 +686,23 @@ if (!id) {
 
         .customer-box {
           margin-top: 16px;
-          border: 1px solid #94a3b8;
-          border-radius: 5px;
-          padding: 12px;
+          border: 0;
+          border-radius: 0;
+          padding: 0;
           font-size: 12px;
           line-height: 1.55;
         }
 
         .customer-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          column-gap: 28px;
-          row-gap: 3px;
+          display: block;
+        }
+
+        .customer-grid > div {
+          margin-top: 3px;
         }
 
         .customer-address {
-          grid-column: 1 / -1;
+          display: block;
         }
 
         .items-table {
@@ -936,11 +936,11 @@ if (!id) {
 
           .customer-box {
             margin-top: 12px;
-            padding: 9px;
+            padding: 0;
           }
 
           .customer-grid {
-            column-gap: 16px;
+            display: block;
           }
 
           .items-table {
@@ -1069,41 +1069,41 @@ if (!id) {
           <div className="customer-box">
             <div className="customer-grid">
               <div>
-                <strong>Khách hàng:</strong>{" "}
+                - <strong>Khách hàng:</strong>{" "}
                 {customerName}
               </div>
 
               {customerPhone && (
                 <div>
-                  <strong>Điện thoại:</strong>{" "}
+                  - <strong>Điện thoại:</strong>{" "}
                   {customerPhone}
                 </div>
               )}
 
               {customerCompany && (
                 <div>
-                  <strong>Công ty:</strong>{" "}
+                  - <strong>Công ty:</strong>{" "}
                   {customerCompany}
                 </div>
               )}
 
               {customerTaxCode && (
                 <div>
-                  <strong>MST:</strong>{" "}
+                  - <strong>MST:</strong>{" "}
                   {customerTaxCode}
                 </div>
               )}
 
               {customerEmail && (
                 <div className="break-all">
-                  <strong>Email:</strong>{" "}
+                  - <strong>Email:</strong>{" "}
                   {customerEmail}
                 </div>
               )}
 
               {customerAddress && (
                 <div className="customer-address">
-                  <strong>Địa chỉ:</strong>{" "}
+                  - <strong>Địa chỉ:</strong>{" "}
                   {customerAddress}
                 </div>
               )}
