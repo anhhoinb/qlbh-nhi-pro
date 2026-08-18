@@ -46,9 +46,6 @@ export default function OrdersPage() {
   const [returnReason, setReturnReason] =
     useState("");
 
-  const [printPaperPickerOpen, setPrintPaperPickerOpen] =
-    useState(false);
-
   const [restockReturnedItems, setRestockReturnedItems] =
     useState(true);
 
@@ -981,43 +978,30 @@ export default function OrdersPage() {
     return;
   }
 
-  setPrintPaperPickerOpen(true);
-};
+  selectedOrders.forEach((order) => {
+    const orderId =
+      order.id ||
+      order.orderCode ||
+      order.order_code;
 
-  const printSelectedOrdersByPaper = (
-    paper: "K80" | "A5" | "A4"
-  ) => {
-    if (selectedOrders.length === 0) {
-      setPrintPaperPickerOpen(false);
+    if (!orderId) {
       return;
     }
 
-    selectedOrders.forEach((order) => {
-      const orderId =
-        order.id ||
-        order.orderCode ||
-        order.order_code;
+    const printWindow = window.open(
+      `/print-order/invoice?id=${encodeURIComponent(
+        orderId
+      )}`,
+      "_blank"
+    );
 
-      if (!orderId) {
-        return;
-      }
-
-      const printWindow = window.open(
-        `/print-order/invoice?id=${encodeURIComponent(
-          orderId
-        )}&paper=${paper}`,
-        "_blank"
+    if (!printWindow) {
+      alert(
+        "Trình duyệt đang chặn cửa sổ in. Vui lòng cho phép popup."
       );
-
-      if (!printWindow) {
-        alert(
-          "Trình duyệt đang chặn cửa sổ in. Vui lòng cho phép popup."
-        );
-      }
-    });
-
-    setPrintPaperPickerOpen(false);
-  };
+    }
+  });
+};
 
   const cancelSelectedOrders = async () => {
   if (selectedOrders.length === 0) {
@@ -1950,44 +1934,6 @@ export default function OrdersPage() {
           </div>
         )}
       </div>
-
-      {printPaperPickerOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
-            <div className="flex items-center justify-between bg-slate-800 px-6 py-5 text-white">
-              <div>
-                <h2 className="text-xl font-bold">
-                  Chọn mẫu in đơn hàng
-                </h2>
-                <p className="mt-1 text-sm text-slate-300">
-                  Dữ liệu đơn sẽ render vào mẫu bạn chọn
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setPrintPaperPickerOpen(false)}
-                className="h-10 w-10 rounded-full bg-white/20 text-xl hover:bg-white/30"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 p-6">
-              {(["K80", "A5", "A4"] as const).map((paper) => (
-                <button
-                  key={paper}
-                  type="button"
-                  onClick={() => printSelectedOrdersByPaper(paper)}
-                  className="rounded-2xl border border-slate-300 bg-white px-4 py-5 text-center font-bold text-slate-800 transition hover:border-sky-500 hover:bg-sky-50 hover:text-sky-700"
-                >
-                  {paper}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {returnOpen && returnOrder && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4">

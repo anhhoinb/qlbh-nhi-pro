@@ -584,25 +584,192 @@ if (!id) {
   const vatBreakdown =
     getVatBreakdown(order);
 
-  return (
-    <main className="min-h-screen bg-white">
+  const customerName =
+    order.customerName ||
+    order.customer?.name ||
+    "Khách lẻ";
 
+  const customerCompany =
+    order.customerCompanyName ||
+    order.customer?.companyName ||
+    "";
+
+  const customerPhone =
+    order.customerPhone ||
+    order.customer?.phone ||
+    "";
+
+  const customerEmail =
+    order.customerEmail ||
+    order.customer?.email ||
+    "";
+
+  const customerTaxCode =
+    order.customerTaxCode ||
+    order.customer?.taxCode ||
+    "";
+
+  const customerAddress =
+    order.customerAddress ||
+    order.customer?.address ||
+    "";
+
+  const getDisplayProductCode = (product: any) =>
+    product.product_code ||
+    product.productCode ||
+    product.code ||
+    product.sku ||
+    "---";
+
+  return (
+    <main className="print-root min-h-screen bg-white">
       <style>{`
         /*
-         * Khổ giấy in thực tế:
-         * K80 = 80mm
-         * A5  = 148 x 210mm
-         * A4  = 210 x 297mm
+         * Không cố định @page size.
+         * Khổ giấy do người dùng chọn trực tiếp trong Print Preview.
+         * Layout tự thay đổi dựa trên chiều rộng vùng in.
          */
         @page {
-          size: ${
-            paperSize === "K80"
-              ? "80mm auto"
-              : paperSize === "A4"
-              ? "A4 portrait"
-              : "A5 portrait"
-          };
-          margin: ${paperSize === "K80" ? "0" : "6mm"};
+          margin: 6mm;
+        }
+
+        html,
+        body {
+          background: #fff;
+        }
+
+        .invoice-paper {
+          width: 100%;
+          max-width: 100%;
+          margin: 0 auto;
+          box-sizing: border-box;
+          color: #000;
+          font-family: Arial, sans-serif;
+        }
+
+        .invoice-header {
+          display: flex;
+          justify-content: space-between;
+          gap: 24px;
+          align-items: flex-start;
+          border-bottom: 2px solid #111;
+          padding-bottom: 14px;
+        }
+
+        .shop-block {
+          width: 56%;
+        }
+
+        .title-block {
+          width: 44%;
+          text-align: right;
+        }
+
+        .shop-name {
+          font-size: 28px;
+          line-height: 1.1;
+          font-weight: 700;
+        }
+
+        .invoice-title {
+          font-size: 24px;
+          line-height: 1.15;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+
+        .shop-meta,
+        .invoice-meta {
+          margin-top: 6px;
+          font-size: 12px;
+          line-height: 1.5;
+        }
+
+        .customer-box {
+          margin-top: 16px;
+          border: 1px solid #94a3b8;
+          border-radius: 5px;
+          padding: 12px;
+          font-size: 12px;
+          line-height: 1.55;
+        }
+
+        .customer-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          column-gap: 28px;
+          row-gap: 3px;
+        }
+
+        .customer-address {
+          grid-column: 1 / -1;
+        }
+
+        .items-table {
+          width: 100%;
+          table-layout: fixed;
+          border-collapse: collapse;
+          margin-top: 18px;
+          font-size: 12px;
+        }
+
+        .items-table th {
+          background: #f1f5f9;
+          border: 1px solid #64748b;
+          padding: 8px 7px;
+          font-weight: 700;
+        }
+
+        .items-table td {
+          border: 1px solid #cbd5e1;
+          padding: 8px 7px;
+          vertical-align: top;
+        }
+
+        .col-stt { width: 6%; text-align: center; }
+        .col-code { width: 14%; }
+        .col-name { width: auto; }
+        .col-qty { width: 8%; text-align: center; }
+        .col-price { width: 16%; text-align: right; }
+        .col-total { width: 17%; text-align: right; }
+
+        .summary-wrap {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 18px;
+        }
+
+        .summary {
+          width: 340px;
+          max-width: 100%;
+          font-size: 12px;
+        }
+
+        .summary-row {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          margin-top: 4px;
+        }
+
+        .summary-total {
+          margin-top: 7px;
+          padding-top: 7px;
+          border-top: 1px solid #475569;
+          font-size: 17px;
+          font-weight: 700;
+        }
+
+        .invoice-footer {
+          margin-top: 28px;
+          text-align: center;
+          font-size: 11px;
+          line-height: 1.5;
+        }
+
+        .break-all {
+          overflow-wrap: anywhere;
+          word-break: break-word;
         }
 
         @media print {
@@ -610,349 +777,399 @@ if (!id) {
           body {
             margin: 0 !important;
             padding: 0 !important;
-            background: white !important;
+            background: #fff !important;
             overflow: visible !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
 
-          main {
-            width: 100% !important;
-            min-height: 0 !important;
+          .print-root {
             margin: 0 !important;
             padding: 0 !important;
-          }
-
-          .print-box {
-            box-sizing: border-box !important;
-            box-shadow: none !important;
-          }
-
-          .print-paper-k80 {
-            width: 80mm !important;
-            max-width: 80mm !important;
             min-height: 0 !important;
-            margin: 0 auto !important;
-            padding: 3mm !important;
           }
 
-          .print-paper-a5 {
-            width: 136mm !important;
-            max-width: 136mm !important;
-            min-height: 198mm !important;
-            margin: 0 auto !important;
-            padding: 0 !important;
+          .invoice-paper {
+            padding: 0;
           }
 
-          .print-paper-a4 {
-            width: 198mm !important;
-            max-width: 198mm !important;
-            min-height: 285mm !important;
-            margin: 0 auto !important;
-            padding: 0 !important;
+          table {
+            page-break-inside: auto;
+          }
+
+          tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+          }
+
+          thead {
+            display: table-header-group;
+          }
+        }
+
+        /*
+         * K80: vùng in rất hẹp.
+         * Chrome sẽ đánh giá lại media query khi đổi khổ giấy trong Print Preview.
+         */
+        @media print and (max-width: 110mm) {
+          @page {
+            margin: 3mm;
+          }
+
+          .invoice-paper {
+            font-size: ${bodyFontSize}px;
+          }
+
+          .invoice-header {
+            display: block;
+            border-bottom: 1px dashed #111;
+            padding-bottom: 7px;
+          }
+
+          .shop-block,
+          .title-block {
+            width: 100%;
+            text-align: center;
+          }
+
+          .shop-name {
+            font-size: 20px;
+          }
+
+          .invoice-title {
+            margin-top: 5px;
+            font-size: 18px;
+          }
+
+          .shop-meta,
+          .invoice-meta {
+            margin-top: 3px;
+            font-size: 0.88em;
+            line-height: 1.35;
+          }
+
+          .customer-box {
+            margin-top: 8px;
+            border: 0;
+            border-radius: 0;
+            padding: 0;
+            font-size: 0.9em;
+            line-height: 1.4;
+          }
+
+          .customer-grid {
+            display: block;
+          }
+
+          .customer-grid > div {
+            margin-top: 2px;
+          }
+
+          .items-table {
+            margin-top: 10px;
+            font-size: 0.86em;
+          }
+
+          .items-table th,
+          .items-table td {
+            border-left: 0;
+            border-right: 0;
+            border-top: 0;
+            border-bottom: 1px dashed #999;
+            padding: 5px 2px;
+          }
+
+          .items-table th {
+            background: transparent;
+          }
+
+          .col-stt { width: 8%; }
+          .col-code { display: none; }
+          .col-name { width: 45%; }
+          .col-qty { width: 10%; }
+          .col-price { width: 17%; }
+          .col-total { width: 20%; }
+
+          .summary-wrap {
+            margin-top: 9px;
+          }
+
+          .summary {
+            width: 100%;
+            font-size: 0.95em;
+          }
+
+          .summary-total {
+            font-size: 1.25em;
+          }
+
+          .invoice-footer {
+            margin-top: 18px;
+            font-size: 0.92em;
+          }
+        }
+
+        /*
+         * A5: vùng in trung bình.
+         */
+        @media print and (min-width: 111mm) and (max-width: 170mm) {
+          .invoice-header {
+            gap: 16px;
+            padding-bottom: 11px;
+          }
+
+          .shop-name {
+            font-size: 22px;
+          }
+
+          .invoice-title {
+            font-size: 18px;
+          }
+
+          .shop-meta,
+          .invoice-meta,
+          .customer-box,
+          .items-table,
+          .summary {
+            font-size: 10px;
+          }
+
+          .customer-box {
+            margin-top: 12px;
+            padding: 9px;
+          }
+
+          .customer-grid {
+            column-gap: 16px;
+          }
+
+          .items-table {
+            margin-top: 13px;
+          }
+
+          .items-table th,
+          .items-table td {
+            padding: 6px 5px;
+          }
+
+          .col-stt { width: 7%; }
+          .col-code { width: 15%; }
+          .col-qty { width: 9%; }
+          .col-price { width: 17%; }
+          .col-total { width: 19%; }
+
+          .summary-wrap {
+            margin-top: 13px;
+          }
+
+          .summary {
+            width: 260px;
+          }
+
+          .summary-total {
+            font-size: 14px;
+          }
+
+          .invoice-footer {
+            margin-top: 22px;
+            font-size: 10px;
+          }
+        }
+
+        /*
+         * A4 trở lên dùng layout rộng mặc định.
+         */
+        @media print and (min-width: 171mm) {
+          .invoice-paper {
+            font-size: 12px;
           }
         }
       `}</style>
 
-      <div
-        style={{
-          margin: "0 auto",
-          ...(paperSize === "K80"
-            ? { fontSize: `${bodyFontSize}px` }
-            : {}),
-        }}
-        className={
-          paperSize === "K80"
-            ? "print-box print-paper-k80 bg-white w-[80mm] p-[3mm] leading-[1.4] text-black"
-            : paperSize === "A4"
-            ? "print-box print-paper-a4 bg-white w-[198mm] min-h-[285mm] p-[8mm] text-black text-[13px]"
-            : "print-box print-paper-a5 bg-white w-[136mm] min-h-[190mm] p-[8mm] text-black text-[12px]"
-        }
-      >
+      <div className="invoice-paper">
+        {(showShopName ||
+          showAddress ||
+          showPhone ||
+          showTaxCode ||
+          showTitle ||
+          showDate ||
+          showOrderCode) && (
+          <div className="invoice-header">
+            <div className="shop-block">
+              {showShopName && (
+                <div className="shop-name">
+                  {shopName}
+                </div>
+              )}
 
-        {(showShopName || showAddress || showPhone || showTaxCode) && (
-          <div className="text-center">
+              {(showAddress || showPhone || showTaxCode) && (
+                <div className="shop-meta">
+                  {showAddress && (
+                    <div className="whitespace-pre-line">
+                      {address}
+                    </div>
+                  )}
 
-            {showShopName && (
-              <div
-                className={`font-bold leading-none ${
-                  paperSize === "K80"
-                    ? "text-[20px]"
-                    : paperSize === "A4"
-                    ? "text-[26px]"
-                    : "text-[22px]"
-                }`}
-              >
-                {shopName}
-              </div>
-            )}
-
-            {(showAddress || showPhone || showTaxCode) && (
-              <div
-                className={`mt-1 ${
-                  paperSize === "K80"
-                    ? "text-[1em]"
-                    : "text-[11px]"
-                }`}
-              >
-                {paperSize === "K80" ? (
-                  <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
-                    {showAddress && (
-                      <span className="whitespace-pre-line">{address}</span>
-                    )}
-                    {showAddress && (showPhone || showTaxCode) && <span>|</span>}
-                    {showPhone && <span>Hotline: {phone}</span>}
-                    {showPhone && showTaxCode && <span>|</span>}
-                    {showTaxCode && (
-                      <span>MST: {shopTaxCode || "---"}</span>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    {showAddress && (
-                      <div className="whitespace-pre-line">
-                        {address}
-                      </div>
-                    )}
-
-                    {(showPhone || showTaxCode) && (
-                      <div className="mt-1">
-                        {showPhone && <span>Hotline: {phone}</span>}
-                        {showPhone && showTaxCode && <span> | </span>}
-                        {showTaxCode && (
-                          <span>MST: {shopTaxCode || "---"}</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-          </div>
-        )}
-
-        {(showTitle || showDate || showOrderCode) && (
-          <div className="mt-1 pt-1 text-center">
-
-            {showTitle && (
-              <div
-                className={`font-bold ${
-                  paperSize === "K80"
-                    ? "text-[18px]"
-                    : paperSize === "A4"
-                    ? "text-[20px]"
-                    : "text-[16px]"
-                }`}
-              >
-                {isTemporary
-  ? temporaryTitle
-  : invoiceTitle}
-              </div>
-            )}
-
-            {(showDate || showOrderCode) && (
-              <div
-                className={`mt-1 flex items-center justify-center gap-1 ${
-                  paperSize === "K80" ? "text-[1em]" : "text-[11px]"
-                }`}
-              >
-                {showDate && (
-                  <span>
-                    {formatDate(
-                      order.createdAt
-                    )}
-                  </span>
-                )}
-
-                {showDate && showOrderCode && <span>|</span>}
-
-                {showOrderCode && (
-                  <span>
-                    Mã đơn:
-                    {" "}
-                    <strong>
-                      {getOrderCode(
-                        order
+                  {(showPhone || showTaxCode) && (
+                    <div>
+                      {showPhone && (
+                        <span>Hotline: {phone}</span>
                       )}
-                    </strong>
-                  </span>
-                )}
-              </div>
-            )}
-
-          </div>
-        )}
-
-        {(order.customerName ||
-          order.customer?.name ||
-          order.customerPhone ||
-          order.customer?.phone ||
-          order.customerCompanyName ||
-          order.customer?.companyName ||
-          order.customerTaxCode ||
-          order.customer?.taxCode ||
-          order.customerEmail ||
-          order.customer?.email ||
-          order.customerAddress ||
-          order.customer?.address) && (
-          <div
-            className={`mt-3 pb-2 text-left leading-[1.45] ${
-              paperSize === "K80" ? "text-[1em]" : "text-[11px]"
-            }`}
-          >
-            <div>
-              <strong>Khách hàng:</strong>{" "}
-              <span className="font-normal">
-                {order.customerName ||
-                  order.customer?.name ||
-                  "Khách lẻ"}
-              </span>
+                      {showPhone && showTaxCode && (
+                        <span> | </span>
+                      )}
+                      {showTaxCode && (
+                        <span>
+                          MST: {shopTaxCode || "---"}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {(order.customerCompanyName ||
-              order.customer?.companyName) && (
-              <div className="mt-1">
-                <strong>Công ty:</strong>{" "}
-                <span className="font-normal">
-                  {order.customerCompanyName ||
-                    order.customer?.companyName}
-                </span>
-              </div>
-            )}
+            <div className="title-block">
+              {showTitle && (
+                <div className="invoice-title">
+                  {isTemporary
+                    ? temporaryTitle
+                    : invoiceTitle}
+                </div>
+              )}
 
-            {(order.customerPhone ||
-              order.customer?.phone) && (
-              <div className="mt-1">
-                <strong>Điện thoại:</strong>{" "}
-                <span className="font-normal">
-                  {order.customerPhone ||
-                    order.customer?.phone}
-                </span>
-              </div>
-            )}
+              {(showDate || showOrderCode) && (
+                <div className="invoice-meta">
+                  {showOrderCode && (
+                    <div>
+                      Mã đơn:{" "}
+                      <strong>
+                        {getOrderCode(order)}
+                      </strong>
+                    </div>
+                  )}
 
-            {(order.customerEmail ||
-              order.customer?.email) && (
-              <div className="mt-1">
-                <strong>Email:</strong>{" "}
-                <span className="font-normal break-all">
-                  {order.customerEmail ||
-                    order.customer?.email}
-                </span>
-              </div>
-            )}
-
-            {(order.customerTaxCode ||
-              order.customer?.taxCode) && (
-              <div className="mt-1">
-                <strong>MST:</strong>{" "}
-                <span className="font-normal">
-                  {order.customerTaxCode ||
-                    order.customer?.taxCode}
-                </span>
-              </div>
-            )}
-
-            {(order.customerAddress ||
-              order.customer?.address) && (
-              <div className="mt-1">
-                <strong>Địa chỉ:</strong>{" "}
-                <span className="font-normal">
-                  {order.customerAddress ||
-                    order.customer?.address}
-                </span>
-              </div>
-            )}
+                  {showDate && (
+                    <div>
+                      {formatDate(order.createdAt)}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        <table
-          className={`w-full border-collapse mt-3 ${
-            paperSize === "K80"
-              ? "text-[0.96em]"
-              : paperSize === "A4"
-              ? "text-[12px]"
-              : "text-[10px]"
-          }`}
-        >
+        {(customerName ||
+          customerPhone ||
+          customerCompany ||
+          customerTaxCode ||
+          customerEmail ||
+          customerAddress) && (
+          <div className="customer-box">
+            <div className="customer-grid">
+              <div>
+                <strong>Khách hàng:</strong>{" "}
+                {customerName}
+              </div>
 
-         <thead className="border-y border-dashed border-black">
+              {customerPhone && (
+                <div>
+                  <strong>Điện thoại:</strong>{" "}
+                  {customerPhone}
+                </div>
+              )}
 
-            <tr className="border-b border-dashed border-black">
+              {customerCompany && (
+                <div>
+                  <strong>Công ty:</strong>{" "}
+                  {customerCompany}
+                </div>
+              )}
 
-              <th className="w-[8%] py-1 text-center">
-                STT
-              </th>
+              {customerTaxCode && (
+                <div>
+                  <strong>MST:</strong>{" "}
+                  {customerTaxCode}
+                </div>
+              )}
 
-              <th className="w-[48%] py-1 text-left">
+              {customerEmail && (
+                <div className="break-all">
+                  <strong>Email:</strong>{" "}
+                  {customerEmail}
+                </div>
+              )}
+
+              {customerAddress && (
+                <div className="customer-address">
+                  <strong>Địa chỉ:</strong>{" "}
+                  {customerAddress}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <table className="items-table">
+          <thead>
+            <tr>
+              <th className="col-stt">STT</th>
+
+              {showProductCode && (
+                <th className="col-code">
+                  Mã SP
+                </th>
+              )}
+
+              <th className="col-name">
                 Sản phẩm
               </th>
 
-              <th className="w-[10%] py-1 text-center">
+              <th className="col-qty">
                 SL
               </th>
 
-              <th className="w-[16%] py-1 text-right">
-                Giá
+              <th className="col-price">
+                Đơn giá
               </th>
 
-              <th className="w-[18%] py-1 text-right">
+              <th className="col-total">
                 Thành tiền
               </th>
-
             </tr>
-
           </thead>
 
           <tbody>
-
             {items.map(
               (
                 product: any,
                 index: number
               ) => (
-                <tr
-                  key={index}
-                >
-
-                  <td className="border border border-dashed border-gray-300 px-1 py-[7px] text-center">
+                <tr key={index}>
+                  <td className="col-stt">
                     {index + 1}
                   </td>
 
-                  <td className="border border border-dashed border-gray-300 px-2 py-[7px]">
+                  {showProductCode && (
+                    <td className="col-code break-all">
+                      {getDisplayProductCode(
+                        product
+                      )}
+                    </td>
+                  )}
 
-  <div>
-    {getProductName(
-      product
-    )}
-  </div>
+                  <td className="col-name break-all">
+                    {getProductName(product)}
+                  </td>
 
-  {showProductCode && (
-    <div
-      className={`mt-[2px] text-gray-600 ${
-        paperSize === "K80" ? "text-[0.85em]" : "text-[8px]"
-      }`}
-    >
-      MSP:
-      {" "}
-      {product.product_code ||
-  product.productCode ||
-  product.code ||
-  product.sku ||
-  "---"}
-    </div>
-  )}
-
-</td>
-
-                  <td className="border border border-dashed border-gray-300 px-1 py-[7px] text-center">
+                  <td className="col-qty">
                     {getProductQuantity(
                       product
                     )}
                   </td>
 
-                  <td className="border border border-dashed border-gray-300 px-2 py-[7px] text-right">
+                  <td className="col-price">
                     {formatMoney(
                       getProductPrice(
                         product
@@ -961,7 +1178,7 @@ if (!id) {
                     đ
                   </td>
 
-                  <td className="border border border-dashed border-gray-300 px-2 py-[7px] text-right">
+                  <td className="col-total">
                     {formatMoney(
                       getProductTotal(
                         product
@@ -969,37 +1186,19 @@ if (!id) {
                     )}
                     đ
                   </td>
-
                 </tr>
               )
             )}
-
           </tbody>
-
         </table>
 
-        <div className="flex justify-end mt-3">
-
-          <div
-            className={`space-y-[1px] ${
-              paperSize === "K80"
-                ? "w-full text-[1em]"
-                : paperSize === "A4"
-                ? "w-[320px] text-[12px]"
-                : "w-[230px] text-[10px]"
-            }`}
-          >
-
-            <div className="flex justify-between gap-2">
-              <span className="pl-2">
-                Tạm tính:
-              </span>
-
+        <div className="summary-wrap">
+          <div className="summary">
+            <div className="summary-row">
+              <span>Tạm tính:</span>
               <strong>
                 {formatMoney(
-                  getSubtotal(
-                    order
-                  )
+                  getSubtotal(order)
                 )}
                 đ
               </strong>
@@ -1007,102 +1206,74 @@ if (!id) {
 
             {showVat &&
               hasAppliedVat(order) &&
-              vatBreakdown.map(({ rate, amount }) => (
-                <div
-                  key={rate}
-                  className="flex justify-between gap-2"
-                >
-                  <span className="pl-2">
-                    VAT ({rate}%):
-                  </span>
-
-                  <strong>
-                    {formatMoney(amount)}đ
-                  </strong>
-                </div>
-              ))}
+              vatBreakdown.map(
+                ({ rate, amount }) => (
+                  <div
+                    key={rate}
+                    className="summary-row"
+                  >
+                    <span>
+                      VAT ({rate}%):
+                    </span>
+                    <strong>
+                      {formatMoney(amount)}đ
+                    </strong>
+                  </div>
+                )
+              )}
 
             {showDiscount && (
-              <div className="flex justify-between gap-2">
-                <span className="pl-2">
-                  Giảm giá:
-                </span>
-
+              <div className="summary-row">
+                <span>Giảm giá:</span>
                 <strong>
                   {formatMoney(
-                    getDiscountAmount(
-                      order
-                    )
+                    getDiscountAmount(order)
                   )}
                   đ
                 </strong>
               </div>
             )}
 
-            <div
-              className={`flex justify-between font-bold border-t border-gray-300 pt-1 mt-1 ${
-                paperSize === "K80" ? "text-[1.3em]" : paperSize === "A4" ? "text-[17px]" : "text-[14px]"
-              }`}
-            >
-              <span className="pl-2">
-                Tổng cộng:
-              </span>
-
+            <div className="summary-row summary-total">
+              <span>Tổng cộng:</span>
               <span>
                 {formatMoney(
-                  getGrandTotal(
-                    order
-                  )
+                  getGrandTotal(order)
                 )}
                 đ
               </span>
             </div>
 
             {!isTemporary &&
-  showCustomerPaid && (
-              <div className="flex justify-between gap-2 mt-1">
-                <span className="pl-2">
-                  Khách trả:
-                </span>
-
-                <strong>
-                  {formatMoney(
-                    getCustomerPaid(
-                      order
-                    )
-                  )}
-                  đ
-                </strong>
-              </div>
-            )}
+              showCustomerPaid && (
+                <div className="summary-row">
+                  <span>Khách trả:</span>
+                  <strong>
+                    {formatMoney(
+                      getCustomerPaid(order)
+                    )}
+                    đ
+                  </strong>
+                </div>
+              )}
 
             {!isTemporary &&
-  showChange && (
-              <div className="flex justify-between gap-2">
-                <span className="pl-2">
-                  Tiền thừa:
-                </span>
-
-                <strong>
-                  {formatMoney(
-                    getChange(order)
-                  )}
-                  đ
-                </strong>
-              </div>
-            )}
-
+              showChange && (
+                <div className="summary-row">
+                  <span>Tiền thừa:</span>
+                  <strong>
+                    {formatMoney(
+                      getChange(order)
+                    )}
+                    đ
+                  </strong>
+                </div>
+              )}
           </div>
-
         </div>
 
         {(showThankYou || showSeeYou) && (
-          <div
-            className={`text-center mt-6 space-y-1 ${
-              paperSize === "K80" ? "text-[1em]" : "text-[11px]"
-            }`}
-          >
-
+          <div className="invoice-footer">
             {showThankYou && (
               <div className="whitespace-pre-line">
                 {thankYouText}
@@ -1114,12 +1285,9 @@ if (!id) {
                 {seeYouText}
               </div>
             )}
-
           </div>
         )}
-
       </div>
-
     </main>
   );
 }

@@ -245,130 +245,6 @@ useEffect(() => {
       paperSize: "A5",
     });
 
-  const [printPaperPicker, setPrintPaperPicker] =
-    useState<{
-      open: boolean;
-      mode: "temporary" | "invoice" | null;
-      orderId?: string;
-    }>({
-      open: false,
-      mode: null,
-    });
-
-  const openPrintPaperPicker = (
-    mode: "temporary" | "invoice",
-    orderId?: string
-  ) => {
-    setPrintPaperPicker({
-      open: true,
-      mode,
-      orderId,
-    });
-  };
-
-  const closePrintPaperPicker = () => {
-    setPrintPaperPicker({
-      open: false,
-      mode: null,
-    });
-  };
-
-  const confirmPrintPaper = (
-    paper: "K80" | "A5" | "A4"
-  ) => {
-    if (printPaperPicker.mode === "temporary") {
-      if (cart.length === 0) {
-        alert("Chưa có sản phẩm");
-        closePrintPaperPicker();
-        return;
-      }
-
-      const temporaryOrder = {
-        id: "TAM-TINH",
-        orderCode: "TẠM TÍNH",
-        order_code: "TẠM TÍNH",
-        createdAt: new Date().toISOString(),
-        customer: selectedCustomer,
-        customerName: selectedCustomer?.name || "Khách lẻ",
-        customerPhone: selectedCustomer?.phone || "",
-        customerCompanyName: selectedCustomer?.companyName || "",
-        customerCode: selectedCustomer?.code || "",
-        customerAddress: selectedCustomer?.address || "",
-        customerEmail: selectedCustomer?.email || "",
-        customerTaxCode: selectedCustomer?.taxCode || "",
-        items: cart.map((item) => ({
-          ...item,
-          name: item.name || "",
-          main_name:
-            item.main_name ||
-            item.name ||
-            "",
-          short_name:
-            item.short_name ||
-            item.main_name ||
-            item.name ||
-            "",
-          printName: showMainName
-            ? (
-                item.main_name ||
-                item.name ||
-                ""
-              )
-            : (
-                item.short_name ||
-                item.main_name ||
-                item.name ||
-                ""
-              ),
-          productCode:
-            item.product_code ||
-            item.code ||
-            item.sku ||
-            "",
-        })),
-        subtotal,
-        vatAmount,
-        useProductVat,
-        discountType,
-        discountValue,
-        discountCode,
-        discountAmount,
-        total,
-        finalTotal: total,
-        final_total: total,
-        customerPaid: customerPayAmount,
-        paidAmount: customerPayAmount,
-        changeAmount,
-      };
-
-      sessionStorage.setItem(
-        "temporary_invoice_order",
-        JSON.stringify(temporaryOrder)
-      );
-
-      window.open(
-        `/print-order/invoice?type=temporary&paper=${paper}&print=1`,
-        "_blank"
-      );
-
-      closePrintPaperPicker();
-      return;
-    }
-
-    if (
-      printPaperPicker.mode === "invoice" &&
-      printPaperPicker.orderId
-    ) {
-      window.open(
-        `/print-order/invoice?id=${encodeURIComponent(
-          printPaperPicker.orderId
-        )}&paper=${paper}&print=1`,
-        "_blank"
-      );
-      closePrintPaperPicker();
-    }
-  };
-
   const currentOrder =
     orders.find(
       (order) =>
@@ -1583,7 +1459,97 @@ setTimeout(() => {
     return;
   }
 
-  openPrintPaperPicker("temporary");
+  const temporaryOrder = {
+    id: "TAM-TINH",
+
+    orderCode: "TẠM TÍNH",
+    order_code: "TẠM TÍNH",
+
+    createdAt:
+      new Date().toISOString(),
+
+    customer:
+      selectedCustomer,
+
+    customerName:
+      selectedCustomer?.name ||
+      "Khách lẻ",
+
+    customerPhone:
+      selectedCustomer?.phone ||
+      "",
+
+    items: cart.map((item) => ({
+  ...item,
+
+  name: item.name || "",
+
+  main_name:
+    item.main_name ||
+    item.name ||
+    "",
+
+  short_name:
+    item.short_name ||
+    item.main_name ||
+    item.name ||
+    "",
+
+  printName: showMainName
+    ? (
+        item.main_name ||
+        item.name ||
+        ""
+      )
+    : (
+        item.short_name ||
+        item.main_name ||
+        item.name ||
+        ""
+      ),
+
+  productCode:
+    item.product_code ||
+    item.code ||
+    item.sku ||
+    "",
+})),
+
+    subtotal,
+    vatAmount,
+
+    discountType,
+    discountValue,
+    discountAmount,
+
+    total,
+
+    finalTotal:
+      total,
+
+    final_total:
+      total,
+
+    customerPaid:
+      customerPayAmount,
+
+    paidAmount:
+      customerPayAmount,
+
+    changeAmount,
+  };
+
+  sessionStorage.setItem(
+    "temporary_invoice_order",
+    JSON.stringify(
+      temporaryOrder
+    )
+  );
+
+  window.open(
+    "/print-order/invoice?type=temporary&print=1",
+    "_blank"
+  );
 };
 
   const checkout =
@@ -1896,9 +1862,9 @@ list: cart.map(item => ({
     createdAt: new Date(),
   }
 );
-openPrintPaperPicker(
-  "invoice",
-  orderRef.id
+window.open(
+  `/print-order/invoice?id=${encodeURIComponent(orderRef.id)}&print=1`,
+  "_blank"
 );
 console.log(
   "TOTAL:",
@@ -2226,7 +2192,6 @@ setTimeout(() => {
           setShowCustomerDropdown(false);
           setShowDiscountModal(false);
           setShowSplitPaymentModal(false);
-          closePrintPaperPicker();
 
           updateCurrentOrder({
             showProductDropdown: false,
@@ -4085,48 +4050,6 @@ const itemShortName =
   id="print-area"
   style={{ display: "none" }}
 ></div>
-      {printPaperPicker.open && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
-            <div className="flex items-center justify-between bg-slate-800 px-6 py-5 text-white">
-              <div>
-                <h2 className="text-xl font-bold">
-                  Chọn mẫu in
-                </h2>
-                <p className="mt-1 text-sm text-slate-300">
-                  Chọn khổ giấy để render đúng mẫu
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={closePrintPaperPicker}
-                className="h-10 w-10 rounded-full bg-white/20 text-xl hover:bg-white/30"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 p-6">
-              {(["K80", "A5", "A4"] as const).map((paper) => (
-                <button
-                  key={paper}
-                  type="button"
-                  onClick={() => confirmPrintPaper(paper)}
-                  className="rounded-2xl border border-slate-300 bg-white px-4 py-5 text-center font-bold text-slate-800 transition hover:border-sky-500 hover:bg-sky-50 hover:text-sky-700"
-                >
-                  {paper}
-                </button>
-              ))}
-            </div>
-
-            <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 text-center text-sm text-slate-500">
-              K80 = máy in nhiệt · A5/A4 = giấy văn phòng
-            </div>
-          </div>
-        </div>
-      )}
-
     </main>
   );
 }
