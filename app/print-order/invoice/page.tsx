@@ -584,484 +584,16 @@ if (!id) {
   const vatBreakdown =
     getVatBreakdown(order);
 
-  const customerName =
-    order.customerName ||
-    order.customer?.name ||
-    "Khách lẻ";
-
-  const customerCompany =
-    order.customerCompanyName ||
-    order.customer?.companyName ||
-    "";
-
-  const customerPhone =
-    order.customerPhone ||
-    order.customer?.phone ||
-    "";
-
-  const customerEmail =
-    order.customerEmail ||
-    order.customer?.email ||
-    "";
-
-  const customerTaxCode =
-    order.customerTaxCode ||
-    order.customer?.taxCode ||
-    "";
-
-  const customerAddress =
-    order.customerAddress ||
-    order.customer?.address ||
-    "";
-
-  const productCode = (product: any) =>
-    product.product_code ||
-    product.productCode ||
-    product.code ||
-    product.sku ||
-    "---";
-
-  const summaryBlock = (
-    size: "K80" | "A5" | "A4"
-  ) => (
-    <div
-      className={
-        size === "K80"
-          ? "w-full space-y-1 text-[1em]"
-          : size === "A4"
-          ? "ml-auto w-[340px] space-y-1 text-[12px]"
-          : "ml-auto w-[260px] space-y-1 text-[11px]"
-      }
-    >
-      <div className="flex justify-between gap-3">
-        <span>Tạm tính:</span>
-        <strong>{formatMoney(getSubtotal(order))}đ</strong>
-      </div>
-
-      {showVat &&
-        hasAppliedVat(order) &&
-        vatBreakdown.map(({ rate, amount }) => (
-          <div
-            key={rate}
-            className="flex justify-between gap-3"
-          >
-            <span>VAT ({rate}%):</span>
-            <strong>{formatMoney(amount)}đ</strong>
-          </div>
-        ))}
-
-      {showDiscount && (
-        <div className="flex justify-between gap-3">
-          <span>Giảm giá:</span>
-          <strong>
-            {formatMoney(getDiscountAmount(order))}đ
-          </strong>
-        </div>
-      )}
-
-      <div
-        className={
-          size === "K80"
-            ? "mt-1 flex justify-between gap-3 border-t border-black pt-1 text-[1.25em] font-bold"
-            : size === "A4"
-            ? "mt-2 flex justify-between gap-3 border-t border-slate-500 pt-2 text-[17px] font-bold"
-            : "mt-2 flex justify-between gap-3 border-t border-slate-500 pt-2 text-[14px] font-bold"
-        }
-      >
-        <span>Tổng cộng:</span>
-        <span>{formatMoney(getGrandTotal(order))}đ</span>
-      </div>
-
-      {!isTemporary && showCustomerPaid && (
-        <div className="flex justify-between gap-3">
-          <span>Khách trả:</span>
-          <strong>{formatMoney(getCustomerPaid(order))}đ</strong>
-        </div>
-      )}
-
-      {!isTemporary && showChange && (
-        <div className="flex justify-between gap-3">
-          <span>Tiền thừa:</span>
-          <strong>{formatMoney(getChange(order))}đ</strong>
-        </div>
-      )}
-    </div>
-  );
-
-  const footerBlock = (compact = false) =>
-    (showThankYou || showSeeYou) ? (
-      <div
-        className={
-          compact
-            ? "mt-5 space-y-1 text-center text-[1em]"
-            : "mt-8 space-y-1 text-center text-[11px]"
-        }
-      >
-        {showThankYou && (
-          <div className="whitespace-pre-line">
-            {thankYouText}
-          </div>
-        )}
-        {showSeeYou && (
-          <div className="whitespace-pre-line">
-            {seeYouText}
-          </div>
-        )}
-      </div>
-    ) : null;
-
-  const K80Template = () => (
-    <div
-      className="print-template print-k80 mx-auto box-border w-[80mm] bg-white p-[3mm] text-black leading-[1.35]"
-      style={{ fontSize: `${bodyFontSize}px` }}
-    >
-      {(showShopName || showAddress || showPhone || showTaxCode) && (
-        <div className="text-center">
-          {showShopName && (
-            <div className="text-[20px] font-bold leading-tight">
-              {shopName}
-            </div>
-          )}
-
-          <div className="mt-1 text-[0.92em] leading-[1.35]">
-            {showAddress && (
-              <div className="whitespace-pre-line">{address}</div>
-            )}
-            {(showPhone || showTaxCode) && (
-              <div>
-                {showPhone && <span>Hotline: {phone}</span>}
-                {showPhone && showTaxCode && <span> | </span>}
-                {showTaxCode && (
-                  <span>MST: {shopTaxCode || "---"}</span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {(showTitle || showDate || showOrderCode) && (
-        <div className="mt-2 border-y border-dashed border-black py-2 text-center">
-          {showTitle && (
-            <div className="text-[18px] font-bold">
-              {isTemporary ? temporaryTitle : invoiceTitle}
-            </div>
-          )}
-
-          {(showDate || showOrderCode) && (
-            <div className="mt-1 text-[0.88em]">
-              {showDate && <span>{formatDate(order.createdAt)}</span>}
-              {showDate && showOrderCode && <span> | </span>}
-              {showOrderCode && (
-                <span>
-                  Mã đơn: <strong>{getOrderCode(order)}</strong>
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {(customerName ||
-        customerPhone ||
-        customerCompany ||
-        customerTaxCode ||
-        customerEmail ||
-        customerAddress) && (
-        <div className="mt-2 text-[0.92em] leading-[1.4]">
-          <div>
-            <strong>Khách hàng:</strong> {customerName}
-          </div>
-          {customerCompany && (
-            <div><strong>Công ty:</strong> {customerCompany}</div>
-          )}
-          {customerPhone && (
-            <div><strong>Điện thoại:</strong> {customerPhone}</div>
-          )}
-          {customerTaxCode && (
-            <div><strong>MST:</strong> {customerTaxCode}</div>
-          )}
-          {customerEmail && (
-            <div className="break-all">
-              <strong>Email:</strong> {customerEmail}
-            </div>
-          )}
-          {customerAddress && (
-            <div><strong>Địa chỉ:</strong> {customerAddress}</div>
-          )}
-        </div>
-      )}
-
-      <table className="mt-3 w-full table-fixed border-collapse text-[0.88em]">
-        <thead className="border-y border-dashed border-black">
-          <tr>
-            <th className="w-[8%] py-1 text-center">STT</th>
-            <th className="w-[46%] py-1 text-left">Sản phẩm</th>
-            <th className="w-[10%] py-1 text-center">SL</th>
-            <th className="w-[17%] py-1 text-right">Giá</th>
-            <th className="w-[19%] py-1 text-right">T.Tiền</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((product: any, index: number) => (
-            <tr
-              key={index}
-              className="border-b border-dashed border-gray-400"
-            >
-              <td className="px-1 py-1.5 text-center align-top">
-                {index + 1}
-              </td>
-              <td className="px-1 py-1.5 align-top break-words">
-                <div>{getProductName(product)}</div>
-                {showProductCode && (
-                  <div className="mt-0.5 text-[0.82em] text-gray-600">
-                    MSP: {productCode(product)}
-                  </div>
-                )}
-              </td>
-              <td className="px-1 py-1.5 text-center align-top">
-                {getProductQuantity(product)}
-              </td>
-              <td className="px-1 py-1.5 text-right align-top whitespace-nowrap">
-                {formatMoney(getProductPrice(product))}
-              </td>
-              <td className="px-1 py-1.5 text-right align-top whitespace-nowrap">
-                {formatMoney(getProductTotal(product))}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="mt-3">{summaryBlock("K80")}</div>
-      {footerBlock(true)}
-    </div>
-  );
-
-  const A5Template = () => (
-    <div className="print-template print-a5 mx-auto box-border w-[148mm] min-h-[210mm] bg-white px-[8mm] py-[7mm] text-black">
-      <div className="flex items-start justify-between gap-5 border-b-2 border-slate-700 pb-4">
-        <div className="max-w-[58%]">
-          {showShopName && (
-            <div className="text-[22px] font-bold leading-tight">
-              {shopName}
-            </div>
-          )}
-          <div className="mt-1 text-[10px] leading-[1.45] text-slate-700">
-            {showAddress && (
-              <div className="whitespace-pre-line">{address}</div>
-            )}
-            {showPhone && <div>Hotline: {phone}</div>}
-            {showTaxCode && (
-              <div>MST: {shopTaxCode || "---"}</div>
-            )}
-          </div>
-        </div>
-
-        <div className="min-w-[42%] text-right">
-          {showTitle && (
-            <div className="text-[18px] font-bold uppercase">
-              {isTemporary ? temporaryTitle : invoiceTitle}
-            </div>
-          )}
-          <div className="mt-1 text-[10px] leading-[1.45]">
-            {showOrderCode && (
-              <div>
-                Mã đơn: <strong>{getOrderCode(order)}</strong>
-              </div>
-            )}
-            {showDate && <div>{formatDate(order.createdAt)}</div>}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 rounded border border-slate-300 p-3 text-[10px] leading-[1.5]">
-        <div className="grid grid-cols-2 gap-x-5 gap-y-1">
-          <div><strong>Khách hàng:</strong> {customerName}</div>
-          {customerPhone && (
-            <div><strong>Điện thoại:</strong> {customerPhone}</div>
-          )}
-          {customerCompany && (
-            <div><strong>Công ty:</strong> {customerCompany}</div>
-          )}
-          {customerTaxCode && (
-            <div><strong>MST:</strong> {customerTaxCode}</div>
-          )}
-          {customerEmail && (
-            <div className="break-all">
-              <strong>Email:</strong> {customerEmail}
-            </div>
-          )}
-          {customerAddress && (
-            <div className="col-span-2">
-              <strong>Địa chỉ:</strong> {customerAddress}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <table className="mt-4 w-full table-fixed border-collapse text-[10px]">
-        <thead>
-          <tr className="bg-slate-100">
-            <th className="w-[7%] border border-slate-400 px-2 py-2 text-center">STT</th>
-            {showProductCode && (
-              <th className="w-[15%] border border-slate-400 px-2 py-2 text-left">Mã SP</th>
-            )}
-            <th className="border border-slate-400 px-2 py-2 text-left">Sản phẩm</th>
-            <th className="w-[9%] border border-slate-400 px-2 py-2 text-center">SL</th>
-            <th className="w-[17%] border border-slate-400 px-2 py-2 text-right">Đơn giá</th>
-            <th className="w-[19%] border border-slate-400 px-2 py-2 text-right">Thành tiền</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((product: any, index: number) => (
-            <tr key={index}>
-              <td className="border border-slate-300 px-2 py-2 text-center align-top">
-                {index + 1}
-              </td>
-              {showProductCode && (
-                <td className="border border-slate-300 px-2 py-2 align-top break-words">
-                  {productCode(product)}
-                </td>
-              )}
-              <td className="border border-slate-300 px-2 py-2 align-top break-words">
-                {getProductName(product)}
-              </td>
-              <td className="border border-slate-300 px-2 py-2 text-center align-top">
-                {getProductQuantity(product)}
-              </td>
-              <td className="border border-slate-300 px-2 py-2 text-right align-top whitespace-nowrap">
-                {formatMoney(getProductPrice(product))}đ
-              </td>
-              <td className="border border-slate-300 px-2 py-2 text-right align-top whitespace-nowrap">
-                {formatMoney(getProductTotal(product))}đ
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="mt-4">{summaryBlock("A5")}</div>
-      {footerBlock(false)}
-    </div>
-  );
-
-  const A4Template = () => (
-    <div className="print-template print-a4 mx-auto box-border w-[210mm] min-h-[297mm] bg-white px-[12mm] py-[10mm] text-black">
-      <div className="flex items-start justify-between gap-8 border-b-2 border-black pb-5">
-        <div className="max-w-[58%]">
-          {showShopName && (
-            <div className="text-[28px] font-bold leading-tight">
-              {shopName}
-            </div>
-          )}
-          <div className="mt-2 text-[12px] leading-[1.55]">
-            {showAddress && (
-              <div className="whitespace-pre-line">{address}</div>
-            )}
-            {(showPhone || showTaxCode) && (
-              <div>
-                {showPhone && <span>Hotline: {phone}</span>}
-                {showPhone && showTaxCode && <span> | </span>}
-                {showTaxCode && (
-                  <span>MST: {shopTaxCode || "---"}</span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="min-w-[40%] text-right">
-          {showTitle && (
-            <div className="text-[24px] font-bold uppercase">
-              {isTemporary ? temporaryTitle : invoiceTitle}
-            </div>
-          )}
-          <div className="mt-2 text-[12px] leading-[1.55]">
-            {showOrderCode && (
-              <div>
-                Mã đơn: <strong>{getOrderCode(order)}</strong>
-              </div>
-            )}
-            {showDate && <div>Ngày: {formatDate(order.createdAt)}</div>}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-5 rounded-md border border-slate-400 p-4 text-[12px] leading-[1.6]">
-        <div className="grid grid-cols-2 gap-x-8 gap-y-1">
-          <div><strong>Khách hàng:</strong> {customerName}</div>
-          {customerPhone && (
-            <div><strong>Điện thoại:</strong> {customerPhone}</div>
-          )}
-          {customerCompany && (
-            <div><strong>Công ty:</strong> {customerCompany}</div>
-          )}
-          {customerTaxCode && (
-            <div><strong>MST:</strong> {customerTaxCode}</div>
-          )}
-          {customerEmail && (
-            <div className="break-all">
-              <strong>Email:</strong> {customerEmail}
-            </div>
-          )}
-          {customerAddress && (
-            <div className="col-span-2">
-              <strong>Địa chỉ:</strong> {customerAddress}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <table className="mt-5 w-full table-fixed border-collapse text-[12px]">
-        <thead>
-          <tr className="bg-slate-100">
-            <th className="w-[6%] border border-slate-500 px-3 py-2.5 text-center">STT</th>
-            {showProductCode && (
-              <th className="w-[14%] border border-slate-500 px-3 py-2.5 text-left">Mã SP</th>
-            )}
-            <th className="border border-slate-500 px-3 py-2.5 text-left">Tên sản phẩm</th>
-            <th className="w-[8%] border border-slate-500 px-3 py-2.5 text-center">SL</th>
-            <th className="w-[16%] border border-slate-500 px-3 py-2.5 text-right">Đơn giá</th>
-            <th className="w-[17%] border border-slate-500 px-3 py-2.5 text-right">Thành tiền</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((product: any, index: number) => (
-            <tr key={index}>
-              <td className="border border-slate-300 px-3 py-2.5 text-center align-top">
-                {index + 1}
-              </td>
-              {showProductCode && (
-                <td className="border border-slate-300 px-3 py-2.5 align-top break-words">
-                  {productCode(product)}
-                </td>
-              )}
-              <td className="border border-slate-300 px-3 py-2.5 align-top break-words">
-                {getProductName(product)}
-              </td>
-              <td className="border border-slate-300 px-3 py-2.5 text-center align-top">
-                {getProductQuantity(product)}
-              </td>
-              <td className="border border-slate-300 px-3 py-2.5 text-right align-top whitespace-nowrap">
-                {formatMoney(getProductPrice(product))}đ
-              </td>
-              <td className="border border-slate-300 px-3 py-2.5 text-right align-top whitespace-nowrap">
-                {formatMoney(getProductTotal(product))}đ
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="mt-5">{summaryBlock("A4")}</div>
-      {footerBlock(false)}
-    </div>
-  );
-
   return (
     <main className="min-h-screen bg-white">
+
       <style>{`
+        /*
+         * Khổ giấy in thực tế:
+         * K80 = 80mm
+         * A5  = 148 x 210mm
+         * A4  = 210 x 297mm
+         */
         @page {
           size: ${
             paperSize === "K80"
@@ -1070,7 +602,7 @@ if (!id) {
               ? "A4 portrait"
               : "A5 portrait"
           };
-          margin: 0;
+          margin: ${paperSize === "K80" ? "0" : "6mm"};
         }
 
         @media print {
@@ -1078,24 +610,25 @@ if (!id) {
           body {
             margin: 0 !important;
             padding: 0 !important;
-            background: #fff !important;
+            background: white !important;
             overflow: visible !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
 
           main {
+            width: 100% !important;
+            min-height: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
-            min-height: 0 !important;
-            background: #fff !important;
           }
 
-          .print-template {
+          .print-box {
+            box-sizing: border-box !important;
             box-shadow: none !important;
           }
 
-          .print-k80 {
+          .print-paper-k80 {
             width: 80mm !important;
             max-width: 80mm !important;
             min-height: 0 !important;
@@ -1103,50 +636,490 @@ if (!id) {
             padding: 3mm !important;
           }
 
-          .print-a5 {
-            width: 148mm !important;
-            min-height: 210mm !important;
+          .print-paper-a5 {
+            width: 136mm !important;
+            max-width: 136mm !important;
+            min-height: 198mm !important;
             margin: 0 auto !important;
-            padding: 7mm 8mm !important;
+            padding: 0 !important;
           }
 
-          .print-a4 {
-            width: 210mm !important;
-            min-height: 297mm !important;
+          .print-paper-a4 {
+            width: 198mm !important;
+            max-width: 198mm !important;
+            min-height: 285mm !important;
             margin: 0 auto !important;
-            padding: 10mm 12mm !important;
-          }
-
-          table {
-            page-break-inside: auto;
-          }
-
-          tr {
-            page-break-inside: avoid;
-            page-break-after: auto;
-          }
-
-          thead {
-            display: table-header-group;
-          }
-        }
-
-        @media screen {
-          .print-k80,
-          .print-a5,
-          .print-a4 {
-            box-shadow: 0 1px 10px rgba(0, 0, 0, 0.08);
+            padding: 0 !important;
           }
         }
       `}</style>
 
-      {paperSize === "K80" ? (
-        <K80Template />
-      ) : paperSize === "A4" ? (
-        <A4Template />
-      ) : (
-        <A5Template />
-      )}
+      <div
+        style={{
+          margin: "0 auto",
+          ...(paperSize === "K80"
+            ? { fontSize: `${bodyFontSize}px` }
+            : {}),
+        }}
+        className={
+          paperSize === "K80"
+            ? "print-box print-paper-k80 bg-white w-[80mm] p-[3mm] leading-[1.4] text-black"
+            : paperSize === "A4"
+            ? "print-box print-paper-a4 bg-white w-[198mm] min-h-[285mm] p-[8mm] text-black text-[13px]"
+            : "print-box print-paper-a5 bg-white w-[136mm] min-h-[190mm] p-[8mm] text-black text-[12px]"
+        }
+      >
+
+        {(showShopName || showAddress || showPhone || showTaxCode) && (
+          <div className="text-center">
+
+            {showShopName && (
+              <div
+                className={`font-bold leading-none ${
+                  paperSize === "K80"
+                    ? "text-[20px]"
+                    : paperSize === "A4"
+                    ? "text-[26px]"
+                    : "text-[22px]"
+                }`}
+              >
+                {shopName}
+              </div>
+            )}
+
+            {(showAddress || showPhone || showTaxCode) && (
+              <div
+                className={`mt-1 ${
+                  paperSize === "K80"
+                    ? "text-[1em]"
+                    : "text-[11px]"
+                }`}
+              >
+                {paperSize === "K80" ? (
+                  <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
+                    {showAddress && (
+                      <span className="whitespace-pre-line">{address}</span>
+                    )}
+                    {showAddress && (showPhone || showTaxCode) && <span>|</span>}
+                    {showPhone && <span>Hotline: {phone}</span>}
+                    {showPhone && showTaxCode && <span>|</span>}
+                    {showTaxCode && (
+                      <span>MST: {shopTaxCode || "---"}</span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    {showAddress && (
+                      <div className="whitespace-pre-line">
+                        {address}
+                      </div>
+                    )}
+
+                    {(showPhone || showTaxCode) && (
+                      <div className="mt-1">
+                        {showPhone && <span>Hotline: {phone}</span>}
+                        {showPhone && showTaxCode && <span> | </span>}
+                        {showTaxCode && (
+                          <span>MST: {shopTaxCode || "---"}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+        )}
+
+        {(showTitle || showDate || showOrderCode) && (
+          <div className="mt-1 pt-1 text-center">
+
+            {showTitle && (
+              <div
+                className={`font-bold ${
+                  paperSize === "K80"
+                    ? "text-[18px]"
+                    : paperSize === "A4"
+                    ? "text-[20px]"
+                    : "text-[16px]"
+                }`}
+              >
+                {isTemporary
+  ? temporaryTitle
+  : invoiceTitle}
+              </div>
+            )}
+
+            {(showDate || showOrderCode) && (
+              <div
+                className={`mt-1 flex items-center justify-center gap-1 ${
+                  paperSize === "K80" ? "text-[1em]" : "text-[11px]"
+                }`}
+              >
+                {showDate && (
+                  <span>
+                    {formatDate(
+                      order.createdAt
+                    )}
+                  </span>
+                )}
+
+                {showDate && showOrderCode && <span>|</span>}
+
+                {showOrderCode && (
+                  <span>
+                    Mã đơn:
+                    {" "}
+                    <strong>
+                      {getOrderCode(
+                        order
+                      )}
+                    </strong>
+                  </span>
+                )}
+              </div>
+            )}
+
+          </div>
+        )}
+
+        {(order.customerName ||
+          order.customer?.name ||
+          order.customerPhone ||
+          order.customer?.phone ||
+          order.customerCompanyName ||
+          order.customer?.companyName ||
+          order.customerTaxCode ||
+          order.customer?.taxCode ||
+          order.customerEmail ||
+          order.customer?.email ||
+          order.customerAddress ||
+          order.customer?.address) && (
+          <div
+            className={`mt-3 pb-2 text-left leading-[1.45] ${
+              paperSize === "K80" ? "text-[1em]" : "text-[11px]"
+            }`}
+          >
+            <div>
+              <strong>Khách hàng:</strong>{" "}
+              <span className="font-normal">
+                {order.customerName ||
+                  order.customer?.name ||
+                  "Khách lẻ"}
+              </span>
+            </div>
+
+            {(order.customerCompanyName ||
+              order.customer?.companyName) && (
+              <div className="mt-1">
+                <strong>Công ty:</strong>{" "}
+                <span className="font-normal">
+                  {order.customerCompanyName ||
+                    order.customer?.companyName}
+                </span>
+              </div>
+            )}
+
+            {(order.customerPhone ||
+              order.customer?.phone) && (
+              <div className="mt-1">
+                <strong>Điện thoại:</strong>{" "}
+                <span className="font-normal">
+                  {order.customerPhone ||
+                    order.customer?.phone}
+                </span>
+              </div>
+            )}
+
+            {(order.customerEmail ||
+              order.customer?.email) && (
+              <div className="mt-1">
+                <strong>Email:</strong>{" "}
+                <span className="font-normal break-all">
+                  {order.customerEmail ||
+                    order.customer?.email}
+                </span>
+              </div>
+            )}
+
+            {(order.customerTaxCode ||
+              order.customer?.taxCode) && (
+              <div className="mt-1">
+                <strong>MST:</strong>{" "}
+                <span className="font-normal">
+                  {order.customerTaxCode ||
+                    order.customer?.taxCode}
+                </span>
+              </div>
+            )}
+
+            {(order.customerAddress ||
+              order.customer?.address) && (
+              <div className="mt-1">
+                <strong>Địa chỉ:</strong>{" "}
+                <span className="font-normal">
+                  {order.customerAddress ||
+                    order.customer?.address}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <table
+          className={`w-full border-collapse mt-3 ${
+            paperSize === "K80"
+              ? "text-[0.96em]"
+              : paperSize === "A4"
+              ? "text-[12px]"
+              : "text-[10px]"
+          }`}
+        >
+
+         <thead className="border-y border-dashed border-black">
+
+            <tr className="border-b border-dashed border-black">
+
+              <th className="w-[8%] py-1 text-center">
+                STT
+              </th>
+
+              <th className="w-[48%] py-1 text-left">
+                Sản phẩm
+              </th>
+
+              <th className="w-[10%] py-1 text-center">
+                SL
+              </th>
+
+              <th className="w-[16%] py-1 text-right">
+                Giá
+              </th>
+
+              <th className="w-[18%] py-1 text-right">
+                Thành tiền
+              </th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            {items.map(
+              (
+                product: any,
+                index: number
+              ) => (
+                <tr
+                  key={index}
+                >
+
+                  <td className="border border border-dashed border-gray-300 px-1 py-[7px] text-center">
+                    {index + 1}
+                  </td>
+
+                  <td className="border border border-dashed border-gray-300 px-2 py-[7px]">
+
+  <div>
+    {getProductName(
+      product
+    )}
+  </div>
+
+  {showProductCode && (
+    <div
+      className={`mt-[2px] text-gray-600 ${
+        paperSize === "K80" ? "text-[0.85em]" : "text-[8px]"
+      }`}
+    >
+      MSP:
+      {" "}
+      {product.product_code ||
+  product.productCode ||
+  product.code ||
+  product.sku ||
+  "---"}
+    </div>
+  )}
+
+</td>
+
+                  <td className="border border border-dashed border-gray-300 px-1 py-[7px] text-center">
+                    {getProductQuantity(
+                      product
+                    )}
+                  </td>
+
+                  <td className="border border border-dashed border-gray-300 px-2 py-[7px] text-right">
+                    {formatMoney(
+                      getProductPrice(
+                        product
+                      )
+                    )}
+                    đ
+                  </td>
+
+                  <td className="border border border-dashed border-gray-300 px-2 py-[7px] text-right">
+                    {formatMoney(
+                      getProductTotal(
+                        product
+                      )
+                    )}
+                    đ
+                  </td>
+
+                </tr>
+              )
+            )}
+
+          </tbody>
+
+        </table>
+
+        <div className="flex justify-end mt-3">
+
+          <div
+            className={`space-y-[1px] ${
+              paperSize === "K80"
+                ? "w-full text-[1em]"
+                : paperSize === "A4"
+                ? "w-[320px] text-[12px]"
+                : "w-[230px] text-[10px]"
+            }`}
+          >
+
+            <div className="flex justify-between gap-2">
+              <span className="pl-2">
+                Tạm tính:
+              </span>
+
+              <strong>
+                {formatMoney(
+                  getSubtotal(
+                    order
+                  )
+                )}
+                đ
+              </strong>
+            </div>
+
+            {showVat &&
+              hasAppliedVat(order) &&
+              vatBreakdown.map(({ rate, amount }) => (
+                <div
+                  key={rate}
+                  className="flex justify-between gap-2"
+                >
+                  <span className="pl-2">
+                    VAT ({rate}%):
+                  </span>
+
+                  <strong>
+                    {formatMoney(amount)}đ
+                  </strong>
+                </div>
+              ))}
+
+            {showDiscount && (
+              <div className="flex justify-between gap-2">
+                <span className="pl-2">
+                  Giảm giá:
+                </span>
+
+                <strong>
+                  {formatMoney(
+                    getDiscountAmount(
+                      order
+                    )
+                  )}
+                  đ
+                </strong>
+              </div>
+            )}
+
+            <div
+              className={`flex justify-between font-bold border-t border-gray-300 pt-1 mt-1 ${
+                paperSize === "K80" ? "text-[1.3em]" : paperSize === "A4" ? "text-[17px]" : "text-[14px]"
+              }`}
+            >
+              <span className="pl-2">
+                Tổng cộng:
+              </span>
+
+              <span>
+                {formatMoney(
+                  getGrandTotal(
+                    order
+                  )
+                )}
+                đ
+              </span>
+            </div>
+
+            {!isTemporary &&
+  showCustomerPaid && (
+              <div className="flex justify-between gap-2 mt-1">
+                <span className="pl-2">
+                  Khách trả:
+                </span>
+
+                <strong>
+                  {formatMoney(
+                    getCustomerPaid(
+                      order
+                    )
+                  )}
+                  đ
+                </strong>
+              </div>
+            )}
+
+            {!isTemporary &&
+  showChange && (
+              <div className="flex justify-between gap-2">
+                <span className="pl-2">
+                  Tiền thừa:
+                </span>
+
+                <strong>
+                  {formatMoney(
+                    getChange(order)
+                  )}
+                  đ
+                </strong>
+              </div>
+            )}
+
+          </div>
+
+        </div>
+
+        {(showThankYou || showSeeYou) && (
+          <div
+            className={`text-center mt-6 space-y-1 ${
+              paperSize === "K80" ? "text-[1em]" : "text-[11px]"
+            }`}
+          >
+
+            {showThankYou && (
+              <div className="whitespace-pre-line">
+                {thankYouText}
+              </div>
+            )}
+
+            {showSeeYou && (
+              <div className="whitespace-pre-line">
+                {seeYouText}
+              </div>
+            )}
+
+          </div>
+        )}
+
+      </div>
+
     </main>
   );
 }
