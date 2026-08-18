@@ -991,7 +991,7 @@ export default function OrdersPage() {
     const printWindow = window.open(
       `/print-order/invoice?id=${encodeURIComponent(
         orderId
-      )}`,
+      )}&print=1`,
       "_blank"
     );
 
