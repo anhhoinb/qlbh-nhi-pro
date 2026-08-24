@@ -828,6 +828,34 @@ if (duplicateCode) {
     }
   };
 
+  // DOWNLOAD PRODUCT IMPORT TEMPLATE
+  const downloadProductTemplate = () => {
+    const headers = [
+      "main_name", "short_name", "product_code", "product_location",
+      "price", "import_price", "capital_price", "stock", "unit", "tax",
+    ];
+
+    const exampleRow = [
+      "Tên sản phẩm chính", "Tên sản phẩm phụ", "A001", "Kệ A1",
+      "10000", "8000", "8000", "100", "Cái", "8",
+    ];
+
+    const csvContent = [
+      headers.join(","),
+      exampleRow.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
+    ].join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "mau-nhap-san-pham.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   // EXPORT CSV
   const exportProductsToCSV = () => {
     if (products.length === 0) {
@@ -950,11 +978,12 @@ if (duplicateCode) {
         header.trim()
       );
 
-      const requiredHeader = "name";
+      const hasMainName =
+        headers.includes("main_name") || headers.includes("name");
 
-      if (!headers.includes(requiredHeader)) {
+      if (!hasMainName) {
         alert(
-          "File CSV cần có cột name. Ví dụ: name,product_code,product_location,price,import_price,capital_price,stock,unit,tax"
+          "File CSV cần có cột main_name (Tên chính). File mẫu mới gồm: main_name,short_name,product_code,product_location,price,import_price,capital_price,stock,unit,tax"
         );
         event.target.value = "";
         return;
@@ -986,7 +1015,7 @@ const existingCodes = new Set(
           row[header] = values[index] || "";
         });
 
-        const productName = String(row.name || "").trim();
+        const productName = String(row.main_name || row.name || "").trim();
 
         if (!productName) {
           skipCount++;
@@ -1127,13 +1156,13 @@ successCount++;
               className="hidden"
               onChange={importProductsFromCSV}
             />
-<a
-  href="/templates/mau-nhap-san-pham.xlsx"
-  download
+<button
+  type="button"
+  onClick={downloadProductTemplate}
   className="border border-sky-500 text-sky-700 hover:bg-sky-50 px-5 py-3 rounded-2xl font-semibold transition"
 >
   Tải file mẫu
-</a>
+</button>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
