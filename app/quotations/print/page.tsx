@@ -296,7 +296,40 @@ function QuotationPrintContent() {
         Number(item.tax || 0)
       )
     )
-  ).filter((rate) => rate > 0);
+  )
+    .filter((rate) => rate > 0)
+    .sort((a, b) => a - b);
+
+  const vatBreakdown = useMemo(() => {
+    const grouped = new Map<number, number>();
+
+    items.forEach((item) => {
+      const rate = toNumber(item.tax);
+
+      if (rate <= 0) {
+        return;
+      }
+
+      const lineSubtotal =
+        toNumber(item.quantity) *
+        toNumber(item.price);
+
+      const lineVat =
+        lineSubtotal * (rate / 100);
+
+      grouped.set(
+        rate,
+        (grouped.get(rate) || 0) + lineVat
+      );
+    });
+
+    return Array.from(grouped.entries())
+      .map(([rate, amount]) => ({
+        rate,
+        amount,
+      }))
+      .sort((a, b) => a.rate - b.rate);
+  }, [items]);
 
   const quotationDate =
     quotation?.createdAt?.toDate?.() ??
@@ -573,19 +606,48 @@ function QuotationPrintContent() {
         result: subtotal,
       };
 
-      const vatText =
-        vatRates.length > 0
-          ? `Thuế VAT (${vatRates.join("%, ")}%):`
-          : "Thuế VAT (0%):";
+      const vatLines =
+        vatBreakdown.length > 0
+          ? vatBreakdown.map(
+              (entry) =>
+                `Thuế VAT (${entry.rate}%):`
+            )
+          : ["Thuế VAT (0%):"];
 
-      worksheet.getCell(`A${vatRow}`).value = vatText;
-      worksheet.getCell(`H${vatRow}`).value = {
-        formula:
-          vatRates.length === 1
-            ? `H${subtotalRow}*${vatRates[0]}%`
-            : `${vatAmount}`,
-        result: vatAmount,
+      const vatAmountLines =
+        vatBreakdown.length > 0
+          ? vatBreakdown.map(
+              (entry) =>
+                Math.round(entry.amount)
+            )
+          : [0];
+
+      worksheet.getCell(`A${vatRow}`).value =
+        vatLines.join("\n");
+      worksheet.getCell(`A${vatRow}`).alignment = {
+        ...(worksheet.getCell(`A${vatRow}`).alignment || {}),
+        wrapText: true,
+        vertical: "middle",
       };
+
+      worksheet.getCell(`H${vatRow}`).value =
+        vatAmountLines
+          .map((amount) =>
+            Number(amount).toLocaleString("vi-VN")
+          )
+          .join("\n");
+      worksheet.getCell(`H${vatRow}`).alignment = {
+        ...(worksheet.getCell(`H${vatRow}`).alignment || {}),
+        wrapText: true,
+        vertical: "middle",
+        horizontal: "right",
+      };
+
+      worksheet.getRow(vatRow).height =
+        Math.max(
+          Number(worksheet.getRow(vatRow).height || 20),
+          vatAmountLines.length * 18
+        );
 
       worksheet.getCell(`A${totalRow}`).value =
         "Tổng cộng sau thuế:";
@@ -595,7 +657,6 @@ function QuotationPrintContent() {
       };
 
       worksheet.getCell(`H${subtotalRow}`).numFmt = "#,##0";
-      worksheet.getCell(`H${vatRow}`).numFmt = "#,##0";
       worksheet.getCell(`H${totalRow}`).numFmt = "#,##0";
 
       /*
@@ -979,7 +1040,9 @@ function QuotationPrintContent() {
       link.click();
       link.remove();
 
-      URL.revokeObjectURL(downloadUrl);
+      window.setTimeout(() => {
+        URL.revokeObjectURL(downloadUrl);
+      }, 1500);
     } catch (exportError) {
       console.error("EXPORT EXCEL ERROR:", exportError);
 
@@ -1218,6 +1281,10 @@ ${exportError.message}`
                 Đơn Giá
               </th>
 
+              <th className="col-vat">
+                VAT
+              </th>
+
               <th className="col-total">
                 Thành Tiền
               </th>
@@ -1278,6 +1345,10 @@ ${exportError.message}`
                       )}
                     </td>
 
+                    <td className="center">
+                      {toNumber(item.tax)}%
+                    </td>
+
                     <td className="money">
                       {formatMoney(
                         lineSubtotal
@@ -1294,7 +1365,7 @@ ${exportError.message}`
 
             <tr className="summary-row">
               <td
-                colSpan={5}
+                colSpan={6}
                 className="summary-label"
               >
                 Tiền hàng trước thuế:
@@ -1309,30 +1380,46 @@ ${exportError.message}`
               <td />
             </tr>
 
-            <tr className="summary-row">
-              <td
-  colSpan={5}
-  className="summary-label"
->
-  Thuế VAT
-  {vatRates.length > 0
-    ? ` (${vatRates.join("%, ")}%)`
-    : " (0%)"}
-  :
-</td>
+            {vatBreakdown.length > 0 ? (
+              vatBreakdown.map((entry) => (
+                <tr
+                  className="summary-row"
+                  key={`vat-${entry.rate}`}
+                >
+                  <td
+                    colSpan={6}
+                    className="summary-label"
+                  >
+                    Thuế VAT ({entry.rate}%):
+                  </td>
 
-              <td className="money summary-value">
-                {formatMoney(
-                  vatAmount
-                )}
-              </td>
+                  <td className="money summary-value">
+                    {formatMoney(entry.amount)}
+                  </td>
 
-              <td />
-            </tr>
+                  <td />
+                </tr>
+              ))
+            ) : (
+              <tr className="summary-row">
+                <td
+                  colSpan={6}
+                  className="summary-label"
+                >
+                  Thuế VAT (0%):
+                </td>
+
+                <td className="money summary-value">
+                  0
+                </td>
+
+                <td />
+              </tr>
+            )}
 
             <tr className="summary-row total-row">
               <td
-                colSpan={5}
+                colSpan={6}
                 className="summary-label"
               >
                 Tổng cộng sau thuế:
@@ -1722,7 +1809,7 @@ ${exportError.message}`
         }
 
         .col-product {
-          width: 77mm;
+          width: 65mm;
         }
 
         .col-unit {
@@ -1735,6 +1822,10 @@ ${exportError.message}`
 
         .col-price {
           width: 19mm;
+        }
+
+        .col-vat {
+          width: 12mm;
         }
 
         .col-total {
