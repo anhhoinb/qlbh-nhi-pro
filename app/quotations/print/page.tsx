@@ -374,6 +374,29 @@ function QuotationPrintContent() {
             ];
 
       /*
+       * Tính chiều cao dòng theo độ dài tên sản phẩm.
+       * Excel không tự AutoFit ổn định với ô đang merge, nên cần chủ động
+       * tăng chiều cao để tên dài luôn hiển thị đầy đủ.
+       */
+      const getWrappedRowHeight = (
+        value: string,
+        charsPerLine: number,
+        minHeight = 22
+      ) => {
+        const normalized = String(value || "");
+        const explicitLines = normalized.split(/\r?\n/);
+
+        const wrappedLineCount = explicitLines.reduce(
+          (totalLines, line) =>
+            totalLines +
+            Math.max(1, Math.ceil(line.length / charsPerLine)),
+          0
+        );
+
+        return Math.max(minHeight, wrappedLineCount * 18);
+      };
+
+      /*
        * File mẫu có dòng sản phẩm đầu tiên tại dòng 15.
        * Nếu có nhiều sản phẩm, chèn thêm dòng trước phần tổng tiền.
        */
@@ -484,8 +507,21 @@ function QuotationPrintContent() {
         const quantity = toNumber(item.quantity);
         const price = toNumber(item.price);
 
+        const productName = getItemName(item);
+
         worksheet.getCell(`A${rowNumber}`).value = itemIndex + 1;
-        worksheet.getCell(`B${rowNumber}`).value = getItemName(item);
+        worksheet.getCell(`B${rowNumber}`).value = productName;
+        worksheet.getCell(`B${rowNumber}`).alignment = {
+          ...(worksheet.getCell(`B${rowNumber}`).alignment || {}),
+          wrapText: true,
+          vertical: "middle",
+        };
+        targetRow.height = getWrappedRowHeight(
+          productName,
+          42,
+          Number(templateRow.height || 22)
+        );
+
         worksheet.getCell(`E${rowNumber}`).value = item.unit || "cái";
         worksheet.getCell(`F${rowNumber}`).value = quantity;
         worksheet.getCell(`G${rowNumber}`).value = price;
@@ -605,6 +641,13 @@ function QuotationPrintContent() {
           ? "* Giá trên đã bao gồm chi phí vận chuyển."
           : "* Giá trên chưa bao gồm chi phí vận chuyển.";
 
+      worksheet.getCell(`B${shippingRow}`).font = {
+        ...(worksheet.getCell(`B${shippingRow}`).font || {}),
+        color: quotation.terms?.shippingIncluded
+          ? worksheet.getCell(`B${shippingRow}`).font?.color
+          : { argb: "FFFF0000" },
+      };
+
       if (quotation.terms?.shippingNote) {
         worksheet.getCell(`B${shippingNoteRow}`).value =
           `* ${quotation.terms.shippingNote}`;
@@ -678,6 +721,15 @@ function QuotationPrintContent() {
 
       worksheet.mergeCells(`A${paymentTitleRow}:I${paymentTitleRow}`);
       worksheet.getCell(`A${paymentTitleRow}`).value = "Thanh toán:";
+
+      /*
+       * Bỏ 2 lựa chọn thanh toán cũ khỏi PBG:
+       * - Tạm ứng 70%
+       * - Thanh toán 30% còn lại
+       * Các lựa chọn 100% và chuyển khoản phía dưới vẫn giữ nguyên.
+       */
+      worksheet.getCell(`B${paymentTitleRow + 1}`).value = "";
+      worksheet.getCell(`B${paymentTitleRow + 2}`).value = "";
 
       worksheet.getCell(`B${bankOwnerRow}`).value =
         `Đơn vị thụ hưởng: ${seller.bankOwner || ""}`;
@@ -828,9 +880,22 @@ function QuotationPrintContent() {
 
           const item = exportItems[itemIndex];
 
+          const deliveryProductName = getItemName(item);
+
           deliveryWorksheet.getCell(`A${rowNumber}`).value = itemIndex + 1;
           deliveryWorksheet.getCell(`B${rowNumber}`).value =
-            getItemName(item);
+            deliveryProductName;
+          deliveryWorksheet.getCell(`B${rowNumber}`).alignment = {
+            ...(deliveryWorksheet.getCell(`B${rowNumber}`).alignment || {}),
+            wrapText: true,
+            vertical: "middle",
+          };
+          targetRow.height = getWrappedRowHeight(
+            deliveryProductName,
+            58,
+            Number(deliveryTemplateRow.height || 22)
+          );
+
           deliveryWorksheet.getCell(`H${rowNumber}`).value =
             item.unit || "cái";
           deliveryWorksheet.getCell(`I${rowNumber}`).value =
@@ -865,6 +930,27 @@ function QuotationPrintContent() {
           deliveryWorksheet.mergeCells(range);
         });
 
+        /*
+         * Giữ toàn bộ biên bản giao nhận nằm trong khổ giấy A4 khi in.
+         */
+        deliveryWorksheet.pageSetup = {
+          ...deliveryWorksheet.pageSetup,
+          paperSize: 9,
+          orientation: "portrait",
+          fitToPage: true,
+          fitToWidth: 1,
+          fitToHeight: 1,
+          margins: {
+            left: 0.45,
+            right: 0.45,
+            top: 0.4,
+            bottom: 0.5,
+            header: 0.2,
+            footer: 0.2,
+          },
+          printArea: `A1:I${deliverySignatureSubRow + 2}`,
+        };
+
         deliveryWorksheet.views = [
           {
             state: "normal",
@@ -874,7 +960,6 @@ function QuotationPrintContent() {
       }
 
       workbook.calcProperties.fullCalcOnLoad = true;
-      workbook.calcProperties.calcMode = "auto";
 
       const safeCode = String(
         quotation.quotationCode || "Bao-gia-xem-truoc"
@@ -1271,7 +1356,17 @@ ${exportError.message}`
 
           <h3>Thời gian giao hàng và bảo hành sản phẩm:</h3>
 
-          <p>* {quotation.terms?.shippingIncluded ? "Giá trên đã bao gồm chi phí vận chuyển." : "Giá trên chưa bao gồm chi phí vận chuyển."}</p>
+          <p
+            className={
+              quotation.terms?.shippingIncluded
+                ? undefined
+                : "shipping-not-included"
+            }
+          >
+            * {quotation.terms?.shippingIncluded
+              ? "Giá trên đã bao gồm chi phí vận chuyển."
+              : "Giá trên chưa bao gồm chi phí vận chuyển."}
+          </p>
 
           {quotation.terms?.shippingNote && (
             <p>* {quotation.terms.shippingNote}</p>
@@ -1708,6 +1803,10 @@ ${exportError.message}`
         .terms {
           margin-top: 4mm;
           font-size: 13.5px;
+        }
+
+        .shipping-not-included {
+          color: #f00;
         }
 
         .terms h3 {
