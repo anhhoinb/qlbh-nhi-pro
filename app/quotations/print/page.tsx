@@ -290,40 +290,13 @@ function QuotationPrintContent() {
     quotation?.total ??
     subtotal + vatAmount;
 
-  const vatBreakdown = useMemo(() => {
-    const breakdown = new Map<number, number>();
-
-    items.forEach((item) => {
-      const rate = toNumber(item.tax);
-
-      if (rate <= 0) {
-        return;
-      }
-
-      const lineSubtotal =
-        toNumber(item.quantity) *
-        toNumber(item.price);
-
-      const lineVat =
-        lineSubtotal * (rate / 100);
-
-      breakdown.set(
-        rate,
-        (breakdown.get(rate) || 0) + lineVat
-      );
-    });
-
-    return Array.from(breakdown.entries())
-      .map(([rate, amount]) => ({
-        rate,
-        amount,
-      }))
-      .filter(({ amount }) => amount > 0)
-      .sort((a, b) => a.rate - b.rate);
-  }, [items]);
-
-  const vatRates =
-    vatBreakdown.map(({ rate }) => rate);
+  const vatRates = Array.from(
+    new Set(
+      items.map((item) =>
+        Number(item.tax || 0)
+      )
+    )
+  ).filter((rate) => rate > 0);
 
   const quotationDate =
     quotation?.createdAt?.toDate?.() ??
@@ -531,39 +504,21 @@ function QuotationPrintContent() {
        * Sau khi chèn dòng, các phần phía dưới được dời xuống tương ứng.
        */
       const subtotalRow = firstProductRow + exportItems.length;
-      const vatRowCount = Math.max(vatBreakdown.length, 1);
-      const extraVatRows = Math.max(vatRowCount - 1, 0);
-
-      if (extraVatRows > 0) {
-        worksheet.insertRows(
-          subtotalRow + 2,
-          Array.from({ length: extraVatRows }, () => []),
-          "i"
-        );
-      }
-
-      const firstVatRow = subtotalRow + 1;
-      const totalRow = firstVatRow + vatRowCount;
-      const spacerRow = totalRow + 1;
-      const noteTitleRow = totalRow + 2;
-      const validityRow = totalRow + 3;
-      const deliveryTitleRow = totalRow + 4;
-      const shippingRow = totalRow + 5;
-      const shippingNoteRow = totalRow + 6;
-      const deliveryRow = totalRow + 7;
-      const warrantyRow = totalRow + 8;
+      const vatRow = subtotalRow + 1;
+      const totalRow = subtotalRow + 2;
+      const spacerRow = subtotalRow + 3;
+      const noteTitleRow = subtotalRow + 4;
+      const validityRow = subtotalRow + 5;
+      const deliveryTitleRow = subtotalRow + 6;
+      const shippingRow = subtotalRow + 7;
+      const shippingNoteRow = subtotalRow + 8;
+      const deliveryRow = subtotalRow + 9;
+      const warrantyRow = subtotalRow + 10;
 
       /*
        * Đảm bảo vùng tổng tiền vẫn được merge đúng sau khi chèn dòng.
        */
-      [
-        subtotalRow,
-        ...Array.from(
-          { length: vatRowCount },
-          (_, index) => firstVatRow + index
-        ),
-        totalRow,
-      ].forEach((rowNumber) => {
+      [subtotalRow, vatRow, totalRow].forEach((rowNumber) => {
         try {
           worksheet.unMergeCells(`A${rowNumber}:G${rowNumber}`);
         } catch {
@@ -582,50 +537,29 @@ function QuotationPrintContent() {
         result: subtotal,
       };
 
-      if (vatBreakdown.length > 0) {
-        vatBreakdown.forEach(
-          ({ rate, amount }, index) => {
-            const rowNumber =
-              firstVatRow + index;
+      const vatText =
+        vatRates.length > 0
+          ? `Thuế VAT (${vatRates.join("%, ")}%):`
+          : "Thuế VAT (0%):";
 
-            worksheet.getCell(
-              `A${rowNumber}`
-            ).value = `VAT (${rate}%):`;
-
-            worksheet.getCell(
-              `H${rowNumber}`
-            ).value = amount;
-
-            worksheet.getCell(
-              `H${rowNumber}`
-            ).numFmt = "#,##0";
-          }
-        );
-      } else {
-        worksheet.getCell(
-          `A${firstVatRow}`
-        ).value = "VAT (0%):";
-
-        worksheet.getCell(
-          `H${firstVatRow}`
-        ).value = 0;
-
-        worksheet.getCell(
-          `H${firstVatRow}`
-        ).numFmt = "#,##0";
-      }
+      worksheet.getCell(`A${vatRow}`).value = vatText;
+      worksheet.getCell(`H${vatRow}`).value = {
+        formula:
+          vatRates.length === 1
+            ? `H${subtotalRow}*${vatRates[0]}%`
+            : `${vatAmount}`,
+        result: vatAmount,
+      };
 
       worksheet.getCell(`A${totalRow}`).value =
         "Tổng cộng sau thuế:";
-
       worksheet.getCell(`H${totalRow}`).value = {
-        formula: `H${subtotalRow}+SUM(H${firstVatRow}:H${
-          firstVatRow + vatRowCount - 1
-        })`,
+        formula: `H${subtotalRow}+H${vatRow}`,
         result: total,
       };
 
       worksheet.getCell(`H${subtotalRow}`).numFmt = "#,##0";
+      worksheet.getCell(`H${vatRow}`).numFmt = "#,##0";
       worksheet.getCell(`H${totalRow}`).numFmt = "#,##0";
 
       /*
@@ -706,9 +640,9 @@ function QuotationPrintContent() {
        * Ngân hàng và chữ ký.
        * Các dòng này cũng tự dịch xuống khi thêm sản phẩm.
        */
-      const bankOwnerRow = totalRow + 13;
-      const bankAccountRow = totalRow + 14;
-      const signatureRow = totalRow + 16;
+      const bankOwnerRow = subtotalRow + 15;
+      const bankAccountRow = subtotalRow + 16;
+      const signatureRow = subtotalRow + 18;
       const buyerSignatureBlankRow = signatureRow + 1;
       const sellerSignatureBlankRow = signatureRow + 2;
 
@@ -734,7 +668,7 @@ function QuotationPrintContent() {
       /*
        * Dòng tiêu đề Thanh toán cần merge để không bị cắt còn chữ "Thanh".
        */
-      const paymentTitleRow = totalRow + 8;
+      const paymentTitleRow = subtotalRow + 10;
 
       try {
         worksheet.unMergeCells(`A${paymentTitleRow}:I${paymentTitleRow}`);
@@ -787,7 +721,160 @@ function QuotationPrintContent() {
         },
       ];
 
+      /*
+       * BIÊN BẢN GIAO NHẬN - sheet PGH
+       * Danh sách sản phẩm luôn lấy đúng theo danh sách của báo giá.
+       * Chỉ hiển thị: STT, Tên sản phẩm, ĐVT, SL.
+       */
+      const deliveryWorksheet = workbook.getWorksheet("PGH");
+
+      if (deliveryWorksheet) {
+        const firstDeliveryProductRow = 21;
+        const extraDeliveryItemCount = Math.max(exportItems.length - 1, 0);
+
+        /*
+         * Gỡ merge của dòng sản phẩm mẫu và khu vực chữ ký trước khi chèn dòng.
+         * Làm như vậy để ExcelJS không tạo merge chồng lấn khi insertRows().
+         */
+        [
+          `B${firstDeliveryProductRow}:G${firstDeliveryProductRow}`,
+          "A23:J23",
+          "A25:D25",
+          "E25:I25",
+          "A26:D26",
+          "E26:I26",
+        ].forEach((range) => {
+          try {
+            deliveryWorksheet.unMergeCells(range);
+          } catch {
+            // Bỏ qua nếu vùng chưa merge.
+          }
+        });
+
+        if (extraDeliveryItemCount > 0) {
+          deliveryWorksheet.insertRows(
+            firstDeliveryProductRow + 1,
+            Array.from({ length: extraDeliveryItemCount }, () => []),
+            "i"
+          );
+        }
+
+        const deliveryTemplateRow =
+          deliveryWorksheet.getRow(firstDeliveryProductRow);
+
+        for (
+          let itemIndex = 0;
+          itemIndex < exportItems.length;
+          itemIndex += 1
+        ) {
+          const rowNumber = firstDeliveryProductRow + itemIndex;
+          const targetRow = deliveryWorksheet.getRow(rowNumber);
+
+          if (itemIndex > 0) {
+            targetRow.height = deliveryTemplateRow.height;
+
+            for (let column = 1; column <= 9; column += 1) {
+              const sourceCell = deliveryTemplateRow.getCell(column);
+              const targetCell = targetRow.getCell(column);
+
+              targetCell.style = {
+                ...sourceCell.style,
+                font: sourceCell.font
+                  ? { ...sourceCell.font }
+                  : undefined,
+                fill: sourceCell.fill
+                  ? { ...sourceCell.fill }
+                  : undefined,
+                border: sourceCell.border
+                  ? {
+                      top: sourceCell.border.top
+                        ? { ...sourceCell.border.top }
+                        : undefined,
+                      left: sourceCell.border.left
+                        ? { ...sourceCell.border.left }
+                        : undefined,
+                      bottom: sourceCell.border.bottom
+                        ? { ...sourceCell.border.bottom }
+                        : undefined,
+                      right: sourceCell.border.right
+                        ? { ...sourceCell.border.right }
+                        : undefined,
+                      diagonal: sourceCell.border.diagonal
+                        ? { ...sourceCell.border.diagonal }
+                        : undefined,
+                    }
+                  : undefined,
+                alignment: sourceCell.alignment
+                  ? { ...sourceCell.alignment }
+                  : undefined,
+                protection: sourceCell.protection
+                  ? { ...sourceCell.protection }
+                  : undefined,
+              };
+
+              targetCell.numFmt = sourceCell.numFmt;
+            }
+          }
+
+          try {
+            deliveryWorksheet.unMergeCells(
+              `B${rowNumber}:G${rowNumber}`
+            );
+          } catch {
+            // Bỏ qua nếu dòng chưa merge.
+          }
+
+          deliveryWorksheet.mergeCells(`B${rowNumber}:G${rowNumber}`);
+
+          const item = exportItems[itemIndex];
+
+          deliveryWorksheet.getCell(`A${rowNumber}`).value = itemIndex + 1;
+          deliveryWorksheet.getCell(`B${rowNumber}`).value =
+            getItemName(item);
+          deliveryWorksheet.getCell(`H${rowNumber}`).value =
+            item.unit || "cái";
+          deliveryWorksheet.getCell(`I${rowNumber}`).value =
+            toNumber(item.quantity);
+
+          deliveryWorksheet.getCell(`I${rowNumber}`).numFmt = "#,##0";
+        }
+
+        /*
+         * Khôi phục merge khu vực chữ ký sau khi số dòng sản phẩm thay đổi.
+         */
+        const deliveryLegalTextRow =
+          23 + extraDeliveryItemCount;
+        const deliverySignatureRow =
+          25 + extraDeliveryItemCount;
+        const deliverySignatureSubRow =
+          26 + extraDeliveryItemCount;
+
+        [
+          `A${deliveryLegalTextRow}:J${deliveryLegalTextRow}`,
+          `A${deliverySignatureRow}:D${deliverySignatureRow}`,
+          `E${deliverySignatureRow}:I${deliverySignatureRow}`,
+          `A${deliverySignatureSubRow}:D${deliverySignatureSubRow}`,
+          `E${deliverySignatureSubRow}:I${deliverySignatureSubRow}`,
+        ].forEach((range) => {
+          try {
+            deliveryWorksheet.unMergeCells(range);
+          } catch {
+            // Bỏ qua nếu vùng chưa merge.
+          }
+
+          deliveryWorksheet.mergeCells(range);
+        });
+
+        deliveryWorksheet.views = [
+          {
+            state: "normal",
+            showGridLines: false,
+          },
+        ];
+      }
+
       workbook.calcProperties.fullCalcOnLoad = true;
+      workbook.calcProperties.calcMode = "auto";
 
       const safeCode = String(
         quotation.quotationCode || "Bao-gia-xem-truoc"
@@ -1046,10 +1133,6 @@ ${exportError.message}`
                 Đơn Giá
               </th>
 
-              <th className="col-vat">
-                VAT
-              </th>
-
               <th className="col-total">
                 Thành Tiền
               </th>
@@ -1110,12 +1193,6 @@ ${exportError.message}`
                       )}
                     </td>
 
-                    <td className="center">
-                      {toNumber(item.tax) > 0
-                        ? `${toNumber(item.tax)}%`
-                        : ""}
-                    </td>
-
                     <td className="money">
                       {formatMoney(
                         lineSubtotal
@@ -1132,7 +1209,7 @@ ${exportError.message}`
 
             <tr className="summary-row">
               <td
-                colSpan={6}
+                colSpan={5}
                 className="summary-label"
               >
                 Tiền hàng trước thuế:
@@ -1147,29 +1224,30 @@ ${exportError.message}`
               <td />
             </tr>
 
-            {vatBreakdown.map(({ rate, amount }) => (
-              <tr
-                key={`vat-${rate}`}
-                className="summary-row"
-              >
-                <td
-                  colSpan={6}
-                  className="summary-label"
-                >
-                  VAT ({rate}%):
-                </td>
+            <tr className="summary-row">
+              <td
+  colSpan={5}
+  className="summary-label"
+>
+  Thuế VAT
+  {vatRates.length > 0
+    ? ` (${vatRates.join("%, ")}%)`
+    : " (0%)"}
+  :
+</td>
 
-                <td className="money summary-value">
-                  {formatMoney(amount)}
-                </td>
+              <td className="money summary-value">
+                {formatMoney(
+                  vatAmount
+                )}
+              </td>
 
-                <td />
-              </tr>
-            ))}
+              <td />
+            </tr>
 
             <tr className="summary-row total-row">
               <td
-                colSpan={6}
+                colSpan={5}
                 className="summary-label"
               >
                 Tổng cộng sau thuế:
@@ -1549,7 +1627,7 @@ ${exportError.message}`
         }
 
         .col-product {
-          width: 65mm;
+          width: 77mm;
         }
 
         .col-unit {
@@ -1562,11 +1640,6 @@ ${exportError.message}`
 
         .col-price {
           width: 19mm;
-        }
-
-        .col-vat {
-          width: 11mm;
-          text-align: center;
         }
 
         .col-total {

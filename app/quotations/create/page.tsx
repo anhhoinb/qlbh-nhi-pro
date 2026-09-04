@@ -40,6 +40,7 @@ type QuotationItem = {
   price: number;
   tax: number;
   note: string;
+  isManual?: boolean;
 };
 
 type BuyerInfo = {
@@ -231,6 +232,7 @@ export default function CreateQuotationPage() {
               price: Number(item.price || 0),
               tax: Number(item.tax || 0),
               note: String(item.note || ""),
+              isManual: Boolean(item.isManual),
             };
           })
         );
@@ -342,12 +344,37 @@ export default function CreateQuotationPage() {
           price: Number(product.price || 0),
           tax: Number(product.tax || 0),
           note: "",
+          isManual: false,
         },
       ];
     });
 
     setSearch("");
     setShowDropdown(false);
+  };
+
+  const addManualProduct = () => {
+    const manualId = `manual-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+
+    setItems((prev) => [
+      ...prev,
+      {
+        id: manualId,
+        name: "",
+        main_name: "",
+        short_name: "",
+        printName: "",
+        product_code: "",
+        unit: "cái",
+        quantity: 1,
+        price: 0,
+        tax: 0,
+        note: "",
+        isManual: true,
+      },
+    ]);
   };
 
   const updateItem = (id: string, changes: Partial<QuotationItem>) => {
@@ -650,7 +677,7 @@ export default function CreateQuotationPage() {
 
   return (
     <main className="min-h-screen bg-slate-100 p-5 text-black">
-      <div className="mx-auto max-w-[1500px]">
+      <div className="mx-auto max-w-[1800px]">
         <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-slate-800">
@@ -706,7 +733,7 @@ export default function CreateQuotationPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[420px_1fr]">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[380px_1fr]">
           <section className="space-y-5">
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h2 className="mb-4 text-lg font-bold">Thông tin báo giá</h2>
@@ -918,30 +945,40 @@ export default function CreateQuotationPage() {
                   </p>
                 </div>
 
-                <div className="flex overflow-hidden rounded-xl border border-slate-300">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   <button
                     type="button"
-                    onClick={() => setShowMainName(false)}
-                    className={`px-4 py-2 text-sm font-semibold ${
-                      !showMainName
-                        ? "bg-sky-600 text-white"
-                        : "bg-white text-slate-700"
-                    }`}
+                    onClick={addManualProduct}
+                    className="rounded-xl border border-emerald-600 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
                   >
-                    Tên bán
+                    + Thêm sản phẩm ngoài kho
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setShowMainName(true)}
-                    className={`px-4 py-2 text-sm font-semibold ${
-                      showMainName
-                        ? "bg-sky-600 text-white"
-                        : "bg-white text-slate-700"
-                    }`}
-                  >
-                    Tên đầy đủ
-                  </button>
+                  <div className="flex overflow-hidden rounded-xl border border-slate-300">
+                    <button
+                      type="button"
+                      onClick={() => setShowMainName(false)}
+                      className={`px-4 py-2 text-sm font-semibold ${
+                        !showMainName
+                          ? "bg-sky-600 text-white"
+                          : "bg-white text-slate-700"
+                      }`}
+                    >
+                      Tên bán
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowMainName(true)}
+                      className={`px-4 py-2 text-sm font-semibold ${
+                        showMainName
+                          ? "bg-sky-600 text-white"
+                          : "bg-white text-slate-700"
+                      }`}
+                    >
+                      Tên đầy đủ
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -966,7 +1003,7 @@ export default function CreateQuotationPage() {
                 />
 
                 {showDropdown && (
-                  <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-80 overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+                  <div className="absolute left-0 right-0 top-full z-30 max-h-80 overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl">
                     {filteredProducts.length === 0 ? (
                       <div className="p-4 text-sm text-slate-500">
                         Không tìm thấy sản phẩm
@@ -1047,13 +1084,63 @@ export default function CreateQuotationPage() {
                         lineSubtotal * (Number(item.tax || 0) / 100);
 
                       return (
-                        <tr key={item.id} className="border-b border-slate-200 hover:bg-slate-50">
+                        <tr key={item.id} className="border-b border-slate-200 align-middle hover:bg-slate-50">
                           <td className="p-3 text-center">{index + 1}</td>
-                          <td className="p-3">{item.product_code || "---"}</td>
-                          <td className="p-3 align-top font-normal whitespace-normal break-words">
-                            {item.printName}
+                          <td className="p-3 align-middle">
+                            {item.isManual ? (
+                              <input
+                                value={item.product_code}
+                                onChange={(event) =>
+                                  updateItem(item.id, {
+                                    product_code: event.target.value,
+                                  })
+                                }
+                                className="h-10 w-28 rounded-lg border border-slate-300 px-2 outline-none focus:border-sky-500"
+                                placeholder="Mã SP"
+                              />
+                            ) : (
+                              item.product_code || "---"
+                            )}
                           </td>
-                          <td className="p-3 text-center">{item.unit}</td>
+
+                          <td className="p-3 align-middle font-normal whitespace-normal break-words">
+                            {item.isManual ? (
+                              <input
+                                value={item.printName}
+                                onChange={(event) => {
+                                  const value = event.target.value;
+
+                                  updateItem(item.id, {
+                                    name: value,
+                                    main_name: value,
+                                    short_name: value,
+                                    printName: value,
+                                  });
+                                }}
+                                className="h-10 min-w-[260px] w-full rounded-lg border border-slate-300 px-2 outline-none focus:border-sky-500"
+                                placeholder="Nhập tên sản phẩm"
+                              />
+                            ) : (
+                              item.printName
+                            )}
+                          </td>
+
+                          <td className="p-3 text-center align-middle">
+                            {item.isManual ? (
+                              <input
+                                value={item.unit}
+                                onChange={(event) =>
+                                  updateItem(item.id, {
+                                    unit: event.target.value,
+                                  })
+                                }
+                                className="h-10 w-24 rounded-lg border border-slate-300 px-2 text-center outline-none focus:border-sky-500"
+                                placeholder="ĐVT"
+                              />
+                            ) : (
+                              item.unit
+                            )}
+                          </td>
                           <td className="p-3 text-center">
                             <input
                               type="number"
@@ -1067,7 +1154,7 @@ export default function CreateQuotationPage() {
                                   ),
                                 })
                               }
-                              className="w-20 rounded-lg border border-slate-300 p-2 text-center outline-none focus:border-sky-500"
+                              className="h-10 w-20 rounded-lg border border-slate-300 px-2 text-center outline-none focus:border-sky-500"
                             />
                           </td>
                           <td className="p-3 text-right">
@@ -1079,7 +1166,7 @@ export default function CreateQuotationPage() {
                                   price: parseMoney(event.target.value),
                                 })
                               }
-                              className="w-32 rounded-lg border border-slate-300 p-2 text-right outline-none focus:border-sky-500"
+                              className="h-10 w-32 rounded-lg border border-slate-300 px-2 text-right outline-none focus:border-sky-500"
                             />
                           </td>
                           <td className="p-3 text-center">
@@ -1090,7 +1177,7 @@ export default function CreateQuotationPage() {
                                   tax: Number(event.target.value),
                                 })
                               }
-                              className="rounded-lg border border-slate-300 p-2 outline-none focus:border-sky-500"
+                              className="h-10 rounded-lg border border-slate-300 px-2 outline-none focus:border-sky-500"
                             >
                               <option value="0">0%</option>
                               <option value="8">8%</option>
@@ -1100,17 +1187,34 @@ export default function CreateQuotationPage() {
                           <td className="p-3 text-right font-semibold">
                             {formatMoney(lineTotal)}đ
                           </td>
-                          <td className="p-3 align-top">
+                          <td className="p-3 align-middle">
                             <textarea
-                              rows={3}
+                              rows={1}
+                              ref={(element) => {
+                                if (!element) return;
+
+                                element.style.height = "40px";
+                                element.style.height = `${Math.max(
+                                  40,
+                                  element.scrollHeight
+                                )}px`;
+                              }}
                               value={item.note}
-                              onChange={(event) =>
+                              onChange={(event) => {
+                                const element = event.currentTarget;
+
+                                element.style.height = "40px";
+                                element.style.height = `${Math.max(
+                                  40,
+                                  element.scrollHeight
+                                )}px`;
+
                                 updateItem(item.id, {
                                   note: event.target.value,
-                                })
-                              }
-                              className="min-h-[76px] w-full resize-y rounded-lg border border-slate-300 p-2 leading-5 outline-none focus:border-sky-500"
-                              placeholder="Nhập ghi chú, có thể Enter xuống dòng"
+                                });
+                              }}
+                              className="min-h-10 w-full resize-none overflow-hidden rounded-lg border border-slate-300 px-2 py-2 leading-5 outline-none focus:border-sky-500"
+                              placeholder="Nhập ghi chú"
                             />
                           </td>
                           <td className="p-3 text-center">
