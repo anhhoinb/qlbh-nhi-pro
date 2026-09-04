@@ -406,262 +406,51 @@ function QuotationPrintContent() {
               },
             ];
 
-      /*
-       * Tính chiều cao dòng theo độ dài tên sản phẩm.
-       * Excel không tự AutoFit ổn định với ô đang merge, nên cần chủ động
-       * tăng chiều cao để tên dài luôn hiển thị đầy đủ.
-       */
+      const vatEntries =
+        vatBreakdown.length > 0
+          ? vatBreakdown
+          : [{ rate: 0, amount: 0 }];
+
+      const border = {
+        top: { style: "thin", color: { argb: "FF111111" } },
+        left: { style: "thin", color: { argb: "FF111111" } },
+        bottom: { style: "thin", color: { argb: "FF111111" } },
+        right: { style: "thin", color: { argb: "FF111111" } },
+      } as const;
+
+      const baseFont = {
+        name: "Times New Roman",
+        size: 10,
+        color: { argb: "FF111111" },
+      } as const;
+
       const getWrappedRowHeight = (
         value: string,
         charsPerLine: number,
         minHeight = 22
       ) => {
-        const normalized = String(value || "");
-        const explicitLines = normalized.split(/\r?\n/);
+        const lines = String(value || "")
+          .split(/\r?\n/)
+          .reduce(
+            (sum, line) =>
+              sum +
+              Math.max(
+                1,
+                Math.ceil(line.length / charsPerLine)
+              ),
+            0
+          );
 
-        const wrappedLineCount = explicitLines.reduce(
-          (totalLines, line) =>
-            totalLines +
-            Math.max(1, Math.ceil(line.length / charsPerLine)),
-          0
-        );
-
-        return Math.max(minHeight, wrappedLineCount * 18);
+        return Math.max(minHeight, lines * 17);
       };
 
       /*
-       * File mẫu có dòng sản phẩm đầu tiên tại dòng 15.
-       * Nếu có nhiều sản phẩm, chèn thêm dòng trước phần tổng tiền.
+       * PBG: dùng trực tiếp file mẫu BG.xlsx (BG(8) chuẩn).
+       * Không dựng lại sheet, không đổi độ rộng cột, không sửa bố cục mẫu.
+       * Chỉ chèn dòng khi cần và đổ dữ liệu báo giá.
        */
-      const firstProductRow = 15;
-      const extraItemCount = Math.max(exportItems.length - 1, 0);
 
-      /*
-       * Gỡ toàn bộ merge liên quan đến dòng sản phẩm mẫu và 3 dòng tổng tiền
-       * TRƯỚC KHI chèn dòng. Nếu không, ExcelJS có thể tạo các vùng merge
-       * chồng lấn khi insertRows(), dẫn đến lỗi "Cannot merge already merged cells".
-       */
-      [
-        `B${firstProductRow}:D${firstProductRow}`,
-        `A${firstProductRow + 1}:G${firstProductRow + 1}`,
-        `A${firstProductRow + 2}:G${firstProductRow + 2}`,
-        `A${firstProductRow + 3}:G${firstProductRow + 3}`,
-
-        /*
-         * Các vùng merge nằm phía dưới bảng sản phẩm cũng phải được gỡ
-         * trước khi insertRows(). Nếu giữ nguyên, ExcelJS dịch dữ liệu
-         * nhưng không dịch vùng merge ổn định, làm chữ ký bị lặp/chồng.
-         */
-        "A34:D34",
-        "E34:I34",
-        "A35:D35",
-        "E36:H36",
-      ].forEach((range) => {
-        try {
-          worksheet.unMergeCells(range);
-        } catch {
-          // Bỏ qua nếu vùng chưa merge.
-        }
-      });
-
-      if (extraItemCount > 0) {
-        worksheet.insertRows(
-          firstProductRow + 1,
-          Array.from({ length: extraItemCount }, () => []),
-          "i"
-        );
-      }
-
-      /*
-       * Sao chép định dạng dòng sản phẩm mẫu cho toàn bộ sản phẩm.
-       */
-      const templateRow = worksheet.getRow(firstProductRow);
-
-      for (
-        let itemIndex = 0;
-        itemIndex < exportItems.length;
-        itemIndex += 1
-      ) {
-        const rowNumber = firstProductRow + itemIndex;
-        const targetRow = worksheet.getRow(rowNumber);
-
-        if (itemIndex > 0) {
-          targetRow.height = templateRow.height;
-
-          for (let column = 1; column <= 9; column += 1) {
-            const sourceCell = templateRow.getCell(column);
-            const targetCell = targetRow.getCell(column);
-
-            targetCell.style = {
-              ...sourceCell.style,
-              font: sourceCell.font
-                ? { ...sourceCell.font }
-                : undefined,
-              fill: sourceCell.fill
-                ? { ...sourceCell.fill }
-                : undefined,
-              border: sourceCell.border
-                ? {
-                    top: sourceCell.border.top
-                      ? { ...sourceCell.border.top }
-                      : undefined,
-                    left: sourceCell.border.left
-                      ? { ...sourceCell.border.left }
-                      : undefined,
-                    bottom: sourceCell.border.bottom
-                      ? { ...sourceCell.border.bottom }
-                      : undefined,
-                    right: sourceCell.border.right
-                      ? { ...sourceCell.border.right }
-                      : undefined,
-                    diagonal: sourceCell.border.diagonal
-                      ? { ...sourceCell.border.diagonal }
-                      : undefined,
-                  }
-                : undefined,
-              alignment: sourceCell.alignment
-                ? { ...sourceCell.alignment }
-                : undefined,
-              protection: sourceCell.protection
-                ? { ...sourceCell.protection }
-                : undefined,
-            };
-
-            targetCell.numFmt = sourceCell.numFmt;
-          }
-        }
-
-        /*
-         * Sau khi đã gỡ merge trước khi chèn dòng, có thể merge lại an toàn.
-         */
-        worksheet.mergeCells(`B${rowNumber}:D${rowNumber}`);
-
-        const item = exportItems[itemIndex];
-        const quantity = toNumber(item.quantity);
-        const price = toNumber(item.price);
-
-        const productName = getItemName(item);
-
-        worksheet.getCell(`A${rowNumber}`).value = itemIndex + 1;
-        worksheet.getCell(`B${rowNumber}`).value = productName;
-        worksheet.getCell(`B${rowNumber}`).alignment = {
-          ...(worksheet.getCell(`B${rowNumber}`).alignment || {}),
-          wrapText: true,
-          vertical: "middle",
-        };
-        targetRow.height = getWrappedRowHeight(
-          productName,
-          42,
-          Number(templateRow.height || 22)
-        );
-
-        worksheet.getCell(`E${rowNumber}`).value = item.unit || "cái";
-        worksheet.getCell(`F${rowNumber}`).value = quantity;
-        worksheet.getCell(`G${rowNumber}`).value = price;
-        worksheet.getCell(`H${rowNumber}`).value = {
-          formula: `IFERROR(F${rowNumber}*G${rowNumber},"")`,
-          result: quantity * price,
-        };
-        worksheet.getCell(`I${rowNumber}`).value = item.note || "";
-
-        worksheet.getCell(`F${rowNumber}`).numFmt = "#,##0";
-        worksheet.getCell(`G${rowNumber}`).numFmt = "#,##0";
-        worksheet.getCell(`H${rowNumber}`).numFmt = "#,##0";
-      }
-
-      /*
-       * Sau khi chèn dòng, các phần phía dưới được dời xuống tương ứng.
-       */
-      const subtotalRow = firstProductRow + exportItems.length;
-      const vatRow = subtotalRow + 1;
-      const totalRow = subtotalRow + 2;
-      const spacerRow = subtotalRow + 3;
-      const noteTitleRow = subtotalRow + 4;
-      const validityRow = subtotalRow + 5;
-      const deliveryTitleRow = subtotalRow + 6;
-      const shippingRow = subtotalRow + 7;
-      const shippingNoteRow = subtotalRow + 8;
-      const deliveryRow = subtotalRow + 9;
-      const warrantyRow = subtotalRow + 10;
-
-      /*
-       * Đảm bảo vùng tổng tiền vẫn được merge đúng sau khi chèn dòng.
-       */
-      [subtotalRow, vatRow, totalRow].forEach((rowNumber) => {
-        try {
-          worksheet.unMergeCells(`A${rowNumber}:G${rowNumber}`);
-        } catch {
-          // Không cần xử lý nếu vùng chưa merge.
-        }
-
-        worksheet.mergeCells(`A${rowNumber}:G${rowNumber}`);
-      });
-
-      const itemLastRow = firstProductRow + exportItems.length - 1;
-
-      worksheet.getCell(`A${subtotalRow}`).value =
-        "Tiền hàng trước thuế:";
-      worksheet.getCell(`H${subtotalRow}`).value = {
-        formula: `SUM(H${firstProductRow}:H${itemLastRow})`,
-        result: subtotal,
-      };
-
-      const vatLines =
-        vatBreakdown.length > 0
-          ? vatBreakdown.map(
-              (entry) =>
-                `Thuế VAT (${entry.rate}%):`
-            )
-          : ["Thuế VAT (0%):"];
-
-      const vatAmountLines =
-        vatBreakdown.length > 0
-          ? vatBreakdown.map(
-              (entry) =>
-                Math.round(entry.amount)
-            )
-          : [0];
-
-      worksheet.getCell(`A${vatRow}`).value =
-        vatLines.join("\n");
-      worksheet.getCell(`A${vatRow}`).alignment = {
-        ...(worksheet.getCell(`A${vatRow}`).alignment || {}),
-        wrapText: true,
-        vertical: "middle",
-      };
-
-      worksheet.getCell(`H${vatRow}`).value =
-        vatAmountLines
-          .map((amount) =>
-            Number(amount).toLocaleString("vi-VN")
-          )
-          .join("\n");
-      worksheet.getCell(`H${vatRow}`).alignment = {
-        ...(worksheet.getCell(`H${vatRow}`).alignment || {}),
-        wrapText: true,
-        vertical: "middle",
-        horizontal: "right",
-      };
-
-      worksheet.getRow(vatRow).height =
-        Math.max(
-          Number(worksheet.getRow(vatRow).height || 20),
-          vatAmountLines.length * 18
-        );
-
-      worksheet.getCell(`A${totalRow}`).value =
-        "Tổng cộng sau thuế:";
-      worksheet.getCell(`H${totalRow}`).value = {
-        formula: `H${subtotalRow}+H${vatRow}`,
-        result: total,
-      };
-
-      worksheet.getCell(`H${subtotalRow}`).numFmt = "#,##0";
-      worksheet.getCell(`H${totalRow}`).numFmt = "#,##0";
-
-      /*
-       * Thông tin đầu báo giá.
-       */
+      /* Thông tin đầu báo giá */
       worksheet.getCell("D1").value = [
         seller.companyName || "",
         `MST: ${seller.taxCode || ""}`,
@@ -672,13 +461,11 @@ function QuotationPrintContent() {
       ].join("\n");
 
       worksheet.getCell("E6").value =
-        `TP. HCM, ngày ${String(quotationDate.getDate()).padStart(
-          2,
-          "0"
-        )} tháng ${String(quotationDate.getMonth() + 1).padStart(
-          2,
-          "0"
-        )} năm ${quotationDate.getFullYear()}`;
+        `TP. HCM, ngày ${String(
+          quotationDate.getDate()
+        ).padStart(2, "0")} tháng ${String(
+          quotationDate.getMonth() + 1
+        ).padStart(2, "0")} năm ${quotationDate.getFullYear()}`;
 
       worksheet.getCell("C9").value =
         quotation.buyer?.companyName || "";
@@ -691,141 +478,284 @@ function QuotationPrintContent() {
       worksheet.getCell("F12").value =
         quotation.buyer?.email || "";
 
+      const firstProductRow = 15;
+      const extraProductRows = Math.max(exportItems.length - 1, 0);
+
       /*
-       * Điều kiện báo giá.
+       * Các merge động được gỡ trước khi chèn dòng.
+       * Header B14:D14 giữ nguyên đúng file mẫu.
        */
+      ["B15:D15", "A16:H16", "A17:H17", "A18:H18", "A32:D32", "E32:J32"]
+        .forEach((range) => {
+          try {
+            worksheet.unMergeCells(range);
+          } catch {}
+        });
+
+      const copyTemplateRow = (
+        sourceRowNumber: number,
+        targetRowNumber: number
+      ) => {
+        const sourceRow = worksheet.getRow(sourceRowNumber);
+        const targetRow = worksheet.getRow(targetRowNumber);
+
+        targetRow.height = sourceRow.height;
+
+        for (let column = 1; column <= 10; column += 1) {
+          const sourceCell = sourceRow.getCell(column);
+          const targetCell = targetRow.getCell(column);
+
+          targetCell.style = {
+            ...sourceCell.style,
+            font: sourceCell.font ? { ...sourceCell.font } : undefined,
+            fill: sourceCell.fill ? { ...sourceCell.fill } : undefined,
+            border: sourceCell.border
+              ? {
+                  top: sourceCell.border.top
+                    ? { ...sourceCell.border.top }
+                    : undefined,
+                  left: sourceCell.border.left
+                    ? { ...sourceCell.border.left }
+                    : undefined,
+                  bottom: sourceCell.border.bottom
+                    ? { ...sourceCell.border.bottom }
+                    : undefined,
+                  right: sourceCell.border.right
+                    ? { ...sourceCell.border.right }
+                    : undefined,
+                }
+              : undefined,
+            alignment: sourceCell.alignment
+              ? { ...sourceCell.alignment }
+              : undefined,
+          };
+
+          targetCell.numFmt = sourceCell.numFmt;
+        }
+      };
+
+      /*
+       * File mẫu có sẵn 1 dòng sản phẩm (15).
+       * Chỉ chèn thêm khi báo giá có từ 2 sản phẩm trở lên.
+       */
+      if (extraProductRows > 0) {
+        worksheet.insertRows(
+          firstProductRow + 1,
+          Array.from({ length: extraProductRows }, () => []),
+          "i"
+        );
+      }
+
+      exportItems.forEach((item, index) => {
+        const rowNumber = firstProductRow + index;
+
+        if (index > 0) {
+          copyTemplateRow(firstProductRow, rowNumber);
+        }
+
+        try {
+          worksheet.unMergeCells(`B${rowNumber}:D${rowNumber}`);
+        } catch {}
+        worksheet.mergeCells(`B${rowNumber}:D${rowNumber}`);
+
+        const productName = getItemName(item);
+        const quantity = toNumber(item.quantity);
+        const price = toNumber(item.price);
+        const tax = toNumber(item.tax);
+        const note = String(item.note || "");
+
+        worksheet.getCell(`A${rowNumber}`).value = index + 1;
+        worksheet.getCell(`B${rowNumber}`).value = productName;
+        worksheet.getCell(`E${rowNumber}`).value = item.unit || "cái";
+        worksheet.getCell(`F${rowNumber}`).value = quantity;
+        worksheet.getCell(`G${rowNumber}`).value = price;
+        worksheet.getCell(`H${rowNumber}`).value =
+          tax > 0 ? `${tax}%` : "";
+        worksheet.getCell(`I${rowNumber}`).value = quantity * price;
+        worksheet.getCell(`J${rowNumber}`).value = note;
+
+        worksheet.getCell(`F${rowNumber}`).numFmt = "#,##0";
+        worksheet.getCell(`G${rowNumber}`).numFmt = "#,##0";
+        worksheet.getCell(`I${rowNumber}`).numFmt = "#,##0";
+
+        worksheet.getCell(`B${rowNumber}`).alignment = {
+          ...(worksheet.getCell(`B${rowNumber}`).alignment || {}),
+          horizontal: "left",
+          vertical: "middle",
+          wrapText: true,
+        };
+        worksheet.getCell(`J${rowNumber}`).alignment = {
+          ...(worksheet.getCell(`J${rowNumber}`).alignment || {}),
+          horizontal: "left",
+          vertical: "top",
+          wrapText: true,
+        };
+
+        worksheet.getRow(rowNumber).height = Math.max(
+          getWrappedRowHeight(productName, 48, 21),
+          getWrappedRowHeight(note, 18, 21)
+        );
+      });
+
+      /*
+       * Tổng tiền nằm ngay sau danh sách sản phẩm.
+       * VAT hiển thị đúng như bản xem trước:
+       * 8% và 10% có dòng riêng; không có VAT thì không hiện dòng VAT.
+       */
+      const subtotalRow = firstProductRow + exportItems.length;
+      const templateVatRow = subtotalRow + 1;
+
+      const pbgVatEntries = vatBreakdown;
+
+      if (pbgVatEntries.length === 0) {
+        worksheet.spliceRows(templateVatRow, 1);
+      } else if (pbgVatEntries.length > 1) {
+        worksheet.insertRows(
+          templateVatRow + 1,
+          Array.from({ length: pbgVatEntries.length - 1 }, () => []),
+          "i"
+        );
+
+        for (let index = 1; index < pbgVatEntries.length; index += 1) {
+          copyTemplateRow(templateVatRow, templateVatRow + index);
+        }
+      }
+
+      const totalRow = subtotalRow + 1 + pbgVatEntries.length;
+
+      const writeSummaryRow = (
+        rowNumber: number,
+        label: string,
+        amount: number
+      ) => {
+        try {
+          worksheet.unMergeCells(`A${rowNumber}:H${rowNumber}`);
+        } catch {}
+        worksheet.mergeCells(`A${rowNumber}:H${rowNumber}`);
+
+        worksheet.getCell(`A${rowNumber}`).value = label;
+        worksheet.getCell(`I${rowNumber}`).value = Math.round(amount);
+        worksheet.getCell(`J${rowNumber}`).value = null;
+        worksheet.getCell(`I${rowNumber}`).numFmt = "#,##0";
+      };
+
+      writeSummaryRow(
+        subtotalRow,
+        "Tiền hàng trước thuế:",
+        subtotal
+      );
+
+      pbgVatEntries.forEach((entry, index) => {
+        writeSummaryRow(
+          subtotalRow + 1 + index,
+          `Thuế VAT (${entry.rate}%):`,
+          entry.amount
+        );
+      });
+
+      writeSummaryRow(
+        totalRow,
+        "Tổng cộng sau thuế:",
+        total
+      );
+
+      /*
+       * Các dòng dưới bảng giữ nguyên style/khoảng cách của file mẫu.
+       * Chỉ cập nhật nội dung theo dữ liệu báo giá.
+       */
+      const noteTitleRow = totalRow + 2;
+      const validityRow = totalRow + 3;
+      const deliveryTitleRow = totalRow + 4;
+      const shippingRow = totalRow + 5;
+      const deliveryRow = totalRow + 6;
+      const warrantyRow = totalRow + 7;
+      const paymentTitleRow = totalRow + 8;
+      const payment100Row = totalRow + 9;
+      const transferRow = totalRow + 10;
+      const bankOwnerRow = totalRow + 11;
+      const bankAccountRow = totalRow + 12;
+      const signatureRow = totalRow + 14;
+
+      worksheet.getCell(`A${noteTitleRow}`).value = "Ghi Chú:";
       worksheet.getCell(`B${validityRow}`).value =
         `* Báo giá trên có giá trị trong vòng ${validDays} ngày kể từ ngày báo.`;
+
+      worksheet.getCell(`A${deliveryTitleRow}`).value =
+        "Thời gian giao hàng và bảo hành sản phẩm:";
 
       worksheet.getCell(`B${shippingRow}`).value =
         quotation.terms?.shippingIncluded
           ? "* Giá trên đã bao gồm chi phí vận chuyển."
           : "* Giá trên chưa bao gồm chi phí vận chuyển.";
 
-      worksheet.getCell(`B${shippingRow}`).font = {
-        ...(worksheet.getCell(`B${shippingRow}`).font || {}),
-        color: quotation.terms?.shippingIncluded
-          ? worksheet.getCell(`B${shippingRow}`).font?.color
-          : { argb: "FFFF0000" },
-      };
+      worksheet.getCell(`B${deliveryRow}`).value =
+        `* ${
+          quotation.terms?.deliveryTime ||
+          "Hàng được thực hiện trong vòng 25 đến 30 ngày kể từ ngày thực hiện hợp đồng."
+        }`;
 
-      if (quotation.terms?.shippingNote) {
-        worksheet.getCell(`B${shippingNoteRow}`).value =
-          `* ${quotation.terms.shippingNote}`;
-      } else {
-        worksheet.getCell(`B${shippingNoteRow}`).value =
-          `* ${
-            quotation.terms?.deliveryTime ||
-            "Hàng được thực hiện trong vòng 25 đến 30 ngày kể từ ngày thực hiện hợp đồng."
-          }`;
-      }
+      worksheet.getCell(`B${warrantyRow}`).value =
+        `* ${
+          quotation.terms?.warrantyTime ||
+          "Thiết bị được bảo hành 12 tháng đối với lỗi kỹ thuật do nhà sản xuất."
+        }`;
 
-      if (quotation.terms?.shippingNote) {
-        worksheet.getCell(`B${deliveryRow}`).value =
-          `* ${
-            quotation.terms?.deliveryTime ||
-            "Hàng được thực hiện trong vòng 25 đến 30 ngày kể từ ngày thực hiện hợp đồng."
-          }`;
-        worksheet.getCell(`B${warrantyRow}`).value =
-          `* ${
-            quotation.terms?.warrantyTime ||
-            "Thiết bị được bảo hành 12 tháng đối với lỗi kỹ thuật do nhà sản xuất."
-          }`;
-      } else {
-        worksheet.getCell(`B${deliveryRow}`).value =
-          `* ${
-            quotation.terms?.warrantyTime ||
-            "Thiết bị được bảo hành 12 tháng đối với lỗi kỹ thuật do nhà sản xuất."
-          }`;
-        worksheet.getCell(`B${warrantyRow}`).value = "";
-      }
-
-      /*
-       * Ngân hàng và chữ ký.
-       * Các dòng này cũng tự dịch xuống khi thêm sản phẩm.
-       */
-      const bankOwnerRow = subtotalRow + 15;
-      const bankAccountRow = subtotalRow + 16;
-      const signatureRow = subtotalRow + 18;
-      const buyerSignatureBlankRow = signatureRow + 1;
-      const sellerSignatureBlankRow = signatureRow + 2;
-
-      /*
-       * Khôi phục đúng các vùng merge chữ ký đã có trong file mẫu.
-       * Không ghi thêm nội dung mới vào nhiều ô, tránh bị lặp chữ.
-       */
-      [
-        `A${signatureRow}:D${signatureRow}`,
-        `E${signatureRow}:I${signatureRow}`,
-        `A${buyerSignatureBlankRow}:D${buyerSignatureBlankRow}`,
-        `E${sellerSignatureBlankRow}:H${sellerSignatureBlankRow}`,
-      ].forEach((range) => {
-        try {
-          worksheet.unMergeCells(range);
-        } catch {
-          // Bỏ qua nếu chưa merge.
-        }
-
-        worksheet.mergeCells(range);
-      });
-
-      /*
-       * Dòng tiêu đề Thanh toán cần merge để không bị cắt còn chữ "Thanh".
-       */
-      const paymentTitleRow = subtotalRow + 10;
-
-      try {
-        worksheet.unMergeCells(`A${paymentTitleRow}:I${paymentTitleRow}`);
-      } catch {
-        // Bỏ qua nếu chưa merge.
-      }
-
-      worksheet.mergeCells(`A${paymentTitleRow}:I${paymentTitleRow}`);
       worksheet.getCell(`A${paymentTitleRow}`).value = "Thanh toán:";
-
-      /*
-       * Bỏ 2 lựa chọn thanh toán cũ khỏi PBG:
-       * - Tạm ứng 70%
-       * - Thanh toán 30% còn lại
-       * Các lựa chọn 100% và chuyển khoản phía dưới vẫn giữ nguyên.
-       */
-      worksheet.getCell(`B${paymentTitleRow + 1}`).value = "";
-      worksheet.getCell(`B${paymentTitleRow + 2}`).value = "";
-
+      worksheet.getCell(`B${payment100Row}`).value =
+        "* Thanh toán 100% trước khi giao hàng.";
+      worksheet.getCell(`B${transferRow}`).value =
+        "* Thanh toán bằng chuyển khoản:";
       worksheet.getCell(`B${bankOwnerRow}`).value =
-        `Đơn vị thụ hưởng: ${seller.bankOwner || ""}`;
-
+        `* Đơn vị thụ hưởng: ${seller.bankOwner || ""}`;
       worksheet.getCell(`B${bankAccountRow}`).value =
-        `Tài khoản số: ${seller.bankAccount || ""} – tại ${
+        `* Tài khoản số: ${seller.bankAccount || ""} – tại ${
           seller.bankName || ""
         } - ${seller.bankBranch || ""}`;
 
-      worksheet.getCell(`A${signatureRow}`).value =
-        "XÁC NHẬN BÊN MUA";
-
-      worksheet.getCell(`E${signatureRow}`).value =
-        seller.companyName || "";
+      /*
+       * Các dòng nội dung dưới bảng dùng chữ đen.
+       */
+      [
+        `B${validityRow}`,
+        `B${deliveryRow}`,
+        `B${warrantyRow}`,
+        `B${bankOwnerRow}`,
+        `B${bankAccountRow}`,
+      ].forEach((cellAddress) => {
+        const cell = worksheet.getCell(cellAddress);
+        cell.font = {
+          ...(cell.font || {}),
+          color: { argb: "FF000000" },
+        };
+      });
 
       /*
-       * Thiết lập in A4 và chỉ in vùng báo giá.
+       * Chỉ dòng phí vận chuyển màu đỏ.
+       * Không tạo thêm border cho phần ghi chú/điều khoản/thanh toán.
        */
-      worksheet.pageSetup = {
-        ...worksheet.pageSetup,
-        paperSize: 9,
-        orientation: "portrait",
-        fitToPage: true,
-        fitToWidth: 1,
-        fitToHeight: 0,
-        margins: {
-          left: 0.75,
-          right: 0.75,
-          top: 0.4,
-          bottom: 0.75,
-          header: 0.2,
-          footer: 0.2,
+      worksheet.getCell(`B${shippingRow}`).font = {
+        ...(worksheet.getCell(`B${shippingRow}`).font || {}),
+        color: {
+          argb: quotation.terms?.shippingIncluded
+            ? "FF111111"
+            : "FFFF0000",
         },
-        printArea: `A1:I${signatureRow + 2}`,
       };
+
+      try {
+        worksheet.unMergeCells(`A${signatureRow}:D${signatureRow}`);
+      } catch {}
+      try {
+        worksheet.unMergeCells(`E${signatureRow}:J${signatureRow}`);
+      } catch {}
+
+      worksheet.mergeCells(`A${signatureRow}:D${signatureRow}`);
+      worksheet.mergeCells(`E${signatureRow}:J${signatureRow}`);
+
+      worksheet.getCell(`A${signatureRow}`).value =
+        "XÁC NHẬN BÊN MUA";
+      worksheet.getCell(`E${signatureRow}`).value =
+        seller.companyName || "";
 
       worksheet.views = [
         {
@@ -833,6 +763,34 @@ function QuotationPrintContent() {
           showGridLines: false,
         },
       ];
+
+      worksheet.pageSetup = {
+        ...worksheet.pageSetup,
+        paperSize: 9,
+        orientation: "portrait",
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0,
+        horizontalCentered: true,
+        printArea: `A1:J${signatureRow + 3}`,
+      };
+
+      // Ép màu chữ đen sau cùng để style từ file mẫu không ghi đè.
+      [
+        validityRow,
+        deliveryRow,
+        warrantyRow,
+        bankOwnerRow,
+        bankAccountRow,
+      ].forEach((rowNumber) => {
+        for (let column = 1; column <= 10; column += 1) {
+          const cell = worksheet.getRow(rowNumber).getCell(column);
+          cell.font = {
+            ...(cell.font || {}),
+            color: { argb: "FF000000" },
+          };
+        }
+      });
 
       /*
        * BIÊN BẢN GIAO NHẬN - sheet PGH
@@ -1777,13 +1735,14 @@ ${exportError.message}`
 
         .product-table th {
           background: #fff;
-          padding: 1mm 1.5mm;
+          padding: 1mm 0.8mm;
           color: #000;
           text-align: center;
-          font-size: 13px;
+          font-size: 12.5px;
           font-weight: 700;
           line-height: 1.1;
           vertical-align: middle;
+          white-space: nowrap;
         }
 
         .product-table td {
@@ -1809,7 +1768,7 @@ ${exportError.message}`
         }
 
         .col-product {
-          width: 65mm;
+          width: 72mm;
         }
 
         .col-unit {
@@ -1821,11 +1780,11 @@ ${exportError.message}`
         }
 
         .col-price {
-          width: 19mm;
+          width: 17mm;
         }
 
         .col-vat {
-          width: 12mm;
+          width: 10mm;
         }
 
         .col-total {
@@ -1833,7 +1792,7 @@ ${exportError.message}`
         }
 
         .col-note {
-          width: 20mm;
+          width: 14mm;
         }
 
         .center {
@@ -1873,6 +1832,8 @@ ${exportError.message}`
           height: 7mm;
           padding-top: 1.5mm;
           padding-bottom: 1.5mm;
+          border-top: 1px solid #111;
+          border-bottom: 1px solid #111;
         }
 
         .summary-label {
@@ -1903,6 +1864,18 @@ ${exportError.message}`
         .terms h3 {
           margin: 3mm 0 1mm;
           font-size: 14px;
+        }
+
+        .terms h3:last-of-type {
+          break-after: avoid;
+          page-break-after: avoid;
+        }
+
+        .terms p {
+          margin: 1.2mm 0;
+          line-height: 1.25;
+          white-space: normal;
+          overflow: visible;
         }
 
         .terms p {
