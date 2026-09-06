@@ -52,7 +52,14 @@ export default function OrdersPage() {
   const [savingReturn, setSavingReturn] =
     useState(false);
 
-  const ordersPerPage = 20;
+  const [paymentFilter, setPaymentFilter] =
+    useState("all");
+
+  const [timeFilter, setTimeFilter] =
+    useState("today");
+
+  const [ordersPerPage, setOrdersPerPage] =
+    useState(20);
 
   const formatMoney = (value: any) => {
     return Number(value || 0).toLocaleString();
@@ -164,6 +171,94 @@ export default function OrdersPage() {
     }
 
     return item.customer_address || "";
+  };
+
+
+  const getCustomerBuyerName = (item: any) => {
+    const customer =
+      typeof item.customer === "object" && item.customer
+        ? item.customer
+        : {};
+
+    const companyName =
+      customer.companyName ||
+      customer.company_name ||
+      customer.company ||
+      item.companyName ||
+      item.company_name ||
+      item.customerCompanyName ||
+      item.customer_company_name ||
+      item.company ||
+      "";
+
+    const customerName =
+      customer.name ||
+      customer.fullName ||
+      customer.full_name ||
+      (typeof item.customer_name === "string"
+        ? item.customer_name
+        : "") ||
+      item.customerName ||
+      "";
+
+    return (
+      customer.buyerName ||
+      customer.buyer_name ||
+      customer.contactName ||
+      customer.contact_name ||
+      customer.representative ||
+      item.buyerName ||
+      item.buyer_name ||
+      item.contactName ||
+      item.contact_name ||
+      item.customerBuyerName ||
+      item.customer_buyer_name ||
+      (companyName &&
+      customerName &&
+      String(customerName).trim() !== String(companyName).trim()
+        ? customerName
+        : "") ||
+      ""
+    );
+  };
+
+  const getCustomerCompanyName = (item: any) => {
+    const customer =
+      typeof item.customer === "object" && item.customer
+        ? item.customer
+        : {};
+
+    return (
+      customer.companyName ||
+      customer.company_name ||
+      customer.company ||
+      customer.companyTitle ||
+      item.companyName ||
+      item.company_name ||
+      item.customerCompanyName ||
+      item.customer_company_name ||
+      item.company ||
+      ""
+    );
+  };
+
+  const getCustomerTaxCode = (item: any) => {
+    const customer =
+      typeof item.customer === "object" && item.customer
+        ? item.customer
+        : {};
+
+    return (
+      customer.taxCode ||
+      customer.tax_code ||
+      customer.taxId ||
+      customer.mst ||
+      item.taxCode ||
+      item.tax_code ||
+      item.taxId ||
+      item.mst ||
+      ""
+    );
   };
 
   const getOrderCode = (item: any) => {
@@ -385,6 +480,141 @@ export default function OrdersPage() {
     return "";
   };
 
+  const getPaymentMethodShort = (item: any) => {
+    const method = getPaymentMethodValue(item);
+
+    if (method === "cash") return "TM";
+    if (method === "bank") return "CK";
+    if (method === "mixed") return "CK + TM";
+    if (method === "card") return "Thẻ";
+
+    return "---";
+  };
+
+  const getOrderDate = (item: any) => {
+    const value = item.createdAt;
+
+    if (!value) return null;
+
+    const date = value?.seconds
+      ? new Date(value.seconds * 1000)
+      : value?.toDate
+      ? value.toDate()
+      : new Date(value);
+
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const isInTimeFilter = (item: any, filter: string) => {
+    if (filter === "all") return true;
+
+    const date = getOrderDate(item);
+    if (!date) return false;
+
+    const now = new Date();
+
+    const startOfDay = (d: Date) =>
+      new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    const endOfDay = (d: Date) =>
+      new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
+
+    if (filter === "today") {
+      return date >= todayStart && date < todayEnd;
+    }
+
+    if (filter === "yesterday") {
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 1
+      );
+      const end = todayStart;
+
+      return date >= start && date < end;
+    }
+
+    if (filter === "7days") {
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 6
+      );
+
+      return date >= start && date < todayEnd;
+    }
+
+    if (filter === "this_month") {
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1
+      );
+
+      const end = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        1
+      );
+
+      return date >= start && date < end;
+    }
+
+    if (filter === "last_month") {
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        1
+      );
+
+      const end = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1
+      );
+
+      return date >= start && date < end;
+    }
+
+    if (["q1", "q2", "q3", "q4"].includes(filter)) {
+      const quarterIndex = Number(filter.slice(1)) - 1;
+      const startMonth = quarterIndex * 3;
+
+      const start = new Date(
+        now.getFullYear(),
+        startMonth,
+        1
+      );
+
+      const end = new Date(
+        now.getFullYear(),
+        startMonth + 3,
+        1
+      );
+
+      return date >= start && date < end;
+    }
+
+    if (filter === "this_year") {
+      const start = new Date(now.getFullYear(), 0, 1);
+      const end = new Date(now.getFullYear() + 1, 0, 1);
+
+      return date >= start && date < end;
+    }
+
+    if (filter === "last_year") {
+      const start = new Date(now.getFullYear() - 1, 0, 1);
+      const end = new Date(now.getFullYear(), 0, 1);
+
+      return date >= start && date < end;
+    }
+
+    return true;
+  };
+
   const getDiscountText = (item: any) => {
     const discountAmount = Number(
       item.discountAmount ||
@@ -429,6 +659,28 @@ export default function OrdersPage() {
       item.vatAmount ||
       item.vat ||
       0
+    );
+  };
+
+  const hasVatOrCompanyInfo = (item: any) => {
+    const hasCompany =
+      String(getCustomerCompanyName(item) || "").trim() !== "";
+
+    const hasTaxCode =
+      String(getCustomerTaxCode(item) || "").trim() !== "";
+
+    // Chỉ coi là đơn có VAT khi VAT thực sự được áp dụng cho đơn.
+    // Không kiểm tra % VAT nằm sẵn trong từng sản phẩm vì sản phẩm
+    // có thể lưu tax/VAT mặc định dù đơn bán hàng chọn "Không VAT".
+    const hasAppliedVat =
+      item.useProductVat === true ||
+      item.use_product_vat === true ||
+      Number(getVatAmount(item) || 0) > 0;
+
+    return (
+      hasCompany ||
+      hasTaxCode ||
+      hasAppliedVat
     );
   };
 
@@ -918,17 +1170,71 @@ export default function OrdersPage() {
     loadOrders();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [paymentFilter, timeFilter, ordersPerPage]);
+
+  const filteredOrders = orders.filter((order) => {
+    const paymentMatches =
+      paymentFilter === "all" ||
+      getPaymentMethodValue(order) === paymentFilter;
+
+    const timeMatches =
+      isInTimeFilter(order, timeFilter);
+
+    return paymentMatches && timeMatches;
+  });
+
+  const statisticOrders = filteredOrders.filter(
+    (order) => order.status !== "cancelled"
+  );
+
+  const filteredTotalAmount = statisticOrders.reduce(
+    (sum, order) =>
+      sum + getGrandTotal(order),
+    0
+  );
+
+  const filteredOrderCount =
+    statisticOrders.length;
+
   const totalPages =
-    Math.ceil(orders.length / ordersPerPage);
+    Math.ceil(filteredOrders.length / ordersPerPage);
 
   const startIndex =
     (currentPage - 1) * ordersPerPage;
 
   const currentOrders =
-    orders.slice(
+    filteredOrders.slice(
       startIndex,
       startIndex + ordersPerPage
     );
+
+  const visiblePageNumbers = (() => {
+    if (totalPages <= 5) {
+      return Array.from(
+        { length: totalPages },
+        (_, index) => index + 1
+      );
+    }
+
+    let startPage = Math.max(
+      1,
+      currentPage - 2
+    );
+
+    let endPage = startPage + 4;
+
+    if (endPage > totalPages) {
+      endPage = totalPages;
+      startPage = totalPages - 4;
+    }
+
+    return Array.from(
+      { length: endPage - startPage + 1 },
+      (_, index) => startPage + index
+    );
+  })();
 
   const selectedOrders = orders.filter((order) =>
     selectedOrderIds.includes(order.id)
@@ -1741,6 +2047,81 @@ export default function OrdersPage() {
         </div>
       )}
 
+      <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-[220px_260px_1fr]">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <label className="mb-2 block text-sm font-semibold text-slate-700">
+            Phương thức thanh toán
+          </label>
+
+          <select
+            value={paymentFilter}
+            onChange={(event) =>
+              setPaymentFilter(event.target.value)
+            }
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-500"
+          >
+            <option value="all">Tất cả</option>
+            <option value="cash">TM - Tiền mặt</option>
+            <option value="bank">CK - Chuyển khoản</option>
+            <option value="mixed">CK + TM</option>
+          </select>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <label className="mb-2 block text-sm font-semibold text-slate-700">
+            Thời gian
+          </label>
+
+          <select
+            value={timeFilter}
+            onChange={(event) =>
+              setTimeFilter(event.target.value)
+            }
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-500"
+          >
+            <option value="today">Hôm nay</option>
+            <option value="yesterday">Hôm qua</option>
+            <option value="7days">7 ngày</option>
+            <option value="this_month">Tháng này</option>
+            <option value="last_month">Tháng trước</option>
+            <option value="q1">Quý 1</option>
+            <option value="q2">Quý 2</option>
+            <option value="q3">Quý 3</option>
+            <option value="q4">Quý 4</option>
+            <option value="this_year">Năm nay</option>
+            <option value="last_year">Năm trước</option>
+            <option value="all">Tất cả</option>
+          </select>
+
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 shadow-sm">
+            <div className="text-sm font-semibold text-sky-700">
+              Số đơn tính doanh thu
+            </div>
+            <div className="mt-1 text-2xl font-bold text-sky-800">
+              {filteredOrderCount}
+            </div>
+            <div className="mt-1 text-xs text-sky-600">
+              Không tính đơn đã hủy
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+            <div className="text-sm font-semibold text-emerald-700">
+              Tổng tiền theo bộ lọc
+            </div>
+            <div className="mt-1 text-2xl font-bold text-emerald-800">
+              {formatMoney(filteredTotalAmount)}đ
+            </div>
+            <div className="mt-1 text-xs text-emerald-600">
+              Không tính đơn đã hủy
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <table className="w-full">
           <thead className="bg-slate-800 text-white">
@@ -1773,6 +2154,11 @@ export default function OrdersPage() {
               <th className="px-4 py-3 text-left">
                 Người tạo
               </th>
+
+              <th className="px-4 py-3 text-left">
+                PTTT
+              </th>
+
               <th className="px-4 py-3 text-left">
                 Trạng thái
               </th>
@@ -1801,7 +2187,11 @@ export default function OrdersPage() {
                     onClick={() =>
                       setSelectedOrder(item)
                     }
-                    className="text-sky-700 hover:text-sky-800 hover:underline font-bold"
+                    className={
+                      hasVatOrCompanyInfo(item)
+                        ? "font-bold text-rose-600 hover:text-rose-700 hover:underline"
+                        : "font-bold text-sky-700 hover:text-sky-800 hover:underline"
+                    }
                   >
                     {getOrderCode(item)}
                   </button>
@@ -1829,6 +2219,10 @@ export default function OrdersPage() {
                   {getCreatedBy(item)}
                 </td>
 
+                <td className="px-4 py-3 text-slate-900 font-semibold">
+                  {getPaymentMethodShort(item)}
+                </td>
+
                 <td className="px-4 py-3">
                   {item.status === "cancelled" ? (
                     <span className="px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-xs font-bold">
@@ -1854,7 +2248,7 @@ export default function OrdersPage() {
             {currentOrders.length === 0 && (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={8}
                   className="p-8 text-center text-slate-500"
                 >
                   Chưa có đơn hàng nào
@@ -1864,75 +2258,95 @@ export default function OrdersPage() {
           </tbody>
         </table>
 
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-white">
-            <div className="text-sm text-slate-600">
-              Hiển thị{" "}
-              {orders.length === 0
+        <div className="flex flex-col gap-3 border-t border-slate-200 bg-white px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-2 text-sm text-slate-700">
+            <span>Hiển thị</span>
+
+            <select
+              value={ordersPerPage}
+              onChange={(event) =>
+                setOrdersPerPage(
+                  Number(event.target.value)
+                )
+              }
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none focus:border-sky-500"
+            >
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+
+            <span>kết quả</span>
+          </div>
+
+          <div className="text-sm text-slate-600">
+            Từ{" "}
+            <strong>
+              {filteredOrders.length === 0
                 ? 0
                 : startIndex + 1}
-              {" "}
-              -{" "}
+            </strong>{" "}
+            đến{" "}
+            <strong>
               {Math.min(
                 startIndex + ordersPerPage,
-                orders.length
+                filteredOrders.length
               )}
-              {" "}
-              / {orders.length} đơn hàng
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={currentPage === 1}
-                onClick={() =>
-                  setCurrentPage((prev) =>
-                    Math.max(prev - 1, 1)
-                  )
-                }
-                className="px-4 py-2 rounded-lg border text-sm disabled:opacity-40 hover:bg-slate-100"
-              >
-                Trước
-              </button>
-
-              {Array.from(
-                { length: totalPages },
-                (_, index) => index + 1
-              ).map((page) => (
-                <button
-                  key={page}
-                  type="button"
-                  onClick={() =>
-                    setCurrentPage(page)
-                  }
-                  className={
-                    currentPage === page
-                      ? "px-4 py-2 rounded-lg bg-sky-600 text-white text-sm"
-                      : "px-4 py-2 rounded-lg border text-sm hover:bg-slate-100"
-                  }
-                >
-                  {page}
-                </button>
-              ))}
-
-              <button
-                type="button"
-                disabled={currentPage === totalPages}
-                onClick={() =>
-                  setCurrentPage((prev) =>
-                    Math.min(
-                      prev + 1,
-                      totalPages
-                    )
-                  )
-                }
-                className="px-4 py-2 rounded-lg border text-sm disabled:opacity-40 hover:bg-slate-100"
-              >
-                Sau
-              </button>
-            </div>
+            </strong>{" "}
+            trên tổng{" "}
+            <strong>{filteredOrders.length}</strong>
           </div>
-        )}
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              title="Trang trước"
+              disabled={currentPage === 1 || totalPages <= 1}
+              onClick={() =>
+                setCurrentPage((prev) =>
+                  Math.max(prev - 1, 1)
+                )
+              }
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+            >
+              ◀
+            </button>
+
+            {visiblePageNumbers.map((page) => (
+              <button
+                key={page}
+                type="button"
+                onClick={() =>
+                  setCurrentPage(page)
+                }
+                className={
+                  currentPage === page
+                    ? "flex h-9 min-w-9 items-center justify-center rounded-full bg-sky-600 px-2 text-sm font-semibold text-white"
+                    : "flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-sm text-slate-700 hover:bg-slate-100"
+                }
+              >
+                {page}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              title="Trang sau"
+              disabled={currentPage === totalPages || totalPages <= 1}
+              onClick={() =>
+                setCurrentPage((prev) =>
+                  Math.min(
+                    prev + 1,
+                    Math.max(totalPages, 1)
+                  )
+                )
+              }
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+            >
+              ▶
+            </button>
+          </div>
+        </div>
       </div>
 
       {returnOpen && returnOrder && (
@@ -2171,58 +2585,114 @@ export default function OrdersPage() {
             </div>
 
             <div className="p-5 max-h-[78vh] overflow-auto bg-slate-50">
-              <div className="grid grid-cols-2 gap-5 mb-5">
+              <div className="grid grid-cols-1 gap-5 mb-5 lg:grid-cols-[1.65fr_0.85fr]">
                 <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
                   <h3 className="font-bold text-lg mb-4 text-slate-800">
                     Thông tin khách hàng
                   </h3>
 
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between gap-4">
+                  <div className="space-y-2.5 text-sm">
+                    <div className="grid grid-cols-[118px_1fr] items-start gap-2">
                       <span className="text-slate-500">
-                        Khách hàng
+                        Người mua hàng :
                       </span>
                       <button
                         type="button"
                         onClick={() =>
                           copyCustomerInfo(
-                            getCustomerName(selectedOrder),
-                            "name"
+                            getCustomerBuyerName(selectedOrder) ||
+                              (!getCustomerCompanyName(selectedOrder)
+                                ? getCustomerName(selectedOrder)
+                                : ""),
+                            "buyerName"
                           )
                         }
-                        className="font-semibold text-right cursor-copy hover:text-sky-700 hover:underline"
+                        className="min-w-0 text-left font-semibold cursor-copy hover:text-sky-700 hover:underline"
                         title="Nhấn để sao chép"
                       >
-                        {copiedCustomerField === "name"
+                        {copiedCustomerField === "buyerName"
                           ? "Đã sao chép"
-                          : getCustomerName(selectedOrder)}
+                          : getCustomerBuyerName(selectedOrder) ||
+                            (!getCustomerCompanyName(selectedOrder)
+                              ? getCustomerName(selectedOrder)
+                              : "---")}
                       </button>
                     </div>
 
-                    <div className="flex justify-between gap-4">
+                    <div className="grid grid-cols-[118px_1fr] items-start gap-2">
                       <span className="text-slate-500">
-                        Số điện thoại
+                        Tên công ty :
                       </span>
                       <button
                         type="button"
                         onClick={() =>
                           copyCustomerInfo(
-                            getCustomerPhone(selectedOrder),
-                            "phone"
+                            getCustomerCompanyName(selectedOrder) ||
+                              (getCustomerBuyerName(selectedOrder)
+                                ? getCustomerName(selectedOrder)
+                                : ""),
+                            "companyName"
                           )
                         }
-                        className="font-semibold text-right cursor-copy hover:text-sky-700 hover:underline"
+                        className="min-w-0 text-left font-semibold cursor-copy hover:text-sky-700 hover:underline"
                         title="Nhấn để sao chép"
                       >
-                        {copiedCustomerField === "phone"
+                        {copiedCustomerField === "companyName"
                           ? "Đã sao chép"
-                          : getCustomerPhone(selectedOrder) || "---"}
+                          : getCustomerCompanyName(selectedOrder) ||
+                            (getCustomerBuyerName(selectedOrder)
+                              ? getCustomerName(selectedOrder)
+                              : "---")}
                       </button>
                     </div>
 
-                    <div className="flex justify-between gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-[92px_1fr] items-start gap-2">
+                        <span className="text-slate-500">
+                          Mã số thuế :
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            copyCustomerInfo(
+                              getCustomerTaxCode(selectedOrder),
+                              "taxCode"
+                            )
+                          }
+                          className="min-w-0 text-left font-semibold cursor-copy hover:text-sky-700 hover:underline"
+                          title="Nhấn để sao chép"
+                        >
+                          {copiedCustomerField === "taxCode"
+                            ? "Đã sao chép"
+                            : getCustomerTaxCode(selectedOrder) || "---"}
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-[94px_1fr] items-start gap-2">
+                        <span className="text-slate-500">
+                          Số điện thoại :
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            copyCustomerInfo(
+                              getCustomerPhone(selectedOrder),
+                              "phone"
+                            )
+                          }
+                          className="min-w-0 text-left font-semibold cursor-copy hover:text-sky-700 hover:underline"
+                          title="Nhấn để sao chép"
+                        >
+                          {copiedCustomerField === "phone"
+                            ? "Đã sao chép"
+                            : getCustomerPhone(selectedOrder) || "---"}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-[118px_1fr] items-start gap-2">
                       <span className="text-slate-500">
-                        Email
+                        Email :
                       </span>
                       <button
                         type="button"
@@ -2232,7 +2702,7 @@ export default function OrdersPage() {
                             "email"
                           )
                         }
-                        className="font-semibold text-right break-all cursor-copy hover:text-sky-700 hover:underline"
+                        className="min-w-0 break-all text-left font-semibold cursor-copy hover:text-sky-700 hover:underline"
                         title="Nhấn để sao chép"
                       >
                         {copiedCustomerField === "email"
@@ -2241,9 +2711,9 @@ export default function OrdersPage() {
                       </button>
                     </div>
 
-                    <div className="flex justify-between gap-4">
+                    <div className="grid grid-cols-[118px_1fr] items-start gap-2">
                       <span className="text-slate-500">
-                        Địa chỉ
+                        Địa chỉ :
                       </span>
                       <button
                         type="button"
@@ -2253,7 +2723,7 @@ export default function OrdersPage() {
                             "address"
                           )
                         }
-                        className="max-w-[70%] font-semibold text-right cursor-copy hover:text-sky-700 hover:underline"
+                        className="min-w-0 text-left font-semibold cursor-copy hover:text-sky-700 hover:underline"
                         title="Nhấn để sao chép"
                       >
                         {copiedCustomerField === "address"
