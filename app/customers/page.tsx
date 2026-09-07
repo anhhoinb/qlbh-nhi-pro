@@ -177,6 +177,110 @@ export default function CustomersPage() {
     startIndex + pageSize
   );
 
+  const normalizePhone = (value: any) =>
+    String(value || "").replace(/\D/g, "");
+
+  const normalizeTaxCode = (value: any) =>
+    String(value || "").trim().toLowerCase().replace(/\s+/g, "");
+
+  const normalizeEmail = (value: any) =>
+    String(value || "").trim().toLowerCase();
+
+  const findDuplicateCustomer = (
+    values: { phone?: string; taxCode?: string; email?: string },
+    excludeId = ""
+  ) => {
+    const phone = normalizePhone(values.phone);
+    const taxCode = normalizeTaxCode(values.taxCode);
+    const email = normalizeEmail(values.email);
+
+    return customers.find((customer) => {
+      if (excludeId && customer.id === excludeId) return false;
+
+      return (
+        (phone && normalizePhone(customer.phone) === phone) ||
+        (taxCode && normalizeTaxCode(customer.taxCode) === taxCode) ||
+        (email && normalizeEmail(customer.email) === email)
+      );
+    });
+  };
+
+  const getDuplicateMessage = (
+    duplicate: any,
+    values: { phone?: string; taxCode?: string; email?: string }
+  ) => {
+    if (
+      normalizePhone(values.phone) &&
+      normalizePhone(duplicate?.phone) === normalizePhone(values.phone)
+    ) {
+      return `Số điện thoại "${String(values.phone || "").trim()}" đã thuộc khách hàng "${
+        duplicate.name || duplicate.companyName || "---"
+      }".`;
+    }
+
+    if (
+      normalizeTaxCode(values.taxCode) &&
+      normalizeTaxCode(duplicate?.taxCode) === normalizeTaxCode(values.taxCode)
+    ) {
+      return `Mã số thuế "${String(values.taxCode || "").trim()}" đã thuộc khách hàng "${
+        duplicate.name || duplicate.companyName || "---"
+      }".`;
+    }
+
+    return `Email "${String(values.email || "").trim()}" đã thuộc khách hàng "${
+      duplicate.name || duplicate.companyName || "---"
+    }".`;
+  };
+
+  const downloadCustomerList = () => {
+    const headers = [
+      "STT",
+      "Mã KH",
+      "Tên khách hàng",
+      "Số điện thoại",
+      "Tên công ty",
+      "Mã số thuế",
+      "Email",
+      "Địa chỉ",
+      "Trạng thái",
+    ];
+
+    const rows = filteredCustomers.map((customer, index) => [
+      index + 1,
+      customer.code || "",
+      customer.name || "",
+      customer.phone || "",
+      customer.companyName || "",
+      customer.taxCode || "",
+      customer.email || "",
+      customer.address || "",
+      customer.active === false ? "Ngừng sử dụng" : "Đang sử dụng",
+    ]);
+
+    const csvCell = (value: any) =>
+      `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+    const csv =
+      "\uFEFF" +
+      [headers, ...rows]
+        .map((row) => row.map(csvCell).join(","))
+        .join("\r\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const date = new Date().toISOString().slice(0, 10);
+
+    link.href = url;
+    link.download = `danh-sach-khach-hang-${date}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const resetNewCustomer = () => {
     setNewCustomer({
       name: "",
@@ -203,6 +307,17 @@ export default function CustomersPage() {
 
     if (!phone) {
       alert("Vui lòng nhập số điện thoại");
+      return;
+    }
+
+    const duplicate = findDuplicateCustomer({
+      phone,
+      taxCode,
+      email,
+    });
+
+    if (duplicate) {
+      alert(getDuplicateMessage(duplicate, { phone, taxCode, email }));
       return;
     }
 
@@ -358,6 +473,16 @@ export default function CustomersPage() {
 
     if (!phone) {
       alert("Vui lòng nhập số điện thoại");
+      return;
+    }
+
+    const duplicate = findDuplicateCustomer(
+      { phone, taxCode, email },
+      editingCustomer.id
+    );
+
+    if (duplicate) {
+      alert(getDuplicateMessage(duplicate, { phone, taxCode, email }));
       return;
     }
 
@@ -537,13 +662,23 @@ export default function CustomersPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowAddModal(true)}
-          className="bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-2xl font-semibold shadow-sm transition"
-        >
-          + Thêm khách hàng
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={downloadCustomerList}
+            className="rounded-2xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          >
+            Tải danh sách
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowAddModal(true)}
+            className="bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-2xl font-semibold shadow-sm transition"
+          >
+            + Thêm khách hàng
+          </button>
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4">
@@ -719,7 +854,7 @@ export default function CustomersPage() {
           </table>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-end">
           <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
             <span>Hiển thị</span>
 

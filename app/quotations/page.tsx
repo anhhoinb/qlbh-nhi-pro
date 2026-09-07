@@ -8,9 +8,11 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  limit,
   orderBy,
   query,
   runTransaction,
+  where,
   serverTimestamp,
   type DocumentData,
   type DocumentSnapshot,
@@ -30,6 +32,8 @@ type Quotation = {
     contactName?: string;
     phone?: string;
     email?: string;
+    address?: string;
+    taxCode?: string;
   };
   subtotal?: number;
   vatAmount?: number;
@@ -80,7 +84,7 @@ function getQuotationCode(item: Quotation) {
 }
 
 function getStatusLabel(status?: string) {
-  if (status === "paid") return "Đã thanh toán";
+  if (status === "paid") return "Đã TT";
   if (status === "confirmed") return "Đã xác nhận";
   if (status === "cancelled") return "Đã hủy";
   return "Bản nháp";
@@ -111,6 +115,8 @@ export default function QuotationsPage() {
   const [payingId, setPayingId] = useState("");
   const [paymentQuotation, setPaymentQuotation] = useState<Quotation | null>(null);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const loadQuotations = async () => {
     try {
@@ -186,6 +192,85 @@ export default function QuotationsPage() {
     });
   }, [quotations, search]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, pageSize]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredQuotations.length / pageSize)
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedQuotations = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredQuotations.slice(start, start + pageSize);
+  }, [filteredQuotations, currentPage, pageSize]);
+
+  const visiblePages = useMemo(() => {
+    const maxButtons = 5;
+
+    if (totalPages <= maxButtons) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    let start = Math.max(1, currentPage - 2);
+    let end = start + maxButtons - 1;
+
+    if (end > totalPages) {
+      end = totalPages;
+      start = end - maxButtons + 1;
+    }
+
+    return Array.from(
+      { length: end - start + 1 },
+      (_, index) => start + index
+    );
+  }, [currentPage, totalPages]);
+
+  const listStart =
+    filteredQuotations.length === 0
+      ? 0
+      : (currentPage - 1) * pageSize + 1;
+
+  const listEnd = Math.min(
+    currentPage * pageSize,
+    filteredQuotations.length
+  );
+
+  const findExistingCustomerId = async (buyer: any) => {
+    const phone = String(buyer?.phone || "").trim();
+    const taxCode = String(buyer?.taxCode || "").trim();
+    const email = String(buyer?.email || "").trim();
+
+    const lookups: Array<{ field: string; value: string }> = [];
+
+    if (phone) lookups.push({ field: "phone", value: phone });
+    if (taxCode) lookups.push({ field: "taxCode", value: taxCode });
+    if (email) lookups.push({ field: "email", value: email });
+
+    for (const lookup of lookups) {
+      const snapshot = await getDocs(
+        query(
+          collection(db, "customers"),
+          where(lookup.field, "==", lookup.value),
+          limit(1)
+        )
+      );
+
+      if (!snapshot.empty) {
+        return snapshot.docs[0].id;
+      }
+    }
+
+    return "";
+  };
+
   const markAsPaid = async (
     item: Quotation,
     paymentMethod: "cash" | "bank"
@@ -205,6 +290,11 @@ export default function QuotationsPage() {
       const quotationRef = doc(db, "quotations", item.id);
       const orderRef = doc(collection(db, "orders"));
       const orderCounterRef = doc(db, "settings", "order_counter");
+
+      const existingCustomerId = await findExistingCustomerId(item.buyer);
+      const customerRef = existingCustomerId
+        ? doc(db, "customers", existingCustomerId)
+        : doc(collection(db, "customers"));
 
       let createdOrderCode = "";
 
@@ -317,9 +407,46 @@ export default function QuotationsPage() {
         }));
 
         const buyer = quotationData.buyer || {};
+        const customerName =
+          String(buyer.contactName || buyer.companyName || "Khách lẻ").trim() ||
+          "Khách lẻ";
+        const customerCompanyName = String(buyer.companyName || "").trim();
+        const customerPhone = String(buyer.phone || "").trim();
+        const customerAddress = String(buyer.address || "").trim();
+        const customerEmail = String(buyer.email || "").trim();
+        const customerTaxCode = String(buyer.taxCode || "").trim();
+
         const orderTotal = Number(quotationData.total || 0);
         const cashAmount = paymentMethod === "cash" ? orderTotal : 0;
         const transferAmount = paymentMethod === "bank" ? orderTotal : 0;
+
+        // Khi thanh toán báo giá, tự lưu khách hàng vào danh sách Khách hàng.
+        // Nếu đã có khách trùng SĐT/MST/email thì cập nhật, không tạo bản ghi trùng.
+        if (
+          customerName !== "Khách lẻ" ||
+          customerPhone ||
+          customerCompanyName ||
+          customerTaxCode ||
+          customerEmail
+        ) {
+          transaction.set(
+            customerRef,
+            {
+              name: customerName,
+              phone: customerPhone,
+              address: customerAddress,
+              companyName: customerCompanyName,
+              taxCode: customerTaxCode,
+              email: customerEmail,
+              active: true,
+              updatedAt: serverTimestamp(),
+              ...(existingCustomerId
+                ? {}
+                : { createdAt: serverTimestamp() }),
+            },
+            { merge: true }
+          );
+        }
 
         transaction.set(orderRef, {
           orderCode: createdOrderCode,
@@ -333,23 +460,24 @@ export default function QuotationsPage() {
             item.id,
 
           customer: {
-            name: buyer.companyName || "Khách lẻ",
-            companyName: buyer.companyName || "",
-            phone: buyer.phone || "",
-            address: buyer.address || "",
-            email: buyer.email || "",
-            taxCode: buyer.taxCode || "",
+            id: customerRef.id,
+            name: customerName,
+            companyName: customerCompanyName,
+            phone: customerPhone,
+            address: customerAddress,
+            email: customerEmail,
+            taxCode: customerTaxCode,
           },
-          customerId: "",
-          customerName: buyer.companyName || "Khách lẻ",
-          customer_name: buyer.companyName || "Khách lẻ",
-          customerPhone: buyer.phone || "",
-          customer_phone: buyer.phone || "",
-          customerCompanyName: buyer.companyName || "",
-          customerAddress: buyer.address || "",
-          customer_address: buyer.address || "",
-          customerEmail: buyer.email || "",
-          customerTaxCode: buyer.taxCode || "",
+          customerId: customerRef.id,
+          customerName,
+          customer_name: customerName,
+          customerPhone,
+          customer_phone: customerPhone,
+          customerCompanyName,
+          customerAddress,
+          customer_address: customerAddress,
+          customerEmail,
+          customerTaxCode,
 
           items: orderItems,
           list: orderItems,
@@ -451,9 +579,9 @@ export default function QuotationsPage() {
             stockAfter: newStock,
             orderId: orderRef.id,
             orderCode: createdOrderCode,
-            customerId: "",
-            customerName: buyer.companyName || "Khách lẻ",
-            customerPhone: buyer.phone || "",
+            customerId: customerRef.id,
+            customerName,
+            customerPhone,
             reason: "Bán hàng",
             note: `Tự động trừ kho từ báo giá ${
               quotationData.quotationCode ||
@@ -584,7 +712,7 @@ export default function QuotationsPage() {
                   <th className="px-4 py-3 text-right">VAT</th>
                   <th className="px-4 py-3 text-right">Tổng cộng</th>
                   <th className="px-4 py-3 text-center">Trạng thái</th>
-                  <th className="w-[360px] px-4 py-3 text-center">Thao tác</th>
+                  <th className="w-[270px] px-3 py-3 text-center">Thao tác</th>
                 </tr>
               </thead>
 
@@ -608,7 +736,7 @@ export default function QuotationsPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredQuotations.map((item) => (
+                  paginatedQuotations.map((item) => (
                     <tr
                       key={item.id}
                       className="border-b border-slate-200 hover:bg-slate-50"
@@ -656,7 +784,7 @@ export default function QuotationsPage() {
 
                       <td className="px-4 py-3 text-center">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClass(
+                          className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${getStatusClass(
                             item.status
                           )}`}
                         >
@@ -665,7 +793,7 @@ export default function QuotationsPage() {
                       </td>
 
                       <td className="p-3">
-                        <div className="flex flex-wrap justify-center gap-2">
+                        <div className="flex items-center justify-center gap-2">
                           <button
                             type="button"
                             onClick={() =>
@@ -676,68 +804,67 @@ export default function QuotationsPage() {
                                 "_blank"
                               )
                             }
-                            className="rounded-lg border border-blue-600 px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-blue-50"
+                            className="h-[62px] rounded-lg border border-sky-300 bg-sky-50 px-3 text-xs font-bold text-sky-700 hover:bg-sky-100"
                           >
                             Xem
                           </button>
 
-                          {item.status !== "paid" && (
+                          <div className="grid h-[62px] w-[128px] grid-cols-2 grid-rows-2 overflow-hidden rounded-lg border border-slate-300 bg-white">
                             <button
                               type="button"
-                              disabled={payingId === item.id}
-                              onClick={() => setPaymentQuotation(item)}
-                              className="rounded-lg bg-violet-600 px-3 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+                              disabled={item.status === "paid" || payingId === item.id}
+                              onClick={() => {
+                                if (item.status === "paid") return;
+                                setPaymentQuotation(item);
+                              }}
+                              className="border-b border-r border-slate-300 px-1 text-[11px] font-semibold text-violet-700 hover:bg-violet-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                             >
-                              {payingId === item.id
-                                ? "Đang xử lý..."
-                                : "Thanh toán"}
+                              {payingId === item.id ? "Đang xử lý" : "T.Toán"}
                             </button>
-                          )}
 
-                          <button
-                            type="button"
-                            disabled={item.status === "paid"}
-                            onClick={() => {
-                              if (item.status === "paid") return;
+                            <button
+                              type="button"
+                              disabled={item.status === "paid"}
+                              onClick={() => {
+                                if (item.status === "paid") return;
 
-                              router.push(
-                                `/quotations/create?id=${encodeURIComponent(
-                                  item.id
-                                )}`
-                              );
-                            }}
-                            className="rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:bg-slate-300"
-                          >
-                            Sửa
-                          </button>
+                                router.push(
+                                  `/quotations/create?id=${encodeURIComponent(
+                                    item.id
+                                  )}`
+                                );
+                              }}
+                              className="border-b border-slate-300 px-1 text-[11px] font-semibold text-amber-700 hover:bg-amber-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                            >
+                              Sửa
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              window.open(
-                                `/quotations/print?id=${encodeURIComponent(
-                                  item.id
-                                )}&print=1`,
-                                "_blank"
-                              )
-                            }
-                            className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
-                          >
-                            In lại
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                window.open(
+                                  `/quotations/print?id=${encodeURIComponent(
+                                    item.id
+                                  )}&print=1`,
+                                  "_blank"
+                                )
+                              }
+                              className="border-r border-slate-300 px-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
+                            >
+                              In
+                            </button>
 
-                          <button
-                            type="button"
-                            disabled={
-                              deletingId === item.id || item.status === "paid"
-                            }
-                            onClick={() => deleteQuotation(item)}
-                            className="rounded-lg bg-rose-500 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:opacity-70"
-                          >
-                            {deletingId === item.id
-                              ? "Đang xóa..."
-                              : "Xóa"}
-                          </button>
+                            <button
+                              type="button"
+                              disabled={
+                                deletingId === item.id || item.status === "paid"
+                              }
+                              onClick={() => deleteQuotation(item)}
+                              className="px-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                            >
+                              {deletingId === item.id ? "Đang xóa" : "Xóa"}
+                            </button>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -748,9 +875,71 @@ export default function QuotationsPage() {
           </div>
         </div>
 
-        <div className="mt-4 text-sm text-slate-500">
-          Tổng số báo giá:{" "}
-          <strong>{filteredQuotations.length}</strong>
+        <div className="mt-4 flex flex-col gap-3 text-sm text-slate-600 lg:flex-row lg:items-center lg:justify-end">
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <div className="flex items-center gap-2">
+              <span>Hiển thị</span>
+              <select
+                value={pageSize}
+                onChange={(event) =>
+                  setPageSize(Number(event.target.value))
+                }
+                className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 font-semibold text-slate-700 outline-none focus:border-sky-500"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span>kết quả</span>
+            </div>
+
+            <div className="whitespace-nowrap">
+              Từ <strong>{listStart}</strong> đến <strong>{listEnd}</strong> trên tổng{" "}
+              <strong>{filteredQuotations.length}</strong>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                disabled={currentPage <= 1}
+                onClick={() =>
+                  setCurrentPage((page) => Math.max(1, page - 1))
+                }
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                &lt;
+              </button>
+
+              {visiblePages.map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                  className={`flex h-8 min-w-8 items-center justify-center rounded-lg border px-2 font-semibold ${
+                    currentPage === page
+                      ? "border-sky-600 bg-sky-600 text-white"
+                      : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                disabled={currentPage >= totalPages}
+                onClick={() =>
+                  setCurrentPage((page) =>
+                    Math.min(totalPages, page + 1)
+                  )
+                }
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                &gt;
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

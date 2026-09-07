@@ -199,14 +199,19 @@ export default function ProductsPage() {
   };
 }, []);
 
+const defaultVisibleColumns = {
+  importPrice: true,
+  capitalPrice: true,
+  stock: true,
+  vat: true,
+  actions: true,
+};
+
 const [visibleColumns, setVisibleColumns] =
-  useState({
-    importPrice: true,
-    capitalPrice: true,
-    stock: true,
-    vat: true,
-    actions: true,
-  });
+  useState(defaultVisibleColumns);
+
+const [draftVisibleColumns, setDraftVisibleColumns] =
+  useState(defaultVisibleColumns);
 
 useEffect(() => {
   try {
@@ -217,10 +222,13 @@ useEffect(() => {
       const parsedColumns =
         JSON.parse(savedColumns);
 
-      setVisibleColumns((prev) => ({
-        ...prev,
+      const nextColumns = {
+        ...defaultVisibleColumns,
         ...parsedColumns,
-      }));
+      };
+
+      setVisibleColumns(nextColumns);
+      setDraftVisibleColumns(nextColumns);
     }
   } catch (error) {
     console.log(
@@ -232,16 +240,16 @@ useEffect(() => {
   }
 }, []);
 
-useEffect(() => {
-  if (!columnSettingsLoadedRef.current) {
-    return;
-  }
+const saveVisibleColumns = () => {
+  setVisibleColumns(draftVisibleColumns);
 
   localStorage.setItem(
     "products_visible_columns",
-    JSON.stringify(visibleColumns)
+    JSON.stringify(draftVisibleColumns)
   );
-}, [visibleColumns]);
+
+  setShowColumnSettings(false);
+};
 
 const [canViewCostPrice, setCanViewCostPrice] =
   useState(false);
@@ -1124,6 +1132,30 @@ successCount++;
       startIndex + itemsPerPage
     );
 
+  const visiblePageNumbers = (() => {
+    const maxButtons = 5;
+
+    if (totalPages <= maxButtons) {
+      return Array.from(
+        { length: totalPages },
+        (_, index) => index + 1
+      );
+    }
+
+    let start = Math.max(1, currentPage - 2);
+    let end = start + maxButtons - 1;
+
+    if (end > totalPages) {
+      end = totalPages;
+      start = end - maxButtons + 1;
+    }
+
+    return Array.from(
+      { length: end - start + 1 },
+      (_, index) => start + index
+    );
+  })();
+
   if (loading) {
     return (
       <div className="p-10 text-2xl">
@@ -1523,6 +1555,10 @@ successCount++;
           });
         }
 
+        if (!showColumnSettings) {
+          setDraftVisibleColumns(visibleColumns);
+        }
+
         setShowColumnSettings((prev) => !prev);
       }}
       className="hover:scale-110 transition text-lg"
@@ -1555,9 +1591,9 @@ successCount++;
   <label className="flex items-center gap-2 cursor-pointer">
     <input
       type="checkbox"
-      checked={visibleColumns.importPrice}
+      checked={draftVisibleColumns.importPrice}
       onChange={() =>
-        setVisibleColumns((prev) => ({
+        setDraftVisibleColumns((prev) => ({
           ...prev,
           importPrice: !prev.importPrice,
         }))
@@ -1571,9 +1607,9 @@ successCount++;
   <label className="flex items-center gap-2 cursor-pointer">
     <input
       type="checkbox"
-      checked={visibleColumns.capitalPrice}
+      checked={draftVisibleColumns.capitalPrice}
       onChange={() =>
-        setVisibleColumns((prev) => ({
+        setDraftVisibleColumns((prev) => ({
           ...prev,
           capitalPrice: !prev.capitalPrice,
         }))
@@ -1585,9 +1621,9 @@ successCount++;
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
-            checked={visibleColumns.stock}
+            checked={draftVisibleColumns.stock}
             onChange={() =>
-              setVisibleColumns((prev) => ({
+              setDraftVisibleColumns((prev) => ({
                 ...prev,
                 stock:
                   !prev.stock,
@@ -1600,9 +1636,9 @@ successCount++;
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
-            checked={visibleColumns.vat}
+            checked={draftVisibleColumns.vat}
             onChange={() =>
-              setVisibleColumns((prev) => ({
+              setDraftVisibleColumns((prev) => ({
                 ...prev,
                 vat:
                   !prev.vat,
@@ -1615,9 +1651,9 @@ successCount++;
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
-            checked={visibleColumns.actions}
+            checked={draftVisibleColumns.actions}
             onChange={() =>
-              setVisibleColumns((prev) => ({
+              setDraftVisibleColumns((prev) => ({
                 ...prev,
                 actions:
                   !prev.actions,
@@ -1628,6 +1664,14 @@ successCount++;
         </label>
 
       </div>
+
+      <button
+        type="button"
+        onClick={saveVisibleColumns}
+        className="mt-4 w-full rounded-xl bg-sky-600 px-3 py-2 text-sm font-bold text-white hover:bg-sky-700"
+      >
+        Lưu
+      </button>
 
     </div>
   )}
@@ -1812,10 +1856,9 @@ successCount++;
 
         {/* PAGINATION */}
         {filteredProducts.length > 0 && (
-          <div className="bg-white mt-5 p-4 rounded-3xl shadow-sm border border-slate-200 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
-              <div className="text-sm text-slate-600">
-              Hiển thị{" "}
+          <div className="bg-white mt-5 p-4 rounded-3xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-end gap-3">
+            <div className="text-sm text-slate-600 whitespace-nowrap">
+              Từ{" "}
               <span className="font-semibold text-black">
                 {startIndex + 1}
               </span>
@@ -1826,85 +1869,79 @@ successCount++;
                   filteredProducts.length
                 )}
               </span>
-              {" "}trong tổng{" "}
+              {" "}trên tổng{" "}
               <span className="font-semibold text-black">
                 {filteredProducts.length}
               </span>
-              {" "}sản phẩm
-              </div>
+            </div>
 
-              <div className="flex items-center gap-2 text-sm text-slate-600">
-                <span>Hiển thị</span>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => {
-                    setItemsPerPage(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="border border-slate-300 bg-white px-3 py-2 rounded-xl text-black outline-none focus:border-sky-500"
-                >
-                  <option value={15}>15</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-                <span>sản phẩm / trang</span>
-              </div>
+            <div className="flex items-center gap-2 text-sm text-slate-600 whitespace-nowrap">
+              <span>Hiển thị</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="border border-slate-300 bg-white px-3 py-2 rounded-xl text-black outline-none focus:border-sky-500"
+              >
+                <option value={15}>15</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span>sản phẩm / trang</span>
             </div>
 
             {totalPages > 1 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                disabled={currentPage === 1}
-                onClick={() =>
-                  setCurrentPage((prev) =>
-                    Math.max(prev - 1, 1)
-                  )
-                }
-                className={`px-4 py-2 rounded-xl font-semibold ${
-                  currentPage === 1
-                    ? "bg-slate-100 text-gray-400 cursor-not-allowed"
-                    : "bg-slate-200 hover:bg-slate-300 text-black"
-                }`}
-              >
-                Trước
-              </button>
-
-              {Array.from(
-                { length: totalPages },
-                (_, index) => index + 1
-              ).map((page) => (
+              <div className="flex flex-wrap items-center gap-1">
                 <button
-                  key={page}
                   type="button"
-                  onClick={() => setCurrentPage(page)}
-                  className={`px-4 py-2 rounded-xl font-semibold ${
-                    currentPage === page
-                      ? "bg-sky-600 text-white"
-                      : "bg-slate-100 hover:bg-slate-200 text-black"
-                  }`}
+                  disabled={currentPage === 1}
+                  onClick={() =>
+                    setCurrentPage((prev) =>
+                      Math.max(prev - 1, 1)
+                    )
+                  }
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  {page}
+                  ◀
                 </button>
-              ))}
 
-              <button
-                type="button"
-                disabled={currentPage === totalPages}
-                onClick={() =>
-                  setCurrentPage((prev) =>
-                    Math.min(prev + 1, totalPages)
-                  )
-                }
-                className={`px-4 py-2 rounded-xl font-semibold ${
-                  currentPage === totalPages
-                    ? "bg-slate-100 text-gray-400 cursor-not-allowed"
-                    : "bg-slate-200 hover:bg-slate-300 text-black"
-                }`}
-              >
-                Sau
-              </button>
-            </div>
+                {visiblePageNumbers.map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => setCurrentPage(page)}
+                    className={`flex h-9 min-w-9 items-center justify-center rounded-xl border px-2 font-semibold ${
+                      currentPage === page
+                        ? "border-sky-600 bg-sky-600 text-white"
+                        : "border-slate-300 bg-white text-black hover:bg-slate-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                {visiblePageNumbers.length > 0 &&
+                  visiblePageNumbers[visiblePageNumbers.length - 1] < totalPages && (
+                    <span className="px-1 font-semibold text-slate-500">
+                      ...
+                    </span>
+                  )}
+
+                <button
+                  type="button"
+                  disabled={currentPage === totalPages}
+                  onClick={() =>
+                    setCurrentPage((prev) =>
+                      Math.min(prev + 1, totalPages)
+                    )
+                  }
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  ▶
+                </button>
+              </div>
             )}
           </div>
         )}

@@ -105,7 +105,8 @@ export default function FinanceReportPage() {
   const [expandedOrderId, setExpandedOrderId] =
     useState<string | null>(null);
 
-  const ordersPerPage = 15;
+  const [ordersPerPage, setOrdersPerPage] =
+    useState(15);
 
   const formatMoney = (value: any) => {
     return Number(value || 0).toLocaleString(
@@ -877,6 +878,30 @@ export default function FinanceReportPage() {
         ordersPerPage
     );
 
+  const visiblePageNumbers = (() => {
+    const maxButtons = 5;
+
+    if (totalPages <= maxButtons) {
+      return Array.from(
+        { length: totalPages },
+        (_, index) => index + 1
+      );
+    }
+
+    let start = Math.max(1, currentPage - 2);
+    let end = start + maxButtons - 1;
+
+    if (end > totalPages) {
+      end = totalPages;
+      start = end - maxButtons + 1;
+    }
+
+    return Array.from(
+      { length: end - start + 1 },
+      (_, index) => start + index
+    );
+  })();
+
   const handleSelectOrder = (
     order: OrderData
   ) => {
@@ -1104,7 +1129,7 @@ export default function FinanceReportPage() {
               </h2>
 
               <p className="text-slate-500 mt-1">
-                Hiển thị 15 đơn hàng mỗi trang
+                Danh sách đơn hàng theo bộ lọc hiện tại
               </p>
             </div>
 
@@ -1702,37 +1727,62 @@ export default function FinanceReportPage() {
             </table>
           </div>
 
-          <div className="p-5 border-t border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <p className="text-gray-500">
-              Tổng đơn phù hợp:{" "}
+          <div className="p-5 border-t border-slate-200 flex flex-wrap items-center justify-end gap-3">
+            <div className="text-sm text-slate-600 whitespace-nowrap">
+              Từ{" "}
               <strong className="text-black">
-                {filteredOrders.filter(
-  (order) => !isCancelledOrder(order)
-).length}
+                {filteredOrders.length === 0
+                  ? 0
+                  : (currentPage - 1) * ordersPerPage + 1}
               </strong>
-            </p>
+              {" "}đến{" "}
+              <strong className="text-black">
+                {Math.min(
+                  currentPage * ordersPerPage,
+                  filteredOrders.length
+                )}
+              </strong>
+              {" "}trên tổng{" "}
+              <strong className="text-black">
+                {filteredOrders.length}
+              </strong>
+            </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                type="button"
-                disabled={currentPage === 1}
-                onClick={() => {
-                  setCurrentPage((prev) =>
-                    Math.max(1, prev - 1)
-                  );
+            <label className="flex items-center gap-2 text-sm text-slate-600 whitespace-nowrap">
+              <span>Hiển thị</span>
+              <select
+                value={ordersPerPage}
+                onChange={(e) => {
+                  setOrdersPerPage(Number(e.target.value));
+                  setCurrentPage(1);
                   setExpandedOrderId(null);
                 }}
-                className="px-4 py-2 rounded-xl border border-slate-300 bg-white disabled:opacity-40 hover:bg-slate-100"
+                className="border border-slate-300 bg-white rounded-xl px-3 py-2 text-slate-800 outline-none focus:border-sky-500"
               >
-                Trước
-              </button>
+                <option value={15}>15</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span>đơn hàng / trang</span>
+            </label>
 
-              {Array.from({
-                length: totalPages,
-              }).map((_, index) => {
-                const page = index + 1;
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1 flex-wrap">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => {
+                    setCurrentPage((prev) =>
+                      Math.max(1, prev - 1)
+                    );
+                    setExpandedOrderId(null);
+                  }}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white font-bold text-slate-700 disabled:opacity-40 hover:bg-slate-100"
+                >
+                  ◀
+                </button>
 
-                return (
+                {visiblePageNumbers.map((page) => (
                   <button
                     type="button"
                     key={page}
@@ -1740,36 +1790,38 @@ export default function FinanceReportPage() {
                       setCurrentPage(page);
                       setExpandedOrderId(null);
                     }}
-                    className={`px-4 py-2 rounded-xl border font-semibold ${
+                    className={`flex h-9 min-w-9 items-center justify-center rounded-xl border px-2 font-semibold ${
                       currentPage === page
                         ? "bg-sky-600 text-white border-sky-600"
-                        : "bg-white hover:bg-slate-100"
+                        : "bg-white hover:bg-slate-100 border-slate-300"
                     }`}
                   >
                     {page}
                   </button>
-                );
-              })}
+                ))}
 
-              <button
-                type="button"
-                disabled={
-                  currentPage === totalPages
-                }
-                onClick={() => {
-                  setCurrentPage((prev) =>
-                    Math.min(
-                      totalPages,
-                      prev + 1
-                    )
-                  );
-                  setExpandedOrderId(null);
-                }}
-                className="px-4 py-2 rounded-xl border border-slate-300 bg-white disabled:opacity-40 hover:bg-slate-100"
-              >
-                Sau
-              </button>
-            </div>
+                {visiblePageNumbers.length > 0 &&
+                  visiblePageNumbers[visiblePageNumbers.length - 1] < totalPages && (
+                    <span className="px-1 font-semibold text-slate-500">
+                      ...
+                    </span>
+                  )}
+
+                <button
+                  type="button"
+                  disabled={currentPage === totalPages}
+                  onClick={() => {
+                    setCurrentPage((prev) =>
+                      Math.min(totalPages, prev + 1)
+                    );
+                    setExpandedOrderId(null);
+                  }}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white font-bold text-slate-700 disabled:opacity-40 hover:bg-slate-100"
+                >
+                  ▶
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

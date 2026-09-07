@@ -159,6 +159,30 @@ export default function InventoryPage() {
       startIndex + itemsPerPage
     );
 
+  const visiblePageNumbers = (() => {
+    const maxButtons = 5;
+
+    if (totalPages <= maxButtons) {
+      return Array.from(
+        { length: totalPages },
+        (_, index) => index + 1
+      );
+    }
+
+    let start = Math.max(1, currentPage - 2);
+    let end = start + maxButtons - 1;
+
+    if (end > totalPages) {
+      end = totalPages;
+      start = end - maxButtons + 1;
+    }
+
+    return Array.from(
+      { length: end - start + 1 },
+      (_, index) => start + index
+    );
+  })();
+
   useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
@@ -471,97 +495,93 @@ export default function InventoryPage() {
             </div>
 
             {products.length > 0 && (
-              <div className="px-5 py-4 border-t border-slate-200 bg-slate-50 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                  <span>
-                    Hiển thị{" "}
-                    <span className="font-semibold text-slate-900">
-                      {startIndex + 1}
-                    </span>
-                    {" "}đến{" "}
-                    <span className="font-semibold text-slate-900">
-                      {Math.min(
-                        startIndex + itemsPerPage,
-                        products.length
-                      )}
-                    </span>
-                    {" "}trong tổng{" "}
-                    <span className="font-semibold text-slate-900">
-                      {products.length}
-                    </span>
-                    {" "}sản phẩm
+              <div className="px-5 py-4 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-end gap-3">
+                <div className="text-sm text-slate-600 whitespace-nowrap">
+                  Từ{" "}
+                  <span className="font-semibold text-slate-900">
+                    {startIndex + 1}
                   </span>
-
-                  <label className="flex items-center gap-2">
-                    <span>Hiển thị:</span>
-                    <select
-                      value={itemsPerPage}
-                      onChange={(e) => {
-                        setItemsPerPage(Number(e.target.value));
-                        setCurrentPage(1);
-                      }}
-                      className="border border-slate-300 bg-white rounded-xl px-3 py-2 text-slate-800 outline-none focus:border-sky-500"
-                    >
-                      <option value={15}>15 sản phẩm</option>
-                      <option value={50}>50 sản phẩm</option>
-                      <option value={100}>100 sản phẩm</option>
-                    </select>
-                  </label>
+                  {" "}đến{" "}
+                  <span className="font-semibold text-slate-900">
+                    {Math.min(
+                      startIndex + itemsPerPage,
+                      products.length
+                    )}
+                  </span>
+                  {" "}trên tổng{" "}
+                  <span className="font-semibold text-slate-900">
+                    {products.length}
+                  </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    disabled={currentPage === 1}
-                    onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.max(prev - 1, 1)
-                      )
-                    }
-                    className={`px-4 py-2 rounded-xl font-semibold ${
-                      currentPage === 1
-                        ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                        : "bg-white border border-slate-300 hover:bg-slate-100 text-slate-700"
-                    }`}
+                <label className="flex items-center gap-2 text-sm text-slate-600 whitespace-nowrap">
+                  <span>Hiển thị</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="border border-slate-300 bg-white rounded-xl px-3 py-2 text-slate-800 outline-none focus:border-sky-500"
                   >
-                    Trước
-                  </button>
+                    <option value={15}>15</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                  <span>sản phẩm / trang</span>
+                </label>
 
-                  {Array.from(
-                    { length: totalPages },
-                    (_, index) => index + 1
-                  ).map((page) => (
+                {totalPages > 1 && (
+                  <div className="flex flex-wrap items-center gap-1">
                     <button
-                      key={page}
                       type="button"
-                      onClick={() => setCurrentPage(page)}
-                      className={`min-w-10 px-3 py-2 rounded-xl font-semibold ${
-                        currentPage === page
-                          ? "bg-sky-600 text-white"
-                          : "bg-white border border-slate-300 hover:bg-slate-100 text-slate-700"
-                      }`}
+                      disabled={currentPage === 1}
+                      onClick={() =>
+                        setCurrentPage((prev) =>
+                          Math.max(prev - 1, 1)
+                        )
+                      }
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white font-bold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      {page}
+                      ◀
                     </button>
-                  ))}
 
-                  <button
-                    type="button"
-                    disabled={currentPage === totalPages}
-                    onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(prev + 1, totalPages)
-                      )
-                    }
-                    className={`px-4 py-2 rounded-xl font-semibold ${
-                      currentPage === totalPages
-                        ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                        : "bg-white border border-slate-300 hover:bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    Sau
-                  </button>
-                </div>
+                    {visiblePageNumbers.map((page) => (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => setCurrentPage(page)}
+                        className={`flex h-9 min-w-9 items-center justify-center rounded-xl border px-2 font-semibold ${
+                          currentPage === page
+                            ? "border-sky-600 bg-sky-600 text-white"
+                            : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+
+                    {visiblePageNumbers.length > 0 &&
+                      visiblePageNumbers[visiblePageNumbers.length - 1] < totalPages && (
+                        <span className="px-1 font-semibold text-slate-500">
+                          ...
+                        </span>
+                      )}
+
+                    <button
+                      type="button"
+                      disabled={currentPage === totalPages}
+                      onClick={() =>
+                        setCurrentPage((prev) =>
+                          Math.min(prev + 1, totalPages)
+                        )
+                      }
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white font-bold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      ▶
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
