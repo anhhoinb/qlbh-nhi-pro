@@ -103,13 +103,28 @@ export default function SalesReportPage() {
   };
 
   const getOrderProfit = (order: OrderData) => {
-    if (order.profit !== undefined) {
-      return Number(order.profit || 0);
+    const netRevenue = getNetOrderRevenue(order);
+
+    if (netRevenue <= 0) {
+      return 0;
     }
 
-    return Math.round(
-      getNetOrderRevenue(order) * 0.35
-    );
+    // Nếu đơn đã có lợi nhuận gốc, giảm lợi nhuận theo tỷ lệ
+    // doanh thu còn lại sau khi trả hàng.
+    if (order.profit !== undefined) {
+      const originalTotal = getOrderTotal(order);
+      const originalProfit = Number(order.profit || 0);
+
+      if (originalTotal <= 0) {
+        return 0;
+      }
+
+      return Math.round(
+        originalProfit * (netRevenue / originalTotal)
+      );
+    }
+
+    return Math.round(netRevenue * 0.35);
   };
 
   const getNetOrderRevenue = (
@@ -516,7 +531,31 @@ const isCancelledOrder = (order: OrderData) => {
     1
   );
 
-  const chartStep = 500000;
+  // Giữ trục doanh thu gọn: chỉ khoảng 5 mốc chính thay vì mỗi 500.000đ.
+  const targetChartIntervals = 4;
+
+  const rawChartStep =
+    maxChartValue / targetChartIntervals;
+
+  const chartStepBase = Math.pow(
+    10,
+    Math.floor(Math.log10(Math.max(rawChartStep, 1)))
+  );
+
+  const normalizedChartStep =
+    rawChartStep / chartStepBase;
+
+  const niceChartStepMultiplier =
+    normalizedChartStep <= 1
+      ? 1
+      : normalizedChartStep <= 2
+      ? 2
+      : normalizedChartStep <= 5
+      ? 5
+      : 10;
+
+  const chartStep =
+    niceChartStepMultiplier * chartStepBase;
 
   const chartMax = Math.max(
     chartStep,
@@ -525,10 +564,31 @@ const isCancelledOrder = (order: OrderData) => {
 
   const chartLevels = Array.from(
     {
-      length: chartMax / chartStep + 1,
+      length: Math.round(chartMax / chartStep) + 1,
     },
     (_, index) => chartMax - index * chartStep
   );
+
+  const formatChartLevel = (value: number) => {
+    if (value === 0) return "0";
+
+    if (Math.abs(value) >= 1000000000) {
+      const amount = value / 1000000000;
+      return `${Number.isInteger(amount) ? amount : amount.toFixed(1)} tỷ`;
+    }
+
+    if (Math.abs(value) >= 1000000) {
+      const amount = value / 1000000;
+      return `${Number.isInteger(amount) ? amount : amount.toFixed(1)}tr`;
+    }
+
+    if (Math.abs(value) >= 1000) {
+      const amount = value / 1000;
+      return `${Number.isInteger(amount) ? amount : amount.toFixed(1)}k`;
+    }
+
+    return formatMoney(value);
+  };
 
   const loadOrders = async () => {
     const querySnapshot = await getDocs(collection(db, "orders"));
@@ -856,16 +916,16 @@ const isCancelledOrder = (order: OrderData) => {
             <div className="flex h-[300px]">
 
               {/* CỘT MỨC DOANH THU BÊN TRÁI */}
-              <div className="w-[85px] h-[230px] relative text-xs text-slate-600">
+              <div className="w-[72px] shrink-0 h-[230px] relative text-xs font-medium text-slate-500">
                 {chartLevels.map((level, index) => (
                   <div
                     key={index}
-                    className="absolute right-2 -translate-y-1/2"
+                    className="absolute right-3 -translate-y-1/2 whitespace-nowrap"
                     style={{
                       top: `${(index / (chartLevels.length - 1)) * 100}%`,
                     }}
                   >
-                    {formatMoney(level)}
+                    {formatChartLevel(level)}
                   </div>
                 ))}
               </div>

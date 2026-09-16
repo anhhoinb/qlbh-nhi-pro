@@ -26,6 +26,10 @@ export default function InventoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
 
+  // POPUP PAGINATION
+  const [popupCurrentPage, setPopupCurrentPage] = useState(1);
+  const popupItemsPerPage = 15;
+
   const loadProducts = async () => {
     setLoading(true);
 
@@ -143,6 +147,31 @@ export default function InventoryPage() {
       : "Danh sách sản phẩm dưới định mức";
 
   const popupColor = "bg-slate-800";
+
+  // POPUP PAGINATION
+  const popupTotalPages = Math.max(
+    1,
+    Math.ceil(popupProducts.length / popupItemsPerPage)
+  );
+
+  const popupStartIndex =
+    (popupCurrentPage - 1) * popupItemsPerPage;
+
+  const paginatedPopupProducts =
+    popupProducts.slice(
+      popupStartIndex,
+      popupStartIndex + popupItemsPerPage
+    );
+
+  useEffect(() => {
+    setPopupCurrentPage(1);
+  }, [popupType]);
+
+  useEffect(() => {
+    if (popupCurrentPage > popupTotalPages) {
+      setPopupCurrentPage(popupTotalPages);
+    }
+  }, [popupCurrentPage, popupTotalPages]);
 
   // PAGINATION
   const totalPages = Math.max(
@@ -649,7 +678,7 @@ export default function InventoryPage() {
                 </thead>
 
                 <tbody>
-                  {popupProducts.map(
+                  {paginatedPopupProducts.map(
                     (item, index) => {
                       const stock =
                         Number(item.stock || 0);
@@ -666,7 +695,7 @@ export default function InventoryPage() {
                           className="border-b border-slate-200 hover:bg-slate-50"
                         >
                           <td className="p-3">
-                            {index + 1}
+                            {popupStartIndex + index + 1}
                           </td>
 
                           <td className="p-3">
@@ -730,15 +759,89 @@ export default function InventoryPage() {
               </table>
             </div>
 
-            <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
-              <button
-                onClick={() =>
-                  setPopupType(null)
-                }
-                className="px-6 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold transition"
-              >
-                Đóng
-              </button>
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+              <div className="text-sm text-slate-600">
+                {popupProducts.length > 0 ? (
+                  <>
+                    <span className="font-semibold text-slate-900">
+                      {popupStartIndex + 1}
+                    </span>
+                    {"–"}
+                    <span className="font-semibold text-slate-900">
+                      {Math.min(
+                        popupStartIndex + popupItemsPerPage,
+                        popupProducts.length
+                      )}
+                    </span>
+                    {" / "}
+                    <span className="font-semibold text-slate-900">
+                      {popupProducts.length}
+                    </span>
+                    {" sản phẩm"}
+                  </>
+                ) : (
+                  "0 sản phẩm"
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {popupTotalPages > 1 && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={popupCurrentPage === 1}
+                      onClick={() =>
+                        setPopupCurrentPage((prev) =>
+                          Math.max(prev - 1, 1)
+                        )
+                      }
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white font-bold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      ◀
+                    </button>
+
+                    {Array.from(
+                      { length: popupTotalPages },
+                      (_, index) => index + 1
+                    ).map((page) => (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => setPopupCurrentPage(page)}
+                        className={`flex h-9 min-w-9 items-center justify-center rounded-xl border px-2 font-semibold ${
+                          popupCurrentPage === page
+                            ? "border-sky-600 bg-sky-600 text-white"
+                            : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+
+                    <button
+                      type="button"
+                      disabled={popupCurrentPage === popupTotalPages}
+                      onClick={() =>
+                        setPopupCurrentPage((prev) =>
+                          Math.min(prev + 1, popupTotalPages)
+                        )
+                      }
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white font-bold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      ▶
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  onClick={() =>
+                    setPopupType(null)
+                  }
+                  className="px-6 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold transition"
+                >
+                  Đóng
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -746,3 +849,4 @@ export default function InventoryPage() {
     </main>
   );
 }
+ 

@@ -767,7 +767,64 @@ export default function QuotationsPage() {
                       </td>
 
                       <td className="px-4 py-3 text-center">
-                        {item.items?.length || 0}
+                        <div className="group relative inline-flex">
+                          <span className="cursor-default rounded-lg px-3 py-2 font-semibold hover:bg-sky-50 hover:text-sky-700">
+                            {item.items?.length || 0}
+                          </span>
+
+                          {Array.isArray(item.items) && item.items.length > 0 && (
+                            <div className="invisible absolute left-1/2 top-full z-[100] mt-2 w-[600px] max-w-[80vw] -translate-x-1/2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
+                              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-2xl">
+                                <div className="border-b border-slate-200 bg-slate-800 px-4 py-3 text-sm font-bold text-white">
+                                  Sản phẩm trong báo giá ({item.items.length})
+                                </div>
+
+                                <div className="max-h-[360px] overflow-y-auto overscroll-contain p-2">
+                                  {item.items.map((product: any, productIndex: number) => {
+                                    const productName =
+                                      product.printName ||
+                                      product.short_name ||
+                                      product.main_name ||
+                                      product.name ||
+                                      "Sản phẩm";
+
+                                    const productCode =
+                                      product.product_code ||
+                                      product.productCode ||
+                                      "";
+
+                                    const quantity = Number(
+                                      product.quantity || product.qty || 0
+                                    );
+
+                                    return (
+                                      <div
+                                        key={`${item.id}-${product.id || productIndex}`}
+                                        className="flex items-start justify-between gap-3 rounded-xl px-3 py-2.5 hover:bg-slate-50"
+                                      >
+                                        <div className="min-w-0">
+                                          <div className="break-words text-sm font-semibold text-slate-800">
+                                            {productName}
+                                          </div>
+
+                                          {productCode && (
+                                            <div className="mt-0.5 text-xs text-slate-500">
+                                              Mã: {productCode}
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        <div className="shrink-0 whitespace-nowrap rounded-lg bg-sky-50 px-2.5 py-1 text-sm font-bold text-sky-700">
+                                          SL: {quantity}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </td>
 
                       <td className="px-4 py-3 text-right">

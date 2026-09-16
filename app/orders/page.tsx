@@ -55,6 +55,9 @@ export default function OrdersPage() {
   const [paymentFilter, setPaymentFilter] =
     useState("all");
 
+  const [statusFilter, setStatusFilter] =
+    useState("all");
+
   const [timeFilter, setTimeFilter] =
     useState("today");
 
@@ -701,6 +704,27 @@ export default function OrdersPage() {
     );
   };
 
+  // Doanh thu thực tế sau khi trừ hàng trả.
+  const getNetOrderRevenue = (item: any) => {
+    if (item.status === "cancelled") {
+      return 0;
+    }
+
+    const status = String(item.status || "").toLowerCase();
+    const orderTotal = getGrandTotal(item);
+    const returnedAmount = Number(item.returnedAmount || 0);
+
+    if (status === "returned" || status === "return") {
+      return 0;
+    }
+
+    if (status === "partially_returned") {
+      return Math.max(0, orderTotal - returnedAmount);
+    }
+
+    return orderTotal;
+  };
+
   const getCustomerPay = (item: any) => {
     return Number(
       item.customerPay ||
@@ -1172,17 +1196,30 @@ export default function OrdersPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [paymentFilter, timeFilter, ordersPerPage]);
+  }, [paymentFilter, statusFilter, timeFilter, ordersPerPage]);
 
   const filteredOrders = orders.filter((order) => {
     const paymentMatches =
       paymentFilter === "all" ||
       getPaymentMethodValue(order) === paymentFilter;
 
+    const status = String(order.status || "").toLowerCase();
+
+    const statusMatches =
+      statusFilter === "all" ||
+      (statusFilter === "normal" &&
+        !["cancelled", "returned", "return", "partially_returned"].includes(status)) ||
+      (statusFilter === "partially_returned" &&
+        status === "partially_returned") ||
+      (statusFilter === "returned" &&
+        ["returned", "return"].includes(status)) ||
+      (statusFilter === "cancelled" &&
+        status === "cancelled");
+
     const timeMatches =
       isInTimeFilter(order, timeFilter);
 
-    return paymentMatches && timeMatches;
+    return paymentMatches && statusMatches && timeMatches;
   });
 
   const statisticOrders = filteredOrders.filter(
@@ -1191,7 +1228,7 @@ export default function OrdersPage() {
 
   const filteredTotalAmount = statisticOrders.reduce(
     (sum, order) =>
-      sum + getGrandTotal(order),
+      sum + getNetOrderRevenue(order),
     0
   );
 
@@ -2047,7 +2084,7 @@ export default function OrdersPage() {
         </div>
       )}
 
-      <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-[220px_260px_1fr]">
+      <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-[210px_210px_230px_1fr]">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <label className="mb-2 block text-sm font-semibold text-slate-700">
             Phương thức thanh toán
@@ -2064,6 +2101,26 @@ export default function OrdersPage() {
             <option value="cash">TM - Tiền mặt</option>
             <option value="bank">CK - Chuyển khoản</option>
             <option value="mixed">CK + TM</option>
+          </select>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <label className="mb-2 block text-sm font-semibold text-slate-700">
+            Trạng thái đơn
+          </label>
+
+          <select
+            value={statusFilter}
+            onChange={(event) =>
+              setStatusFilter(event.target.value)
+            }
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-500"
+          >
+            <option value="all">Tất cả</option>
+            <option value="normal">Hoàn thành</option>
+            <option value="partially_returned">Trả một phần</option>
+            <option value="returned">Đã trả hàng</option>
+            <option value="cancelled">Đã hủy</option>
           </select>
         </div>
 
@@ -2116,7 +2173,7 @@ export default function OrdersPage() {
               {formatMoney(filteredTotalAmount)}đ
             </div>
             <div className="mt-1 text-xs text-emerald-600">
-              Không tính đơn đã hủy
+              Đã trừ giá trị hàng trả và không tính đơn đã hủy
             </div>
           </div>
         </div>
@@ -2926,6 +2983,92 @@ export default function OrdersPage() {
                   </tbody>
                 </table>
               </div>
+
+              {Array.isArray(selectedOrder.returnedItems) &&
+                selectedOrder.returnedItems.length > 0 && (
+                  <div className="mb-5 overflow-hidden rounded-2xl border border-amber-200 bg-white">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-5 py-4">
+                      <div>
+                        <h3 className="font-bold text-lg text-amber-800">
+                          Thông tin trả hàng
+                        </h3>
+                        <div className="mt-1 text-sm text-amber-700">
+                          {selectedOrder.status === "returned"
+                            ? "Đơn hàng đã được trả toàn bộ"
+                            : "Đơn hàng đã trả một phần"}
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl bg-white px-4 py-2 text-right shadow-sm ring-1 ring-amber-200">
+                        <div className="text-xs font-semibold text-slate-500">
+                          Tổng tiền đã trả
+                        </div>
+                        <div className="text-lg font-bold text-rose-600">
+                          {formatMoney(selectedOrder.returnedAmount || 0)}đ
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-slate-50 text-slate-700">
+                          <tr>
+                            <th className="p-3 text-left w-16">STT</th>
+                            <th className="p-3 text-left">Sản phẩm đã trả</th>
+                            <th className="p-3 text-left">Mã SP</th>
+                            <th className="p-3 text-right">SL trả</th>
+                            <th className="p-3 text-left">Đơn vị</th>
+                            <th className="p-3 text-right">Đơn giá</th>
+                            <th className="p-3 text-right">Tiền hoàn</th>
+                            <th className="p-3 text-center">Về kho</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {selectedOrder.returnedItems.map(
+                            (returnedItem: any, returnedIndex: number) => (
+                              <tr
+                                key={`${returnedItem.productId || returnedItem.itemIndex || "return"}-${returnedIndex}`}
+                                className="border-t border-slate-100"
+                              >
+                                <td className="p-3">{returnedIndex + 1}</td>
+                                <td className="p-3 font-semibold text-slate-900">
+                                  {returnedItem.productName || "---"}
+                                </td>
+                                <td className="p-3 text-slate-600">
+                                  {returnedItem.productCode || "---"}
+                                </td>
+                                <td className="p-3 text-right font-bold text-amber-700">
+                                  {Number(returnedItem.quantity || 0)}
+                                </td>
+                                <td className="p-3">
+                                  {returnedItem.unit || "---"}
+                                </td>
+                                <td className="p-3 text-right">
+                                  {formatMoney(returnedItem.unitPrice || 0)}đ
+                                </td>
+                                <td className="p-3 text-right font-bold text-rose-600">
+                                  {formatMoney(returnedItem.lineRefund || 0)}đ
+                                </td>
+                                <td className="p-3 text-center">
+                                  {returnedItem.restocked ? (
+                                    <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                                      Đã nhập kho
+                                    </span>
+                                  ) : (
+                                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
+                                      Không nhập kho
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            )
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
               <div className="flex justify-end">
                 <div className="bg-white rounded-2xl border w-full max-w-lg p-5">

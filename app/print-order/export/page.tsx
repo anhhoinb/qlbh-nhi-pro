@@ -20,6 +20,24 @@ export default function PrintOrderPage() {
   const [shopName, setShopName] =
     useState("NhiPro23");
 
+  const [shopAddress, setShopAddress] =
+    useState("");
+
+  const [shopPhone, setShopPhone] =
+    useState("");
+
+  const [shopTaxCode, setShopTaxCode] =
+    useState("");
+
+  const [showAddress, setShowAddress] =
+    useState(true);
+
+  const [showPhone, setShowPhone] =
+    useState(true);
+
+  const [showTaxCode, setShowTaxCode] =
+    useState(true);
+
   const [department, setDepartment] =
     useState("Kho hàng");
 
@@ -55,6 +73,117 @@ export default function PrintOrderPage() {
       item?.orderCode ||
       item?.order_code ||
       item?.id ||
+      ""
+    );
+  };
+
+  const getCustomerName = (item: any) => {
+    const customer =
+      typeof item?.customer === "object" && item.customer
+        ? item.customer
+        : {};
+
+    return (
+      customer.name ||
+      customer.fullName ||
+      customer.full_name ||
+      (typeof item?.customer_name === "string"
+        ? item.customer_name
+        : "") ||
+      item?.customerName ||
+      "Khách lẻ"
+    );
+  };
+
+  const getCustomerBuyerName = (item: any) => {
+    const customer =
+      typeof item?.customer === "object" && item.customer
+        ? item.customer
+        : {};
+
+    return (
+      customer.buyerName ||
+      customer.buyer_name ||
+      customer.contactName ||
+      customer.contact_name ||
+      customer.representative ||
+      item?.buyerName ||
+      item?.buyer_name ||
+      item?.contactName ||
+      item?.contact_name ||
+      item?.customerBuyerName ||
+      item?.customer_buyer_name ||
+      ""
+    );
+  };
+
+  const getCustomerPhone = (item: any) => {
+    const customer =
+      typeof item?.customer === "object" && item.customer
+        ? item.customer
+        : {};
+
+    return (
+      customer.phone ||
+      customer.phoneNumber ||
+      customer.tel ||
+      item?.customer_phone ||
+      item?.customerPhone ||
+      item?.phone ||
+      ""
+    );
+  };
+
+  const getCustomerAddress = (item: any) => {
+    const customer =
+      typeof item?.customer === "object" && item.customer
+        ? item.customer
+        : {};
+
+    return (
+      customer.address ||
+      item?.customer_address ||
+      item?.customerAddress ||
+      item?.address ||
+      ""
+    );
+  };
+
+  const getCustomerCompanyName = (item: any) => {
+    const customer =
+      typeof item?.customer === "object" && item.customer
+        ? item.customer
+        : {};
+
+    return (
+      customer.companyName ||
+      customer.company_name ||
+      customer.company ||
+      customer.companyTitle ||
+      item?.companyName ||
+      item?.company_name ||
+      item?.customerCompanyName ||
+      item?.customer_company_name ||
+      item?.company ||
+      ""
+    );
+  };
+
+  const getCustomerTaxCode = (item: any) => {
+    const customer =
+      typeof item?.customer === "object" && item.customer
+        ? item.customer
+        : {};
+
+    return (
+      customer.taxCode ||
+      customer.tax_code ||
+      customer.taxId ||
+      customer.mst ||
+      item?.taxCode ||
+      item?.tax_code ||
+      item?.taxId ||
+      item?.mst ||
       ""
     );
   };
@@ -174,6 +303,30 @@ export default function PrintOrderPage() {
             setShopName(
               data.shopName ||
               "NhiPro23"
+            );
+
+            setShopAddress(
+              data.address || ""
+            );
+
+            setShopPhone(
+              data.phone || ""
+            );
+
+            setShopTaxCode(
+              data.taxCode || ""
+            );
+
+            setShowAddress(
+              data.showAddress ?? true
+            );
+
+            setShowPhone(
+              data.showPhone ?? true
+            );
+
+            setShowTaxCode(
+              data.showTaxCode ?? true
             );
 
             setDepartment(
@@ -350,7 +503,6 @@ export default function PrintOrderPage() {
         }
 
         @page {
-          size: A5 portrait;
           margin: 8mm;
         }
 
@@ -361,11 +513,21 @@ export default function PrintOrderPage() {
 
           .print-box {
             box-shadow: none !important;
+            width: 100% !important;
+            max-width: none !important;
+            min-height: 0 !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+          }
+
+          .print-box table {
+            width: 100% !important;
           }
         }
       `}</style>
 
-      <div className="print-box bg-white w-[136mm] min-h-[190mm] mx-auto p-[7mm] text-black">
+      <div className="print-box bg-white w-full max-w-[194mm] mx-auto px-[5mm] py-[7mm] text-black">
 
         <div className="flex justify-between items-start text-[11px] leading-4">
 
@@ -376,6 +538,11 @@ export default function PrintOrderPage() {
                 Đơn vị:
               </strong>{" "}
               {shopName}
+              <div className="mt-1 space-y-0.5 text-[0.9em]">
+                {showAddress && shopAddress && <div><strong>Địa chỉ:</strong> {shopAddress}</div>}
+                {showPhone && shopPhone && <div><strong>Điện thoại:</strong> {shopPhone}</div>}
+                {showTaxCode && shopTaxCode && <div><strong>MST:</strong> {shopTaxCode}</div>}
+              </div>
             </div>
 
             <div className="mt-1">
@@ -443,23 +610,63 @@ export default function PrintOrderPage() {
 
               <div className="flex gap-2">
                 <span>
-                  Họ tên người nhận:
+                  Khách hàng:
                 </span>
 
                 <strong>
-                  {receiver}
+                  {getCustomerCompanyName(order) ||
+                    getCustomerName(order) ||
+                    receiver}
                 </strong>
               </div>
 
-              <div className="flex gap-2">
-                <span>
-                  Bộ phận:
-                </span>
+              {getCustomerBuyerName(order) && (
+                <div className="flex gap-2">
+                  <span>
+                    Người nhận:
+                  </span>
 
-                <strong>
-                  {receiverDepartment}
-                </strong>
-              </div>
+                  <strong>
+                    {getCustomerBuyerName(order)}
+                  </strong>
+                </div>
+              )}
+
+              {getCustomerPhone(order) && (
+                <div className="flex gap-2">
+                  <span>
+                    Điện thoại:
+                  </span>
+
+                  <strong>
+                    {getCustomerPhone(order)}
+                  </strong>
+                </div>
+              )}
+
+              {getCustomerAddress(order) && (
+                <div className="flex gap-2">
+                  <span>
+                    Địa chỉ:
+                  </span>
+
+                  <strong>
+                    {getCustomerAddress(order)}
+                  </strong>
+                </div>
+              )}
+
+              {getCustomerTaxCode(order) && (
+                <div className="flex gap-2">
+                  <span>
+                    MST:
+                  </span>
+
+                  <strong>
+                    {getCustomerTaxCode(order)}
+                  </strong>
+                </div>
+              )}
 
             </div>
 

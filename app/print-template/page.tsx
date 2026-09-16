@@ -20,6 +20,7 @@ export default function PrintTemplatePage() {
   const [shopName, setShopName] = useState("NhiPro23");
   const [address, setAddress] = useState("TP.HCM");
   const [phone, setPhone] = useState("0900 000 000");
+  const [taxCode, setTaxCode] = useState("");
 
   const [invoiceTitle, setInvoiceTitle] = useState("HÓA ĐƠN BÁN HÀNG");
   const [temporaryTitle, setTemporaryTitle] = useState("PHIẾU TẠM TÍNH");
@@ -39,6 +40,7 @@ export default function PrintTemplatePage() {
   const [showLogo, setShowLogo] = useState(true);
   const [showAddress, setShowAddress] = useState(true);
   const [showPhone, setShowPhone] = useState(true);
+  const [showTaxCode, setShowTaxCode] = useState(true);
   const [showTitle, setShowTitle] = useState(true);
   const [showThankYou, setShowThankYou] = useState(true);
   const [showSeeYou, setShowSeeYou] = useState(true);
@@ -68,6 +70,7 @@ export default function PrintTemplatePage() {
           setShopName(data.shopName || "NhiPro23");
           setAddress(data.address || "TP.HCM");
           setPhone(data.phone || "0900 000 000");
+          setTaxCode(data.taxCode || "");
           setInvoiceTitle(data.invoiceTitle || "HÓA ĐƠN BÁN HÀNG");
           setTemporaryTitle(data.temporaryTitle || "PHIẾU TẠM TÍNH");
           setWarehouseTitle(data.warehouseTitle || "PHIẾU XUẤT KHO");
@@ -84,6 +87,7 @@ export default function PrintTemplatePage() {
           setShowLogo(data.showLogo ?? true);
           setShowAddress(data.showAddress ?? true);
           setShowPhone(data.showPhone ?? true);
+          setShowTaxCode(data.showTaxCode ?? true);
           setShowTitle(data.showTitle ?? true);
           setShowThankYou(data.showThankYou ?? true);
           setShowSeeYou(data.showSeeYou ?? true);
@@ -133,6 +137,7 @@ export default function PrintTemplatePage() {
           shopName,
           address,
           phone,
+          taxCode,
           invoiceTitle,
           temporaryTitle,
           warehouseTitle,
@@ -146,6 +151,7 @@ export default function PrintTemplatePage() {
           showLogo,
           showAddress,
           showPhone,
+          showTaxCode,
           showTitle,
           showThankYou,
           showSeeYou,
@@ -358,8 +364,8 @@ export default function PrintTemplatePage() {
                   Thông tin cửa hàng
                 </h3>
 
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-                  <Field label="Tên shop">
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <Field label="Tên shop / đơn vị">
                     <input
                       type="text"
                       className="input-control"
@@ -383,6 +389,15 @@ export default function PrintTemplatePage() {
                       className="input-control"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
+                    />
+                  </Field>
+
+                  <Field label="Mã số thuế">
+                    <input
+                      type="text"
+                      className="input-control"
+                      value={taxCode}
+                      onChange={(e) => setTaxCode(e.target.value)}
                     />
                   </Field>
                 </div>
@@ -532,6 +547,11 @@ export default function PrintTemplatePage() {
                     onChange={setShowPhone}
                   />
                   <Toggle
+                    label="Hiện MST"
+                    checked={showTaxCode}
+                    onChange={setShowTaxCode}
+                  />
+                  <Toggle
                     label="Hiện tiêu đề"
                     checked={showTitle}
                     onChange={setShowTitle}
@@ -651,11 +671,14 @@ export default function PrintTemplatePage() {
 
                       <div className="text-xl font-bold">{shopName}</div>
 
-                      {(showAddress || showPhone) && (
+                      {(showAddress || showPhone || showTaxCode) && (
                         <div className="mt-1 text-[0.9em]">
-                          {showAddress && <span>{address}</span>}
-                          {showAddress && showPhone && <span> | </span>}
-                          {showPhone && <span>Hotline: {phone}</span>}
+                          {showAddress && address && <span>{address}</span>}
+                          {showAddress && address && showPhone && phone && <span> | </span>}
+                          {showPhone && phone && <span>Hotline: {phone}</span>}
+                          {(showAddress && address || showPhone && phone) &&
+                            showTaxCode && taxCode && <span> | </span>}
+                          {showTaxCode && taxCode && <span>MST: {taxCode}</span>}
                         </div>
                       )}
                     </div>

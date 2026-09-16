@@ -839,12 +839,12 @@ if (duplicateCode) {
   // DOWNLOAD PRODUCT IMPORT TEMPLATE
   const downloadProductTemplate = () => {
     const headers = [
-      "main_name", "short_name", "product_code", "product_location",
+      "main_name", "short_name", "product_location",
       "price", "import_price", "capital_price", "stock", "unit", "tax",
     ];
 
     const exampleRow = [
-      "Tên sản phẩm chính", "Tên sản phẩm phụ", "A001", "Kệ A1",
+      "Tên sản phẩm chính", "Tên sản phẩm phụ", "Kệ A1",
       "10000", "8000", "8000", "100", "Cái", "8",
     ];
 
@@ -991,7 +991,7 @@ if (duplicateCode) {
 
       if (!hasMainName) {
         alert(
-          "File CSV cần có cột main_name (Tên chính). File mẫu mới gồm: main_name,short_name,product_code,product_location,price,import_price,capital_price,stock,unit,tax"
+          "File CSV cần có cột main_name (Tên chính). File mẫu mới gồm: main_name,short_name,product_location,price,import_price,capital_price,stock,unit,tax"
         );
         event.target.value = "";
         return;
@@ -1006,8 +1006,35 @@ const existingNames = new Set(
   )
 );
 
+// Đọc lại sản phẩm trực tiếp từ Firestore để lấy mã A lớn nhất hiện tại.
+const latestProductsSnapshot = await getDocs(
+  collection(db, "products")
+);
+
+const latestProducts = latestProductsSnapshot.docs.map(
+  (docItem) => ({
+    id: docItem.id,
+    ...docItem.data(),
+  })
+);
+
+let nextProductNumber = 1;
+
+latestProducts.forEach((item: any) => {
+  const code = String(item.product_code || "").trim();
+  const match = code.match(/^A(\d+)$/i);
+
+  if (match) {
+    const number = Number(match[1]);
+
+    if (number >= nextProductNumber) {
+      nextProductNumber = number + 1;
+    }
+  }
+});
+
 const existingCodes = new Set(
-  products.map((item: any) =>
+  latestProducts.map((item: any) =>
     String(item.product_code || "")
       .trim()
       .toLowerCase()
@@ -1035,9 +1062,12 @@ const existingCodes = new Set(
             row.main_name || productName
           );
 
-const productCode = String(
-  row.product_code || ""
-).trim();
+let productCode = `A${nextProductNumber}`;
+
+while (existingCodes.has(productCode.toLowerCase())) {
+  nextProductNumber++;
+  productCode = `A${nextProductNumber}`;
+}
 
 const normalizedCode =
   productCode.toLowerCase();
@@ -1061,7 +1091,7 @@ if (existingCodes.has(normalizedCode)) {
     row.main_name ||
     row.name
   ).trim(),
-          product_code: String(row.product_code || "").trim(),
+          product_code: productCode,
           product_location: String(
             row.product_location || ""
           ).trim(),
@@ -1079,6 +1109,7 @@ if (existingCodes.has(normalizedCode)) {
 
         existingNames.add(normalizedName);
 existingCodes.add(normalizedCode);
+nextProductNumber++;
 successCount++;
       }
 
