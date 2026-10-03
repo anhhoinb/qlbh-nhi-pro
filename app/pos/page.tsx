@@ -1419,10 +1419,6 @@ setTimeout(() => {
     };
 
   const openInvoicePrintPreview = (orderId: string) => {
-    // Mở bản in ngay trên tab POS bằng iframe ẩn.
-    // Trình duyệt sẽ hiện Print Preview đè lên POS:
-    // - Nhấn In để in
-    // - Nhấn ESC để đóng Print Preview và quay lại POS
     const oldFrame =
       document.getElementById("pos-invoice-print-frame");
 
@@ -1448,7 +1444,13 @@ setTimeout(() => {
     printFrame.src =
       `/print-order/invoice?id=${encodeURIComponent(orderId)}`;
 
+    document.body.appendChild(
+      printFrame
+    );
+
     printFrame.onload = () => {
+      // Trang invoice còn phải đọc đơn hàng và mẫu in từ Firestore.
+      // Chờ render bill hoàn tất rồi mới mở Print Preview.
       window.setTimeout(() => {
         try {
           printFrame.contentWindow?.focus();
@@ -1459,22 +1461,8 @@ setTimeout(() => {
             error
           );
         }
-
-        // Không xóa iframe ngay lập tức vì hộp thoại in
-        // cần giữ tài liệu cho đến khi người dùng In hoặc ESC.
-        window.setTimeout(() => {
-          if (printFrame.parentNode) {
-            printFrame.parentNode.removeChild(
-              printFrame
-            );
-          }
-        }, 3000);
-      }, 500);
+      }, 2000);
     };
-
-    document.body.appendChild(
-      printFrame
-    );
   };
 
   const getNextOrderCode =
