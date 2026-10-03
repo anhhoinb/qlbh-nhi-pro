@@ -72,6 +72,20 @@ export default function OrdersPage() {
   const [deletingOrder, setDeletingOrder] =
     useState(false);
 
+  const [exportOpen, setExportOpen] =
+    useState(false);
+
+  const [exportMode, setExportMode] =
+    useState<"month" | "year" | "all">("month");
+
+  const nowForExport = new Date();
+
+  const [exportMonth, setExportMonth] =
+    useState(nowForExport.getMonth() + 1);
+
+  const [exportYear, setExportYear] =
+    useState(nowForExport.getFullYear());
+
   useEffect(() => {
     let mounted = true;
 
@@ -799,14 +813,44 @@ export default function OrdersPage() {
   };
 
   const exportOrdersDetailToCSV = () => {
-    if (orders.length === 0) {
-      alert("Chưa có đơn hàng để xuất file");
+    let exportOrders = [...orders];
+
+    if (exportMode === "month") {
+      exportOrders = exportOrders.filter((order) => {
+        const date = getOrderDate(order);
+
+        return (
+          date &&
+          date.getFullYear() === exportYear &&
+          date.getMonth() + 1 === exportMonth
+        );
+      });
+    } else if (exportMode === "year") {
+      exportOrders = exportOrders.filter((order) => {
+        const date = getOrderDate(order);
+
+        return (
+          date &&
+          date.getFullYear() === exportYear
+        );
+      });
+    }
+
+    if (exportOrders.length === 0) {
+      alert(
+        exportMode === "month"
+          ? `Không có đơn hàng trong tháng ${exportMonth}/${exportYear}`
+          : exportMode === "year"
+          ? `Không có đơn hàng trong năm ${exportYear}`
+          : "Chưa có đơn hàng để xuất file"
+      );
       return;
     }
 
     const headers = [
       "ma_don",
       "khach_hang",
+      "mst",
       "sdt",
       "dia_chi",
       "ngay_tao",
@@ -834,13 +878,23 @@ export default function OrdersPage() {
 
     const rows: any[][] = [];
 
-    orders.forEach((order) => {
+    exportOrders.forEach((order) => {
       const items = getItems(order);
 
       const baseRow = [
         getOrderCode(order),
         getCustomerName(order),
-        getCustomerPhone(order),
+
+        // Thêm dấu tab để Excel luôn hiểu MST/SĐT là chuỗi,
+        // giữ nguyên số 0 ở đầu. Khi mở CSV bằng Excel,
+        // dấu tab không hiển thị trong nội dung ô.
+        getCustomerTaxCode(order)
+          ? `\t${String(getCustomerTaxCode(order))}`
+          : "",
+        getCustomerPhone(order)
+          ? `\t${String(getCustomerPhone(order))}`
+          : "",
+
         getCustomerAddress(order),
         formatDate(order.createdAt),
         getCreatedBy(order),
@@ -878,9 +932,17 @@ export default function OrdersPage() {
           0,
         ]);
       } else {
-        items.forEach((product: any) => {
+        items.forEach((product: any, productIndex: number) => {
+          // Với đơn có nhiều sản phẩm:
+          // thông tin cấp đơn chỉ hiển thị ở dòng sản phẩm đầu tiên.
+          // Các dòng sản phẩm tiếp theo để trống phần thông tin đơn.
+          const orderColumns =
+            productIndex === 0
+              ? baseRow
+              : new Array(baseRow.length).fill("");
+
           rows.push([
-            ...baseRow,
+            ...orderColumns,
             getProductName(product),
             getProductSku(product),
             getProductQuantity(product),
@@ -908,18 +970,31 @@ export default function OrdersPage() {
     );
 
     const url = URL.createObjectURL(blob);
-
     const link = document.createElement("a");
+
+    let fileName =
+      "danh_sach_don_hang_tat_ca.csv";
+
+    if (exportMode === "month") {
+      fileName =
+        `danh_sach_don_hang_thang_${String(exportMonth).padStart(
+          2,
+          "0"
+        )}_nam_${exportYear}.csv`;
+    } else if (exportMode === "year") {
+      fileName =
+        `danh_sach_don_hang_nam_${exportYear}.csv`;
+    }
+
     link.href = url;
-    link.download = `don-hang-chi-tiet-${new Date()
-      .toISOString()
-      .slice(0, 10)}.csv`;
+    link.download = fileName;
 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
     URL.revokeObjectURL(url);
+    setExportOpen(false);
   };
 
   const importOrdersDetailFromCSV = async (
@@ -1030,10 +1105,18 @@ export default function OrdersPage() {
             customer_address:
               row.dia_chi || "",
 
+            taxCode:
+              row.mst || "",
+
+            mst:
+              row.mst || "",
+
             customer: {
               name: row.khach_hang || "Khách lẻ",
               phone: row.sdt || "",
               address: row.dia_chi || "",
+              taxCode: row.mst || "",
+              mst: row.mst || "",
             },
 
             createdBy:
@@ -2105,6 +2188,143 @@ export default function OrdersPage() {
 
   return (
     <main className="min-h-screen bg-slate-100 p-6">
+      {exportOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+            <div className="border-b border-slate-200 px-5 py-4">
+              <h2 className="text-xl font-bold text-slate-800">
+                Xuất file chi tiết
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Chọn khoảng thời gian cần xuất
+              </p>
+            </div>
+
+            <div className="space-y-4 p-5">
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setExportMode("month")}
+                  className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${
+                    exportMode === "month"
+                      ? "border-sky-600 bg-sky-600 text-white"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  Theo tháng
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setExportMode("year")}
+                  className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${
+                    exportMode === "year"
+                      ? "border-sky-600 bg-sky-600 text-white"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  Theo năm
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setExportMode("all")}
+                  className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${
+                    exportMode === "all"
+                      ? "border-sky-600 bg-sky-600 text-white"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  Tất cả
+                </button>
+              </div>
+
+              {exportMode === "month" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                      Tháng
+                    </label>
+                    <select
+                      value={exportMonth}
+                      onChange={(e) =>
+                        setExportMonth(Number(e.target.value))
+                      }
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-sky-500"
+                    >
+                      {Array.from({ length: 12 }, (_, index) => index + 1).map(
+                        (month) => (
+                          <option key={month} value={month}>
+                            Tháng {month}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                      Năm
+                    </label>
+                    <input
+                      type="number"
+                      min="2000"
+                      max="2100"
+                      value={exportYear}
+                      onChange={(e) =>
+                        setExportYear(Number(e.target.value))
+                      }
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-500"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {exportMode === "year" && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                    Năm
+                  </label>
+                  <input
+                    type="number"
+                    min="2000"
+                    max="2100"
+                    value={exportYear}
+                    onChange={(e) =>
+                      setExportYear(Number(e.target.value))
+                    }
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-500"
+                  />
+                </div>
+              )}
+
+              {exportMode === "all" && (
+                <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                  File sẽ chứa toàn bộ đơn hàng hiện có.
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4">
+              <button
+                type="button"
+                onClick={() => setExportOpen(false)}
+                className="rounded-xl bg-slate-200 px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-300"
+              >
+                Hủy
+              </button>
+
+              <button
+                type="button"
+                onClick={exportOrdersDetailToCSV}
+                className="rounded-xl bg-emerald-600 px-4 py-2.5 font-semibold text-white hover:bg-emerald-700"
+              >
+                Xuất file
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-4xl font-bold text-sky-700">
           Lịch sử bán hàng
@@ -2113,7 +2333,7 @@ export default function OrdersPage() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={exportOrdersDetailToCSV}
+            onClick={() => setExportOpen(true)}
             className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition"
           >
             Xuất file chi tiết
