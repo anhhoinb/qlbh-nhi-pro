@@ -73,6 +73,11 @@ const parseInputMoney = (value: string) => {
   const paymentMethodRef =
     useRef<HTMLSelectElement | null>(null);
 
+  const barcodeScannerRef = useRef({
+    buffer: "",
+    lastKeyTime: 0,
+  });
+
   const formatMoney = (value: any) => {
     return new Intl.NumberFormat("vi-VN").format(
       Number(value || 0)
@@ -187,7 +192,7 @@ useEffect(() => {
 }, [orders, activeOrder]);
 
   const [showBarcodeInput, setShowBarcodeInput] =
-    useState(true);
+    useState(false);
 
   const [customerSearch, setCustomerSearch] =
     useState("");
@@ -206,6 +211,9 @@ useEffect(() => {
 
   const [showSplitPaymentModal, setShowSplitPaymentModal] =
     useState(false);
+
+  const [quantityFocusProductId, setQuantityFocusProductId] =
+    useState<string | null>(null);
 
   const [tempSplitPayment, setTempSplitPayment] =
     useState({
@@ -703,6 +711,8 @@ const getProductShortName = (product: any) => {
         return;
       }
 
+      setQuantityFocusProductId(product.id);
+
       if (existing) {
         const updatedCart =
           cart.map((item) => {
@@ -789,6 +799,88 @@ short_name:
         });
       }
     };
+
+  useEffect(() => {
+    const handleGlobalBarcodeScanner =
+      (event: KeyboardEvent) => {
+        // Khi ô barcode đang mở, giữ nguyên cách nhập/quét hiện tại.
+        if (showBarcodeInput) return;
+
+        const target =
+          event.target as HTMLElement | null;
+
+        const tagName =
+          target?.tagName?.toLowerCase() || "";
+
+        const isTyping =
+          tagName === "input" ||
+          tagName === "textarea" ||
+          tagName === "select" ||
+          Boolean(target?.isContentEditable);
+
+        // Không giành phím khi người dùng đang gõ số lượng,
+        // giá, tìm kiếm sản phẩm, khách hàng...
+        if (isTyping) return;
+
+        const scanner =
+          barcodeScannerRef.current;
+
+        const now =
+          performance.now();
+
+        // Máy quét gửi ký tự rất nhanh. Nếu cách nhau lâu,
+        // coi như bắt đầu một mã mới.
+        if (
+          scanner.lastKeyTime &&
+          now - scanner.lastKeyTime > 120
+        ) {
+          scanner.buffer = "";
+        }
+
+        scanner.lastKeyTime = now;
+
+        if (event.key === "Enter") {
+          const code =
+            scanner.buffer.trim();
+
+          scanner.buffer = "";
+
+          if (code.length >= 3) {
+            event.preventDefault();
+            handleBarcode(code);
+          }
+
+          return;
+        }
+
+        if (
+          event.key.length === 1 &&
+          !event.ctrlKey &&
+          !event.altKey &&
+          !event.metaKey
+        ) {
+          scanner.buffer += event.key;
+        }
+      };
+
+    window.addEventListener(
+      "keydown",
+      handleGlobalBarcodeScanner,
+      true
+    );
+
+    return () => {
+      window.removeEventListener(
+        "keydown",
+        handleGlobalBarcodeScanner,
+        true
+      );
+    };
+  }, [
+    showBarcodeInput,
+    products,
+    activeOrder,
+  ]);
 
   const increaseQty =
     (id: string) => {
@@ -2601,7 +2693,7 @@ const itemShortName =
         <div className="flex items-center gap-2 flex-1">
 
           <div
-            className="relative w-[380px]"
+            className="relative w-[500px]"
             onMouseEnter={() =>
               updateCurrentOrder({
                 showProductDropdown: true,
@@ -2614,7 +2706,7 @@ const itemShortName =
               ref={productSearchRef}
               type="text"
               placeholder="Thêm sản phẩm vào đơn (F3)"
-              className="w-full bg-white text-slate-900 px-3 py-2 rounded-lg outline-none text-sm border border-slate-200 focus:border-sky-400"
+              className="w-full h-11 bg-white text-slate-900 px-4 py-2.5 rounded-lg outline-none text-base border border-slate-200 focus:border-sky-400"
               value={search}
               onChange={(e) => {
                 updateCurrentOrder({
@@ -2631,7 +2723,7 @@ const itemShortName =
 
             {showProductDropdown && (
   <div
-    className="absolute top-full left-0 w-[620px] bg-white border rounded-xl shadow-lg z-50 max-h-96 overflow-auto mt-1"
+    className="absolute top-full left-0 w-[720px] bg-white border rounded-xl shadow-lg z-50 max-h-96 overflow-auto mt-1"
     onMouseLeave={() => {
       updateCurrentOrder({
         showProductDropdown: false,
@@ -2814,8 +2906,8 @@ const itemShortName =
                 key={order.id}
                 className={
                   activeOrder === order.id
-                    ? "bg-slate-900 rounded-lg flex items-center overflow-hidden"
-                    : "bg-sky-600 hover:bg-sky-700 rounded-lg flex items-center overflow-hidden"
+                    ? "bg-sky-600 hover:bg-sky-700 rounded-lg flex items-center overflow-hidden"
+                    : "bg-slate-900 hover:bg-slate-800 rounded-lg flex items-center overflow-hidden"
                 }
               >
                 <button
@@ -3102,10 +3194,24 @@ const itemShortName =
                   </button>
 
                   <input
+                    ref={(element) => {
+                      if (
+                        element &&
+                        quantityFocusProductId === item.id
+                      ) {
+                        window.setTimeout(() => {
+                          element.focus();
+                          element.select();
+                          setQuantityFocusProductId(null);
+                        }, 0);
+                      }
+                    }}
                     type="number"
                     min="1"
                     className="w-16 border rounded-lg p-1 text-center"
                     value={item.quantity}
+                    onFocus={(e) => e.currentTarget.select()}
+                    onClick={(e) => e.currentTarget.select()}
                     onChange={(e) =>
                       changeQty(
                         item.id,

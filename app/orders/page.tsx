@@ -11,9 +11,11 @@ import {
   updateDoc,
   getDoc,
   runTransaction,
+  deleteDoc,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { checkAdmin } from "@/lib/checkAdmin";
 
 export default function OrdersPage() {
   const [orders, setOrders] =
@@ -63,6 +65,30 @@ export default function OrdersPage() {
 
   const [ordersPerPage, setOrdersPerPage] =
     useState(20);
+
+  const [isAdmin, setIsAdmin] =
+    useState(false);
+
+  const [deletingOrder, setDeletingOrder] =
+    useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadAdminPermission = async () => {
+      const allowed = await checkAdmin();
+
+      if (mounted) {
+        setIsAdmin(allowed);
+      }
+    };
+
+    loadAdminPermission();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const formatMoney = (value: any) => {
     return Number(value || 0).toLocaleString();
@@ -1346,6 +1372,119 @@ export default function OrdersPage() {
   });
 };
 
+  const isFullyPaidOrder = (order: any) => {
+    const total =
+      Number(getGrandTotal(order) || 0);
+
+    const customerPay =
+      Number(getCustomerPay(order) || 0);
+
+    const changeAmount =
+      Number(getChangeAmount(order) || 0);
+
+    // Tiền thực thu = khách đưa - tiền thừa.
+    // Cho phép sai số nhỏ khi dữ liệu có số lẻ.
+    const actualPaid =
+      Math.max(0, customerPay - changeAmount);
+
+    return (
+      total > 0 &&
+      actualPaid + 0.5 >= total
+    );
+  };
+
+  const deleteSelectedPaidOrder = async () => {
+    if (!isAdmin) {
+      alert(
+        "Chỉ tài khoản Admin mới được xóa đơn hàng"
+      );
+      return;
+    }
+
+    if (selectedOrders.length !== 1) {
+      alert(
+        "Vui lòng chọn đúng 1 đơn hàng cần xóa"
+      );
+      return;
+    }
+
+    const order =
+      selectedOrders[0];
+
+    if (!order?.id) {
+      alert("Không tìm thấy đơn hàng");
+      return;
+    }
+
+    const status =
+      String(order.status || "")
+        .trim()
+        .toLowerCase();
+
+    if (
+      status === "cancelled" ||
+      status === "returned" ||
+      status === "return" ||
+      status === "partially_returned"
+    ) {
+      alert(
+        "Không xóa bằng chức năng này với đơn đã hủy hoặc đã phát sinh trả hàng"
+      );
+      return;
+    }
+
+    if (!isFullyPaidOrder(order)) {
+      alert(
+        "Chỉ được xóa đơn đã thanh toán đủ số tiền"
+      );
+      return;
+    }
+
+    const orderCode =
+      getOrderCode(order);
+
+    const confirmed =
+      window.confirm(
+        `Xóa vĩnh viễn đơn ${orderCode}?\n\n` +
+          "Đơn sẽ bị xóa khỏi doanh thu.\n" +
+          "Tồn kho sẽ GIỮ NGUYÊN, không cộng hàng trở lại.\n\n" +
+          "Thao tác này không thể hoàn tác."
+      );
+
+    if (!confirmed) return;
+
+    try {
+      setDeletingOrder(true);
+
+      // Chỉ xóa document đơn hàng.
+      // Tuyệt đối không cập nhật tồn kho.
+      await deleteDoc(
+        doc(db, "orders", order.id)
+      );
+
+      setSelectedOrderIds([]);
+      setSelectedOrder(null);
+
+      await loadOrders();
+
+      alert(
+        `Đã xóa đơn ${orderCode}. Tồn kho không thay đổi.`
+      );
+    } catch (error: any) {
+      console.error(
+        "DELETE ORDER ERROR:",
+        error
+      );
+
+      alert(
+        error?.message ||
+          "Không xóa được đơn hàng"
+      );
+    } finally {
+      setDeletingOrder(false);
+    }
+  };
+
   const cancelSelectedOrders = async () => {
   if (selectedOrders.length === 0) {
     alert("Vui lòng tích chọn đơn hàng cần hủy");
@@ -2056,6 +2195,20 @@ export default function OrdersPage() {
 >
   Tạo phiếu vận chuyển
 </button>
+
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={deleteSelectedPaidOrder}
+                disabled={deletingOrder}
+                className="px-3.5 py-2 rounded-xl bg-red-700 hover:bg-red-800 text-white text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Chỉ Admin được xóa đơn đã thanh toán đủ. Không hoàn kho."
+              >
+                {deletingOrder
+                  ? "Đang xóa..."
+                  : "Xóa đơn"}
+              </button>
+            )}
 
             <button
               type="button"
