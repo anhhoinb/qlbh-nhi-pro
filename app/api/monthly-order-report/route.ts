@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+
 import {
   adminAuth,
   adminDb,
@@ -101,9 +102,7 @@ const getItems = (item: any) => {
   );
 };
 
-const getProductMainName = (
-  product: any
-) => {
+const getProductMainName = (product: any) => {
   return (
     product.main_name ||
     product.mainName ||
@@ -114,9 +113,7 @@ const getProductMainName = (
   );
 };
 
-const getProductShortName = (
-  product: any
-) => {
+const getProductShortName = (product: any) => {
   return (
     product.short_name ||
     product.shortName ||
@@ -158,9 +155,7 @@ const getProductSku = (product: any) => {
   );
 };
 
-const getProductUnit = (
-  product: any
-) => {
+const getProductUnit = (product: any) => {
   return (
     product.unit ||
     product.unitName ||
@@ -169,9 +164,7 @@ const getProductUnit = (
   );
 };
 
-const getProductQuantity = (
-  product: any
-) => {
+const getProductQuantity = (product: any) => {
   return Number(
     product.quantity ||
       product.qty ||
@@ -179,9 +172,7 @@ const getProductQuantity = (
   );
 };
 
-const getProductPrice = (
-  product: any
-) => {
+const getProductPrice = (product: any) => {
   return Number(
     product.price ||
       product.sellPrice ||
@@ -191,9 +182,7 @@ const getProductPrice = (
   );
 };
 
-const getProductVat = (
-  product: any
-) => {
+const getProductVat = (product: any) => {
   return Number(
     product.vat ||
       product.tax ||
@@ -201,9 +190,7 @@ const getProductVat = (
   );
 };
 
-const getProductTotal = (
-  product: any
-) => {
+const getProductTotal = (product: any) => {
   const directTotal =
     product.total ||
     product.totalPrice ||
@@ -219,9 +206,7 @@ const getProductTotal = (
   );
 };
 
-const getPaymentMethodText = (
-  item: any
-) => {
+const getPaymentMethodText = (item: any) => {
   const method =
     item.paymentMethod ||
     item.payment_method ||
@@ -254,9 +239,7 @@ const getPaymentMethodText = (
   return method || "---";
 };
 
-const getPaymentMethodValue = (
-  item: any
-) => {
+const getPaymentMethodValue = (item: any) => {
   const method =
     item.paymentMethod ||
     item.payment_method ||
@@ -306,9 +289,7 @@ const getVatAmount = (item: any) => {
   );
 };
 
-const getDiscountAmount = (
-  item: any
-) => {
+const getDiscountAmount = (item: any) => {
   return Number(
     item.discountAmount ||
       item.discount ||
@@ -333,9 +314,7 @@ const getCustomerPay = (item: any) => {
   );
 };
 
-const getChangeAmount = (
-  item: any
-) => {
+const getChangeAmount = (item: any) => {
   return Number(
     item.changeAmount ||
       item.change_amount ||
@@ -388,6 +367,8 @@ const getVietnamDateParts = (
         year: "numeric",
         month: "numeric",
         day: "numeric",
+        hour: "numeric",
+        hourCycle: "h23",
       }
     ).formatToParts(date);
 
@@ -404,6 +385,7 @@ const getVietnamDateParts = (
     year: getPart("year"),
     month: getPart("month"),
     day: getPart("day"),
+    hour: getPart("hour"),
   };
 };
 
@@ -498,15 +480,11 @@ const createCSV = (
       getCustomerName(order),
 
       taxCode
-        ? `\t${String(
-            taxCode
-          )}`
+        ? `\t${String(taxCode)}`
         : "",
 
       phone
-        ? `\t${String(
-            phone
-          )}`
+        ? `\t${String(phone)}`
         : "",
 
       getCustomerAddress(order),
@@ -628,7 +606,7 @@ const createCSV = (
 };
 
 /* =========================================================
-   KIỂM TRA ADMIN
+   ADMIN AUTH
 ========================================================= */
 
 const verifyAdmin = async (
@@ -691,37 +669,40 @@ const verifyAdmin = async (
 };
 
 /* =========================================================
-   POST = GỬI THỬ
+   CRON AUTH
 ========================================================= */
 
-export async function POST(
+const verifyCron = (
   request: NextRequest
-) {
-  try {
-    /* -----------------------------------------
-       1. Chỉ Admin được gửi thử
-    ----------------------------------------- */
+) => {
+  const cronSecret =
+    process.env.CRON_SECRET;
 
-    const isAdmin =
-      await verifyAdmin(request);
+  if (!cronSecret) {
+    return false;
+  }
 
-    if (!isAdmin) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Bạn không có quyền thực hiện thao tác này.",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
+  const authorization =
+    request.headers.get(
+      "authorization"
+    );
 
-    /* -----------------------------------------
-       2. Kiểm tra API KEY
-    ----------------------------------------- */
+  return (
+    authorization ===
+    `Bearer ${cronSecret}`
+  );
+};
 
+/* =========================================================
+   GỬI BÁO CÁO
+========================================================= */
+
+const sendMonthlyReport =
+  async ({
+    automatic,
+  }: {
+    automatic: boolean;
+  }) => {
     const resendApiKey =
       process.env.RESEND_API_KEY;
 
@@ -738,26 +719,20 @@ export async function POST(
       );
     }
 
-    /*
-      QUAN TRỌNG:
-      Chỉ khởi tạo Resend SAU KHI
-      đã kiểm tra API key.
-
-      Như vậy npm run build ở local
-      sẽ không bị lỗi Missing API key.
-    */
     const resend =
       new Resend(resendApiKey);
 
     /* -----------------------------------------
-       3. Đọc cài đặt email
+       Đọc cài đặt
     ----------------------------------------- */
 
-    const settingsSnap =
-      await adminDb
+    const settingsRef =
+      adminDb
         .collection("settings")
-        .doc("monthlyReport")
-        .get();
+        .doc("monthlyReport");
+
+    const settingsSnap =
+      await settingsRef.get();
 
     if (!settingsSnap.exists) {
       return NextResponse.json(
@@ -774,6 +749,22 @@ export async function POST(
 
     const settings =
       settingsSnap.data() || {};
+
+    /* -----------------------------------------
+       Cron phải kiểm tra bật / tắt
+    ----------------------------------------- */
+
+    if (
+      automatic &&
+      settings.enabled === false
+    ) {
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+        message:
+          "Báo cáo tự động đang được tắt.",
+      });
+    }
 
     const recipientEmail =
       String(
@@ -795,11 +786,11 @@ export async function POST(
     }
 
     /* -----------------------------------------
-       4. Xác định tháng trước
-       theo giờ Việt Nam
+       Xác định tháng trước
     ----------------------------------------- */
 
-    const now = new Date();
+    const now =
+      new Date();
 
     const vietnamNow =
       getVietnamDateParts(now);
@@ -815,8 +806,33 @@ export async function POST(
       reportYear -= 1;
     }
 
+    const monthText =
+      String(
+        reportMonth
+      ).padStart(2, "0");
+
+    const reportPeriod =
+      `${reportYear}-${monthText}`;
+
     /* -----------------------------------------
-       5. Đọc đơn hàng
+       Chống Cron gửi trùng
+    ----------------------------------------- */
+
+    if (
+      automatic &&
+      settings.lastAutoSentPeriod ===
+        reportPeriod
+    ) {
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+        message:
+          `Báo cáo ${monthText}/${reportYear} đã được gửi tự động trước đó.`,
+      });
+    }
+
+    /* -----------------------------------------
+       Đọc đơn hàng
     ----------------------------------------- */
 
     const ordersSnap =
@@ -856,10 +872,6 @@ export async function POST(
       }
     );
 
-    /* -----------------------------------------
-       6. Sắp xếp theo ngày
-    ----------------------------------------- */
-
     orders.sort((a, b) => {
       const dateA =
         getOrderDate(a);
@@ -887,22 +899,14 @@ export async function POST(
     }
 
     /* -----------------------------------------
-       7. Tạo CSV
+       Tạo CSV
     ----------------------------------------- */
 
     const csv =
       createCSV(orders);
 
-    /*
-      BOM giúp Excel nhận tiếng Việt.
-    */
     const csvWithBom =
       "\uFEFF" + csv;
-
-    const monthText =
-      String(
-        reportMonth
-      ).padStart(2, "0");
 
     const baseName =
       `danh_sach_don_hang_thang_${monthText}_nam_${reportYear}`;
@@ -911,7 +915,7 @@ export async function POST(
       `${baseName}.csv`;
 
     /* -----------------------------------------
-       8. Gửi email
+       Gửi email
     ----------------------------------------- */
 
     const {
@@ -996,11 +1000,34 @@ export async function POST(
     }
 
     /* -----------------------------------------
-       9. Thành công
+       Nếu là Cron, đánh dấu đã gửi tháng này
     ----------------------------------------- */
+
+    if (automatic) {
+      await settingsRef.set(
+        {
+          lastAutoSentPeriod:
+            reportPeriod,
+
+          lastAutoSentAt:
+            new Date().toISOString(),
+
+          lastAutoEmailId:
+            data?.id || "",
+
+          lastAutoFileName:
+            fileName,
+        },
+        {
+          merge: true,
+        }
+      );
+    }
 
     return NextResponse.json({
       success: true,
+
+      automatic,
 
       message:
         `Đã gửi báo cáo tháng ${monthText}/${reportYear} tới ${recipientEmail}.`,
@@ -1013,9 +1040,38 @@ export async function POST(
       orderCount:
         orders.length,
     });
+  };
+
+/* =========================================================
+   POST = NÚT "GỬI THỬ NGAY"
+========================================================= */
+
+export async function POST(
+  request: NextRequest
+) {
+  try {
+    const isAdmin =
+      await verifyAdmin(request);
+
+    if (!isAdmin) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Bạn không có quyền thực hiện thao tác này.",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    return await sendMonthlyReport({
+      automatic: false,
+    });
   } catch (error: any) {
     console.error(
-      "MONTHLY REPORT ERROR:",
+      "MONTHLY REPORT POST ERROR:",
       error
     );
 
@@ -1026,6 +1082,100 @@ export async function POST(
         message:
           error?.message ||
           "Có lỗi khi tạo báo cáo.",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
+
+/* =========================================================
+   GET = VERCEL CRON
+========================================================= */
+
+export async function GET(
+  request: NextRequest
+) {
+  try {
+    /* -----------------------------------------
+       1. Kiểm tra CRON_SECRET
+    ----------------------------------------- */
+
+    if (!verifyCron(request)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Cron không được phép truy cập.",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    /* -----------------------------------------
+       2. Kiểm tra giờ Việt Nam
+
+       Cron Vercel chạy 18:00 UTC mỗi ngày.
+       Việt Nam lúc đó là 01:00 ngày hôm sau.
+
+       Chỉ gửi khi Việt Nam đang là ngày 1.
+    ----------------------------------------- */
+
+    const vietnamNow =
+      getVietnamDateParts(
+        new Date()
+      );
+
+    if (
+      vietnamNow.day !== 1 ||
+      vietnamNow.hour !== 1
+    ) {
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+
+        message:
+          "Chưa đến thời điểm gửi báo cáo tháng.",
+
+        vietnamTime: {
+          year:
+            vietnamNow.year,
+
+          month:
+            vietnamNow.month,
+
+          day:
+            vietnamNow.day,
+
+          hour:
+            vietnamNow.hour,
+        },
+      });
+    }
+
+    /* -----------------------------------------
+       3. Gửi tự động
+    ----------------------------------------- */
+
+    return await sendMonthlyReport({
+      automatic: true,
+    });
+  } catch (error: any) {
+    console.error(
+      "MONTHLY REPORT CRON ERROR:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+
+        message:
+          error?.message ||
+          "Có lỗi khi chạy báo cáo tự động.",
       },
       {
         status: 500,
