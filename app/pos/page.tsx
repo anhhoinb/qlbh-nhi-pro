@@ -1418,6 +1418,65 @@ setTimeout(() => {
 }, 300);
     };
 
+  const openInvoicePrintPreview = (orderId: string) => {
+    // Mở bản in ngay trên tab POS bằng iframe ẩn.
+    // Trình duyệt sẽ hiện Print Preview đè lên POS:
+    // - Nhấn In để in
+    // - Nhấn ESC để đóng Print Preview và quay lại POS
+    const oldFrame =
+      document.getElementById("pos-invoice-print-frame");
+
+    if (oldFrame) {
+      oldFrame.remove();
+    }
+
+    const printFrame =
+      document.createElement("iframe");
+
+    printFrame.id =
+      "pos-invoice-print-frame";
+
+    printFrame.style.position = "fixed";
+    printFrame.style.right = "0";
+    printFrame.style.bottom = "0";
+    printFrame.style.width = "0";
+    printFrame.style.height = "0";
+    printFrame.style.border = "0";
+    printFrame.style.opacity = "0";
+    printFrame.style.pointerEvents = "none";
+
+    printFrame.src =
+      `/print-order/invoice?id=${encodeURIComponent(orderId)}`;
+
+    printFrame.onload = () => {
+      window.setTimeout(() => {
+        try {
+          printFrame.contentWindow?.focus();
+          printFrame.contentWindow?.print();
+        } catch (error) {
+          console.error(
+            "Không mở được bản in hóa đơn:",
+            error
+          );
+        }
+
+        // Không xóa iframe ngay lập tức vì hộp thoại in
+        // cần giữ tài liệu cho đến khi người dùng In hoặc ESC.
+        window.setTimeout(() => {
+          if (printFrame.parentNode) {
+            printFrame.parentNode.removeChild(
+              printFrame
+            );
+          }
+        }, 3000);
+      }, 500);
+    };
+
+    document.body.appendChild(
+      printFrame
+    );
+  };
+
   const getNextOrderCode =
     async () => {
       const counterRef =
@@ -1862,9 +1921,8 @@ list: cart.map(item => ({
     createdAt: new Date(),
   }
 );
-window.open(
-  `/print-order/invoice?id=${encodeURIComponent(orderRef.id)}&print=1`,
-  "_blank"
+openInvoicePrintPreview(
+  orderRef.id
 );
 console.log(
   "TOTAL:",

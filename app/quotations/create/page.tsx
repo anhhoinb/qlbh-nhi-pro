@@ -1020,9 +1020,16 @@ export default function CreateQuotationPage() {
                             className="flex w-full items-center justify-between gap-4 border-b border-slate-100 p-3 text-left hover:bg-sky-50"
                           >
                             <div className="min-w-0 flex-1">
-                              <div className="truncate font-semibold">
-                                {getProductDisplayName(product)}
-                              </div>
+  <div className="font-semibold text-slate-900 whitespace-normal">
+    {product.main_name || product.name || "---"}
+  </div>
+
+  {product.short_name &&
+    product.short_name !== (product.main_name || product.name) && (
+      <div className="mt-0.5 text-sm text-sky-600 whitespace-normal">
+        Tên phụ: {product.short_name}
+      </div>
+    )}
 
                               <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                                 <span className="text-slate-500">
