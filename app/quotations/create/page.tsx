@@ -678,7 +678,7 @@ export default function CreateQuotationPage() {
   return (
     <main className="min-h-screen bg-slate-100 px-3 py-5 text-black">
       <div className="w-full max-w-none">
-        <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+        <div className="mb-2 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3 shadow-sm lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-slate-800">
               {isEditMode ? "Sửa báo giá" : "Tạo báo giá"}
@@ -733,9 +733,9 @@ export default function CreateQuotationPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[380px_1fr]">
-          <section className="space-y-5">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="grid grid-cols-1 gap-1 xl:grid-cols-[380px_1fr]">
+          <section className="space-y-2">
+            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
               <h2 className="mb-4 text-lg font-bold">Thông tin báo giá</h2>
 
               <div className="grid grid-cols-2 gap-3">
@@ -794,7 +794,7 @@ export default function CreateQuotationPage() {
                     Địa chỉ
                   </label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     value={buyer.address}
                     onChange={(event) =>
                       setBuyer((prev) => ({
@@ -871,7 +871,7 @@ export default function CreateQuotationPage() {
                     Thời gian giao hàng
                   </label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     value={deliveryTime}
                     onChange={(event) => setDeliveryTime(event.target.value)}
                     className="w-full resize-y rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
@@ -884,7 +884,7 @@ export default function CreateQuotationPage() {
                     Thời gian bảo hành
                   </label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     value={warrantyTime}
                     onChange={(event) => setWarrantyTime(event.target.value)}
                     className="w-full resize-y rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
@@ -924,7 +924,7 @@ export default function CreateQuotationPage() {
                     Ghi chú vận chuyển
                   </label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     value={shippingNote}
                     onChange={(event) => setShippingNote(event.target.value)}
                     className="w-full resize-y rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
