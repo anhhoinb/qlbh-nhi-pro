@@ -667,7 +667,7 @@ export default function CreateQuotationPage() {
 
   if (loadingQuotation) {
     return (
-      <main className="min-h-screen bg-slate-100 p-5 text-black">
+      <main className="min-h-screen bg-slate-100 px-3 py-5 text-black">
         <div className="mx-auto max-w-[1500px] rounded-2xl bg-white p-10 text-center shadow-sm">
           Đang tải báo giá...
         </div>
@@ -676,8 +676,8 @@ export default function CreateQuotationPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 p-5 text-black">
-      <div className="mx-auto max-w-[1800px]">
+    <main className="min-h-screen bg-slate-100 px-3 py-5 text-black">
+      <div className="w-full max-w-none">
         <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-slate-800">

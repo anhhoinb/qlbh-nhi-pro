@@ -2688,7 +2688,7 @@ const itemShortName =
     <main className="min-h-screen bg-slate-100 text-black">
 
       {/* THANH TRÊN */}
-      <div className="h-12 bg-slate-800 text-white flex items-center justify-between px-3 shadow-sm">
+      <div className="h-14 bg-slate-800 text-white flex items-center justify-between px-3 shadow-sm">
 
         <div className="flex items-center gap-2 flex-1">
 
@@ -2899,7 +2899,7 @@ const itemShortName =
 
 </div>
 
-          <div className="flex items-center gap-1 ml-2">
+          <div className="flex items-center gap-1 ml-2 flex-1 min-w-0">
 
             {orders.map((order) => (
               <div

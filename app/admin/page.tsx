@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import {
   doc,
   getDoc,
@@ -289,47 +290,41 @@ export default function AdminPage() {
   ===================================================== */
 
   return (
-    <main className="min-h-screen bg-gray-100 p-10">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <main className="min-h-screen bg-gray-100 px-5 py-5">
+      <div className="max-w-5xl mx-auto space-y-4">
 
         {/* HEADER */}
 
-        <div className="bg-white rounded-3xl shadow p-10">
-          <h1 className="text-5xl font-bold text-blue-700 mb-5">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5">
+          <h1 className="text-2xl font-bold text-blue-700">
             Quản trị hệ thống
           </h1>
 
-          <p className="text-gray-600 text-lg">
-            Quản lý tài khoản nhân viên,
-            phân quyền và cấu hình hệ thống.
+          <p className="text-sm text-gray-500 mt-1">
+            Quản lý tài khoản nhân viên, phân quyền và cấu hình hệ thống.
           </p>
         </div>
 
         {/* MONTHLY REPORT */}
 
-        <div className="bg-white rounded-3xl shadow p-8">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
 
-          <div className="mb-7">
-            <h2 className="text-2xl font-bold text-gray-800">
-              Báo cáo đơn hàng tự động
-            </h2>
+          {/* HEADER REPORT */}
 
-            <p className="text-gray-500 mt-2">
-              Tự động gửi danh sách đơn hàng
-              của tháng liền trước qua email.
-            </p>
-          </div>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-5 border-b border-gray-100">
 
-          {loading ? (
-            <div className="py-8 text-gray-500">
-              Đang tải cài đặt...
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">
+                Báo cáo đơn hàng tự động
+              </h2>
+
+              <p className="text-sm text-gray-500 mt-1">
+                Tự động gửi danh sách đơn hàng của tháng liền trước qua email.
+              </p>
             </div>
-          ) : (
-            <div className="space-y-6">
 
-              {/* ENABLE */}
-
-              <label className="flex items-center gap-3 cursor-pointer">
+            {!loading && (
+              <label className="flex items-center gap-2 cursor-pointer shrink-0 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
                 <input
                   type="checkbox"
                   checked={enabled}
@@ -338,109 +333,141 @@ export default function AdminPage() {
                       e.target.checked
                     )
                   }
-                  className="w-5 h-5"
+                  className="w-4 h-4"
                 />
 
-                <span className="font-semibold text-gray-700">
-                  Tự động gửi báo cáo
-                  hàng tháng
+                <span className="text-sm font-semibold text-gray-700">
+                  Tự động gửi hàng tháng
                 </span>
               </label>
+            )}
 
-              {/* EMAIL */}
+          </div>
 
-              <div>
-                <label className="block font-semibold text-gray-700 mb-2">
-                  Email nhận báo cáo
-                </label>
+          {loading ? (
+            <div className="py-8 text-sm text-gray-500">
+              Đang tải cài đặt...
+            </div>
+          ) : (
+            <div className="pt-5">
 
-                <input
-                  type="email"
-                  value={
-                    recipientEmail
-                  }
-                  onChange={(e) =>
-                    setRecipientEmail(
-                      e.target.value
-                    )
-                  }
-                  placeholder="example@gmail.com"
-                  className="w-full max-w-xl border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
-                />
+              {/* EMAIL + SCHEDULE */}
 
-                <p className="text-sm text-gray-500 mt-2">
-                  Có thể thay đổi email này
-                  bất cứ lúc nào.
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                {/* EMAIL */}
+
+                <div className="border border-gray-200 rounded-xl p-4">
+                  <div className="text-sm font-bold text-gray-800 mb-3">
+                    Email nhận báo cáo
+                  </div>
+
+                  <input
+                    type="email"
+                    value={
+                      recipientEmail
+                    }
+                    onChange={(e) =>
+                      setRecipientEmail(
+                        e.target.value
+                      )
+                    }
+                    placeholder="example@gmail.com"
+                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  />
+
+                  <p className="text-xs text-gray-500 mt-2">
+                    Có thể thay đổi email nhận báo cáo bất cứ lúc nào.
+                  </p>
+                </div>
+
+                {/* SCHEDULE */}
+
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+
+                  <div className="text-sm font-bold text-blue-800 mb-2">
+                    Lịch gửi hiện tại
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 py-1.5 border-b border-blue-100">
+                    <span className="text-sm text-gray-500">
+                      Thời gian
+                    </span>
+
+                    <span className="text-sm font-semibold text-gray-800 text-right">
+                      01:00 • Ngày 1 hàng tháng
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 py-1.5 border-b border-blue-100">
+                    <span className="text-sm text-gray-500">
+                      Múi giờ
+                    </span>
+
+                    <span className="text-sm font-medium text-gray-700 text-right">
+                      Việt Nam
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 pt-1.5">
+                    <span className="text-sm text-gray-500">
+                      Dữ liệu
+                    </span>
+
+                    <span className="text-sm font-medium text-gray-700 text-right">
+                      Tháng vừa kết thúc
+                    </span>
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* ACTION BAR */}
+
+              <div className="mt-5 pt-4 border-t border-gray-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+
+                <p className="text-xs text-gray-500">
+                  Gửi thử sẽ gửi báo cáo của tháng liền trước đến email đang nhập ở trên.
                 </p>
-              </div>
 
-              {/* SCHEDULE */}
+                <div className="flex items-center gap-2 shrink-0">
 
-              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5">
+                  <button
+                    type="button"
+                    onClick={
+                      handleSave
+                    }
+                    disabled={
+                      saving ||
+                      sending
+                    }
+                    className="h-9 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white text-sm font-semibold px-4 rounded-lg transition"
+                  >
+                    {saving
+                      ? "Đang lưu..."
+                      : "Lưu cài đặt"}
+                  </button>
 
-                <div className="font-bold text-blue-800 mb-2">
-                  Lịch gửi hiện tại
+                  <button
+                    type="button"
+                    onClick={
+                      handleSendTest
+                    }
+                    disabled={
+                      sending ||
+                      saving
+                    }
+                    className="h-9 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white text-sm font-semibold px-4 rounded-lg transition"
+                  >
+                    {sending
+                      ? "Đang gửi..."
+                      : "Gửi thử ngay"}
+                  </button>
+
                 </div>
-
-                <div className="text-gray-700">
-                  01:00 sáng ngày 1 hàng tháng
-                </div>
-
-                <div className="text-sm text-gray-500 mt-1">
-                  Múi giờ Việt Nam
-                  (Asia/Ho_Chi_Minh)
-                </div>
-
-                <div className="text-sm text-gray-500 mt-1">
-                  File gửi là báo cáo của
-                  tháng vừa kết thúc.
-                </div>
-
-              </div>
-
-              {/* BUTTONS */}
-
-              <div className="flex items-center gap-3">
-
-                <button
-                  type="button"
-                  onClick={
-                    handleSave
-                  }
-                  disabled={
-                    saving ||
-                    sending
-                  }
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold px-6 py-3 rounded-xl transition"
-                >
-                  {saving
-                    ? "Đang lưu..."
-                    : "Lưu cài đặt"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={
-                    handleSendTest
-                  }
-                  disabled={
-                    sending ||
-                    saving
-                  }
-                  className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-bold px-6 py-3 rounded-xl transition"
-                >
-                  {sending
-                    ? "Đang gửi..."
-                    : "Gửi thử ngay"}
-                </button>
 
               </div>
-
-              <p className="text-sm text-gray-500">
-                Gửi thử sẽ gửi báo cáo
-                của tháng liền trước đến
-                email đang nhập ở trên.
-              </p>
 
             </div>
           )}
