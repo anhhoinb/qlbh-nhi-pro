@@ -2688,15 +2688,37 @@ const itemShortName =
         });
 
   return (
-    <main className="min-h-screen bg-slate-100 text-black">
+    <main className="min-h-screen bg-slate-100 text-black pos-responsive">
+      <style>{`
+        @media (max-width: 767px) {
+          .pos-responsive { overflow-x: hidden; }
+          .pos-responsive .pos-top { height: auto; min-height: 56px; flex-wrap: wrap; gap: 8px; padding: 10px; }
+          .pos-responsive .pos-top-left { width: 100%; flex-wrap: wrap; gap: 8px; }
+          .pos-responsive .pos-search { width: 100%; order: 0; }
+          .pos-responsive .pos-search-results { width: 100%; max-height: 52vh; }
+          .pos-responsive .pos-search input { font-size: 16px; }
+          .pos-responsive .pos-barcode-controls { order: 1; }
+          .pos-responsive .pos-name-switch { order: 2; margin-left: 0; }
+          .pos-responsive .pos-tabs { order: 3; flex: 1 1 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 3px; }
+          .pos-responsive .pos-top-right { display: none; }
+          .pos-responsive .pos-body { height: auto; min-height: 0; flex-direction: column; padding-bottom: 20px; }
+          .pos-responsive .pos-cart { width: 100%; overflow: visible; min-height: 140px; }
+          .pos-responsive .pos-desktop-table { display: none; }
+          .pos-responsive .pos-payment { width: 100%; border-left: 0; border-top: 6px solid #e2e8f0; }
+          .pos-responsive .pos-payment-scroll { overflow: visible; }
+          .pos-responsive .pos-modal { width: calc(100vw - 24px); max-width: 100%; max-height: 85dvh; overflow-y: auto; }
+          .pos-responsive input, .pos-responsive select { font-size: 16px; }
+        }
+        @media (min-width: 768px) { .pos-mobile-cart { display: none; } }
+      `}</style>
 
       {/* THANH TRÊN */}
-      <div className="h-14 bg-slate-800 text-white flex items-center justify-between px-3 shadow-sm">
+      <div className="pos-top h-14 bg-slate-800 text-white flex items-center justify-between px-3 shadow-sm">
 
-        <div className="flex items-center gap-2 flex-1">
+        <div className="pos-top-left flex items-center gap-2 flex-1">
 
           <div
-            className="relative w-[500px]"
+            className="pos-search relative w-[500px]"
             onMouseEnter={() =>
               updateCurrentOrder({
                 showProductDropdown: true,
@@ -2726,7 +2748,7 @@ const itemShortName =
 
             {showProductDropdown && (
   <div
-    className="absolute top-full left-0 w-[720px] bg-white border rounded-xl shadow-lg z-50 max-h-96 overflow-auto mt-1"
+    className="pos-search-results absolute top-full left-0 w-[720px] bg-white border rounded-xl shadow-lg z-50 max-h-96 overflow-auto mt-1"
     onMouseLeave={() => {
       updateCurrentOrder({
         showProductDropdown: false,
@@ -2743,6 +2765,11 @@ const itemShortName =
                     <button
                       key={product.id}
                       type="button"
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        addToCart(product);
+                        updateCurrentOrder({ search: "", showProductDropdown: false });
+                      }}
                       onMouseDown={() => {
                         addToCart(product);
 
@@ -2874,7 +2901,7 @@ const itemShortName =
 
           </div>
 
-          <div className="flex rounded-lg overflow-hidden border border-white/40 ml-2">
+          <div className="pos-name-switch flex rounded-lg overflow-hidden border border-white/40 ml-2">
 
   <button
     type="button"
@@ -2902,7 +2929,7 @@ const itemShortName =
 
 </div>
 
-          <div className="flex items-center gap-1 ml-2 flex-1 min-w-0">
+          <div className="pos-tabs flex items-center gap-1 ml-2 flex-1 min-w-0">
 
             {orders.map((order) => (
               <div
@@ -3014,10 +3041,10 @@ const itemShortName =
       </div>
 
       {/* BODY */}
-      <div className="flex h-[calc(100vh-48px)]">
+      <div className="pos-body flex h-[calc(100vh-48px)]">
 
         {/* BÊN TRÁI */}
-        <section className="flex-1 bg-white overflow-auto relative">
+        <section className="pos-cart flex-1 bg-white overflow-auto relative">
 
   {cart.length === 0 ? (
     <div className="h-full flex items-center justify-center">
@@ -3053,7 +3080,7 @@ const itemShortName =
 
     </div>
   ) : (
-    <table className="w-full table-fixed border-collapse text-sm">
+    <table className="pos-desktop-table w-full table-fixed border-collapse text-sm">
       <colgroup>
         <col className="w-[60px]" />
         <col className="w-[90px]" />
@@ -3261,10 +3288,43 @@ const itemShortName =
     </table>
   )}
 
+  {cart.length > 0 && (
+    <div className="pos-mobile-cart md:hidden p-3 space-y-3">
+      <div className="font-bold text-slate-700 text-sm">Giỏ hàng ({cart.length} sản phẩm)</div>
+      {cart.map((item: any, index: number) => {
+        const lineTotal = Number(item.price || 0) * Number(item.quantity || 0);
+        const lineVat = useProductVat ? lineTotal * Number(item.tax || 0) / 100 : 0;
+        return (
+          <div key={item.id || index} className="border border-slate-200 rounded-xl p-3 bg-white shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-sm break-words">{getProductDisplayName(item)}</div>
+                <div className="text-xs text-slate-500 mt-1">{item.product_code || ""} · Tồn: {Number(item.stock || 0)} · {getUnitText(item.unit)}</div>
+              </div>
+              <button type="button" onClick={() => removeItem(item.id)} className="text-red-600 text-2xl px-2" aria-label="Xóa sản phẩm">×</button>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => decreaseQty(item.id)} className="w-10 h-10 rounded-lg bg-slate-100 font-bold text-xl">−</button>
+                <input type="number" inputMode="numeric" min="1" value={item.quantity} onChange={(e) => changeQty(item.id, Number(e.target.value))} className="w-14 h-10 border rounded-lg text-center" />
+                <button type="button" onClick={() => increaseQty(item.id)} className="w-10 h-10 rounded-lg bg-slate-100 font-bold text-xl">+</button>
+              </div>
+              <div className="text-right min-w-0">
+                <div className="text-xs text-slate-500">Đơn giá</div>
+                <input type="text" inputMode="numeric" value={formatInputMoney(item.price)} onChange={(e) => changePrice(item.id, parseInputMoney(e.target.value))} className="w-28 max-w-full border rounded-lg px-2 py-2 text-right text-sm" />
+              </div>
+            </div>
+            <div className="mt-2 text-right text-sm font-bold text-sky-700">Thành tiền: {formatMoney(lineTotal + lineVat)}đ</div>
+          </div>
+        );
+      })}
+    </div>
+  )}
+
 </section>
 
         {/* BÊN PHẢI */}
-        <aside className="w-[360px] bg-white border-l flex flex-col">
+        <aside className="pos-payment w-[360px] bg-white border-l flex flex-col">
 
           <div className="p-3 border-b">
 
@@ -3304,9 +3364,8 @@ const itemShortName =
                         <button
                           key={customer.id}
                           type="button"
-                          onMouseDown={() =>
-                            selectCustomer(customer)
-                          }
+                          onTouchEnd={(e) => { e.preventDefault(); selectCustomer(customer); }}
+                          onMouseDown={() => selectCustomer(customer)}
                           className="w-full text-left p-3 hover:bg-sky-50 border-b"
                         >
                           <div className="font-semibold text-black">
@@ -3378,7 +3437,7 @@ const itemShortName =
             </label>
           </div>
 
-          <div className="p-4 flex-1 overflow-auto space-y-4">
+          <div className="pos-payment-scroll p-4 flex-1 overflow-auto space-y-4">
 
             <div className="flex justify-between text-sm">
               <span>
@@ -3609,7 +3668,7 @@ const itemShortName =
       {showDiscountModal && (
   <div className="fixed inset-0 bg-black/40 z-[1000] flex items-start justify-center pt-10">
 
-    <div className="bg-white w-[460px] rounded-xl shadow-xl text-black overflow-hidden">
+    <div className="pos-modal bg-white w-[460px] rounded-xl shadow-xl text-black overflow-hidden">
 
       <div className="flex items-center justify-between px-5 py-4 border-b">
         <h2 className="text-xl font-bold">
