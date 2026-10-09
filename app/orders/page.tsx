@@ -2187,7 +2187,7 @@ export default function OrdersPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-100 p-6">
+    <main className="min-h-screen bg-slate-100 p-3 pb-24 sm:p-6">
       {exportOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
@@ -2553,7 +2553,7 @@ export default function OrdersPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full">
+        <table className="hidden w-full md:table">
           <thead className="bg-slate-800 text-white">
             <tr>
               <th className="px-3 py-3 text-center w-14">
@@ -2687,6 +2687,53 @@ export default function OrdersPage() {
             )}
           </tbody>
         </table>
+
+        {/* Danh sách đơn dạng thẻ dành riêng cho màn hình điện thoại. */}
+        <div className="divide-y divide-slate-100 md:hidden">
+          {currentOrders.map((item) => {
+            const status = String(item.status || "").toLowerCase();
+            const statusLabel = status === "cancelled" ? "Đã hủy" :
+              status === "returned" || status === "return" ? "Đã trả hàng" :
+              status === "partially_returned" ? "Trả một phần" : "Hoàn thành";
+            const statusClass = status === "cancelled" ? "bg-rose-100 text-rose-700" :
+              status === "returned" || status === "return" ? "bg-amber-100 text-amber-700" :
+              status === "partially_returned" ? "bg-yellow-100 text-yellow-700" :
+              "bg-emerald-100 text-emerald-700";
+            return (
+              <div key={item.id} className="p-3.5">
+                <div className="flex items-start gap-3">
+                  <input type="checkbox" aria-label={`Chọn đơn ${getOrderCode(item)}`}
+                    checked={selectedOrderIds.includes(item.id)}
+                    onChange={() => toggleSelectOrder(item.id)}
+                    className="mt-1 h-5 w-5 shrink-0 accent-sky-600" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <button type="button" onClick={() => setSelectedOrder(item)}
+                        className={`text-left text-base font-bold ${hasVatOrCompanyInfo(item) ? "text-rose-600" : "text-sky-700"}`}>
+                        {getOrderCode(item)}
+                      </button>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusClass}`}>{statusLabel}</span>
+                    </div>
+                    <div className="mt-1 break-words text-sm font-medium text-slate-800">{getCustomerName(item)}</div>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <span className="text-base font-bold text-slate-900">{formatMoney(getGrandTotal(item))}đ</span>
+                      <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{getPaymentMethodShort(item)}</span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap justify-between gap-1 text-xs text-slate-500">
+                      <span>{formatDate(item.createdAt)}</span>
+                      <span className="max-w-full truncate">{getCreatedBy(item)}</span>
+                    </div>
+                    <button type="button" onClick={() => setSelectedOrder(item)}
+                      className="mt-3 w-full rounded-lg border border-sky-200 bg-sky-50 px-3 py-2.5 text-sm font-semibold text-sky-700">
+                      Xem chi tiết đơn hàng
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {currentOrders.length === 0 && <p className="p-6 text-center text-sm text-slate-500">Chưa có đơn hàng nào</p>}
+        </div>
 
         <div className="flex flex-col gap-3 border-t border-slate-200 bg-white px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-2 text-sm text-slate-700">
@@ -3014,7 +3061,7 @@ export default function OrdersPage() {
               </button>
             </div>
 
-            <div className="p-5 max-h-[78vh] overflow-auto bg-slate-50">
+            <div className="max-h-[78vh] overflow-auto bg-slate-50 p-3 sm:p-5">
               <div className="grid grid-cols-1 gap-5 mb-5 lg:grid-cols-[1.65fr_0.85fr]">
                 <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
                   <h3 className="font-bold text-lg mb-4 text-slate-800">
@@ -3022,7 +3069,7 @@ export default function OrdersPage() {
                   </h3>
 
                   <div className="space-y-2.5 text-sm">
-                    <div className="grid grid-cols-[118px_1fr] items-start gap-2">
+                    <div className="grid grid-cols-[90px_minmax(0,1fr)] items-start gap-2 sm:grid-cols-[118px_1fr]">
                       <span className="text-slate-500">
                         Người mua hàng :
                       </span>
@@ -3049,7 +3096,7 @@ export default function OrdersPage() {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-[118px_1fr] items-start gap-2">
+                    <div className="grid grid-cols-[90px_minmax(0,1fr)] items-start gap-2 sm:grid-cols-[118px_1fr]">
                       <span className="text-slate-500">
                         Tên công ty :
                       </span>
@@ -3076,8 +3123,8 @@ export default function OrdersPage() {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid grid-cols-[92px_1fr] items-start gap-2">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                      <div className="grid grid-cols-[90px_minmax(0,1fr)] items-start gap-2 sm:grid-cols-[92px_1fr]">
                         <span className="text-slate-500">
                           Mã số thuế :
                         </span>
@@ -3098,7 +3145,7 @@ export default function OrdersPage() {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-[94px_1fr] items-start gap-2">
+                      <div className="grid grid-cols-[90px_minmax(0,1fr)] items-start gap-2 sm:grid-cols-[94px_1fr]">
                         <span className="text-slate-500">
                           Số điện thoại :
                         </span>
@@ -3120,7 +3167,7 @@ export default function OrdersPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-[118px_1fr] items-start gap-2">
+                    <div className="grid grid-cols-[90px_minmax(0,1fr)] items-start gap-2 sm:grid-cols-[118px_1fr]">
                       <span className="text-slate-500">
                         Email :
                       </span>
@@ -3141,7 +3188,7 @@ export default function OrdersPage() {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-[118px_1fr] items-start gap-2">
+                    <div className="grid grid-cols-[90px_minmax(0,1fr)] items-start gap-2 sm:grid-cols-[118px_1fr]">
                       <span className="text-slate-500">
                         Địa chỉ :
                       </span>
@@ -3235,7 +3282,7 @@ export default function OrdersPage() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl border overflow-hidden mb-5">
+              <div className="bg-white rounded-2xl border overflow-x-auto mb-5">
                 <div className="px-5 py-4 border-b flex items-center justify-between">
                   <h3 className="font-bold text-lg text-slate-800">
                     Sản phẩm trong đơn
