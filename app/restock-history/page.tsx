@@ -143,8 +143,8 @@ export default function RestockHistoryPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-100 p-6 text-black">
-      <div className="max-w-[1400px] mx-auto space-y-6">
+    <main className="min-h-screen bg-slate-100 px-3 py-4 text-black">
+      <div className="w-full max-w-none space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-800">
             Lịch sử nhập hàng
@@ -251,8 +251,8 @@ export default function RestockHistoryPage() {
                           className="bg-slate-100 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-bold"
                         >
                           {isOpen
-                            ? "▲"
-                            : "▼"}
+                            ? "«"
+                            : "»"}
                         </button>
                       </td>
                     </tr>

@@ -697,41 +697,47 @@ if (duplicateCode) {
         })
       );
 
+    // Chỉ kiểm tra trùng tên khi người dùng thực sự đổi tên chính.
+    const originalMainName = String(
+      editingProduct.main_name || editingProduct.name || ""
+    );
+    const mainNameChanged =
+      normalizeProductName(editMainName) !==
+      normalizeProductName(originalMainName);
+
     if (
+      mainNameChanged &&
       hasDuplicateProductName(
         latestProducts,
         editMainName,
         editingProduct.id
       )
     ) {
-      alert(
-        `Tên sản phẩm "${editMainName.trim()}" đã tồn tại`
-      );
+      alert(`Tên sản phẩm "${editMainName.trim()}" đã tồn tại`);
       return;
     }
 
-    const normalizedCode = String(
-      editProductCode || ""
-    )
+    // Không chặn chỉnh tồn kho vì mã đã tồn tại từ trước.
+    const normalizedCode = String(editProductCode || "")
+      .trim()
+      .toUpperCase();
+    const originalCode = String(editingProduct.product_code || "")
       .trim()
       .toUpperCase();
 
-    const duplicateCode = latestProducts.find(
-      (item: any) =>
-        item.id !== editingProduct.id &&
-        String(
-          item.product_code || ""
-        )
-          .trim()
-          .toUpperCase() ===
-        normalizedCode
-    );
-
-    if (duplicateCode) {
-      alert(
-        `Mã sản phẩm "${editProductCode}" đã tồn tại`
+    if (normalizedCode !== originalCode) {
+      const duplicateCode = latestProducts.find(
+        (item: any) =>
+          item.id !== editingProduct.id &&
+          String(item.product_code || "")
+            .trim()
+            .toUpperCase() === normalizedCode
       );
-      return;
+
+      if (duplicateCode) {
+        alert(`Mã sản phẩm "${editProductCode}" đã tồn tại`);
+        return;
+      }
     }
 
     await updateDoc(
@@ -1196,8 +1202,8 @@ successCount++;
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 p-6">
-      <div className="w-full max-w-[1800px] mx-auto">
+    <main className="min-h-screen bg-slate-100 px-3 py-4">
+      <div className="w-full max-w-none">
         {/* HEADER */}
         <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 mb-8">
           <div>

@@ -1511,19 +1511,12 @@ setTimeout(() => {
     };
 
   const openInvoicePrintPreview = (orderId: string) => {
-    const oldFrame =
-      document.getElementById("pos-invoice-print-frame");
+    const oldFrame = document.getElementById("pos-invoice-print-frame");
+    if (oldFrame) oldFrame.remove();
 
-    if (oldFrame) {
-      oldFrame.remove();
-    }
-
-    const printFrame =
-      document.createElement("iframe");
-
-    printFrame.id =
-      "pos-invoice-print-frame";
-
+    // Mỗi lần in chỉ lắng nghe đúng hóa đơn hiện tại.
+    const printFrame = document.createElement("iframe");
+    printFrame.id = "pos-invoice-print-frame";
     printFrame.style.position = "fixed";
     printFrame.style.right = "0";
     printFrame.style.bottom = "0";
@@ -1533,28 +1526,39 @@ setTimeout(() => {
     printFrame.style.opacity = "0";
     printFrame.style.pointerEvents = "none";
 
-    printFrame.src =
-      `/print-order/invoice?id=${encodeURIComponent(orderId)}`;
+    let printed = false;
+    let readyTimeout: number;
+    const onInvoiceReady = (event: MessageEvent) => {
+      if (
+        event.origin !== window.location.origin ||
+        event.source !== printFrame.contentWindow ||
+        event.data?.type !== "POS_INVOICE_READY" ||
+        event.data?.orderId !== orderId ||
+        printed
+      ) return;
 
-    document.body.appendChild(
-      printFrame
-    );
-
-    printFrame.onload = () => {
-      // Trang invoice còn phải đọc đơn hàng và mẫu in từ Firestore.
-      // Chờ render bill hoàn tất rồi mới mở Print Preview.
-      window.setTimeout(() => {
-        try {
-          printFrame.contentWindow?.focus();
-          printFrame.contentWindow?.print();
-        } catch (error) {
-          console.error(
-            "Không mở được bản in hóa đơn:",
-            error
-          );
-        }
-      }, 2000);
+      printed = true;
+      window.clearTimeout(readyTimeout);
+      window.removeEventListener("message", onInvoiceReady);
+      try {
+        printFrame.contentWindow?.focus();
+        printFrame.contentWindow?.print();
+      } catch (error) {
+        console.error("Không mở được bản in hóa đơn:", error);
+      }
     };
+
+    window.addEventListener("message", onInvoiceReady);
+    // Không tự in khi dữ liệu chưa sẵn sàng; chỉ thông báo nếu quá lâu.
+    readyTimeout = window.setTimeout(() => {
+      if (!printed && printFrame.isConnected) {
+        console.warn("Hóa đơn chưa tải xong sau 15 giây. Vui lòng kiểm tra kết nối.");
+      }
+      window.removeEventListener("message", onInvoiceReady);
+    }, 15000);
+
+    printFrame.src = `/print-order/invoice?id=${encodeURIComponent(orderId)}`;
+    document.body.appendChild(printFrame);
   };
 
   const getNextOrderCode =
@@ -2272,9 +2276,8 @@ console.log(
         });
       });
 
-setTimeout(() => {
-  resetOrRemoveCurrentOrder();
-}, 800);
+// Chuyển đơn ngay khi giao dịch trừ kho đã hoàn tất.
+resetOrRemoveCurrentOrder();
 };
   const openDiscountModal = () => {
     setTempDiscountType(discountType);

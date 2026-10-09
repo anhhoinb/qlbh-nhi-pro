@@ -155,8 +155,8 @@ export default function InventoryCheckPage() {
   }, [checks, keyword]);
 
   return (
-    <main className="min-h-screen bg-slate-100 p-5 text-black">
-      <div className="mx-auto max-w-[1400px]">
+    <main className="min-h-screen bg-slate-100 px-3 py-4 text-black">
+      <div className="w-full max-w-none">
 
         <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
           <div>

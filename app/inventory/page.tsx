@@ -287,8 +287,8 @@ export default function InventoryPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-100 p-6 text-black">
-      <div className="max-w-[1400px] mx-auto space-y-5">
+    <main className="min-h-screen bg-slate-100 px-3 py-4 text-black">
+      <div className="w-full max-w-none space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-800">
