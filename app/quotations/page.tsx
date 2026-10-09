@@ -1,12 +1,8 @@
 "use client";
 
-
-
 import { useEffect, useMemo, useState } from "react";
 
 import { useRouter } from "next/navigation";
-
-
 
 import {
 
@@ -36,11 +32,7 @@ import {
 
 } from "firebase/firestore";
 
-
-
 import { db } from "@/lib/firebase";
-
-
 
 type Quotation = {
 
@@ -90,8 +82,6 @@ type Quotation = {
 
 };
 
-
-
 function toNumber(value: unknown) {
 
   const number = Number(value || 0);
@@ -100,15 +90,11 @@ function toNumber(value: unknown) {
 
 }
 
-
-
 function formatMoney(value: unknown) {
 
   return toNumber(value).toLocaleString("vi-VN");
 
 }
-
-
 
 function formatDate(value: any, fallback?: string) {
 
@@ -126,8 +112,6 @@ function formatDate(value: any, fallback?: string) {
 
         : new Date(value);
 
-
-
     if (!Number.isNaN(date.getTime())) {
 
       return date.toLocaleString("vi-VN");
@@ -136,13 +120,9 @@ function formatDate(value: any, fallback?: string) {
 
   }
 
-
-
   if (fallback) {
 
     const date = new Date(`${fallback}T00:00:00`);
-
-
 
     if (!Number.isNaN(date.getTime())) {
 
@@ -152,21 +132,15 @@ function formatDate(value: any, fallback?: string) {
 
   }
 
-
-
   return "---";
 
 }
-
-
 
 function getQuotationCode(item: Quotation) {
 
   return item.quotationCode || item.quotation_code || item.id;
 
 }
-
-
 
 function getStatusLabel(status?: string) {
 
@@ -180,8 +154,6 @@ function getStatusLabel(status?: string) {
 
 }
 
-
-
 function getStatusClass(status?: string) {
 
   if (status === "paid") {
@@ -190,15 +162,11 @@ function getStatusClass(status?: string) {
 
   }
 
-
-
   if (status === "confirmed") {
 
     return "bg-blue-100 text-blue-700";
 
   }
-
-
 
   if (status === "cancelled") {
 
@@ -206,19 +174,13 @@ function getStatusClass(status?: string) {
 
   }
 
-
-
   return "bg-slate-100 text-gray-700";
 
 }
 
-
-
 export default function QuotationsPage() {
 
   const router = useRouter();
-
-
 
   const [quotations, setQuotations] = useState<Quotation[]>([]);
 
@@ -236,19 +198,13 @@ export default function QuotationsPage() {
 
   const [pageSize, setPageSize] = useState(10);
 
-
-
   const loadQuotations = async () => {
 
     try {
 
       setLoading(true);
 
-
-
       let snapshot;
-
-
 
       try {
 
@@ -270,8 +226,6 @@ export default function QuotationsPage() {
 
       }
 
-
-
       const data = snapshot.docs.map((item) => ({
 
         id: item.id,
@@ -279,8 +233,6 @@ export default function QuotationsPage() {
         ...item.data(),
 
       })) as Quotation[];
-
-
 
       data.sort((a, b) => {
 
@@ -292,8 +244,6 @@ export default function QuotationsPage() {
 
           0;
 
-
-
         const bTime =
 
           b.createdAt?.seconds ||
@@ -302,13 +252,9 @@ export default function QuotationsPage() {
 
           0;
 
-
-
         return bTime - aTime;
 
       });
-
-
 
       setQuotations(data);
 
@@ -326,29 +272,21 @@ export default function QuotationsPage() {
 
   };
 
-
-
   useEffect(() => {
 
     loadQuotations();
 
   }, []);
 
-
-
   const filteredQuotations = useMemo(() => {
 
     const keyword = search.trim().toLowerCase();
-
-
 
     if (!keyword) {
 
       return quotations;
 
     }
-
-
 
     return quotations.filter((item) => {
 
@@ -368,8 +306,6 @@ export default function QuotationsPage() {
 
       ];
 
-
-
       return values.some((value) =>
 
         String(value || "")
@@ -384,15 +320,11 @@ export default function QuotationsPage() {
 
   }, [quotations, search]);
 
-
-
   useEffect(() => {
 
     setCurrentPage(1);
 
   }, [search, pageSize]);
-
-
 
   const totalPages = Math.max(
 
@@ -401,8 +333,6 @@ export default function QuotationsPage() {
     Math.ceil(filteredQuotations.length / pageSize)
 
   );
-
-
 
   useEffect(() => {
 
@@ -414,8 +344,6 @@ export default function QuotationsPage() {
 
   }, [currentPage, totalPages]);
 
-
-
   const paginatedQuotations = useMemo(() => {
 
     const start = (currentPage - 1) * pageSize;
@@ -424,13 +352,9 @@ export default function QuotationsPage() {
 
   }, [filteredQuotations, currentPage, pageSize]);
 
-
-
   const visiblePages = useMemo(() => {
 
     const maxButtons = 5;
-
-
 
     if (totalPages <= maxButtons) {
 
@@ -438,13 +362,9 @@ export default function QuotationsPage() {
 
     }
 
-
-
     let start = Math.max(1, currentPage - 2);
 
     let end = start + maxButtons - 1;
-
-
 
     if (end > totalPages) {
 
@@ -453,8 +373,6 @@ export default function QuotationsPage() {
       start = end - maxButtons + 1;
 
     }
-
-
 
     return Array.from(
 
@@ -466,8 +384,6 @@ export default function QuotationsPage() {
 
   }, [currentPage, totalPages]);
 
-
-
   const listStart =
 
     filteredQuotations.length === 0
@@ -475,8 +391,6 @@ export default function QuotationsPage() {
       ? 0
 
       : (currentPage - 1) * pageSize + 1;
-
-
 
   const listEnd = Math.min(
 
@@ -486,8 +400,6 @@ export default function QuotationsPage() {
 
   );
 
-
-
   const findExistingCustomerId = async (buyer: any) => {
 
     const phone = String(buyer?.phone || "").trim();
@@ -496,19 +408,13 @@ export default function QuotationsPage() {
 
     const email = String(buyer?.email || "").trim();
 
-
-
     const lookups: Array<{ field: string; value: string }> = [];
-
-
 
     if (phone) lookups.push({ field: "phone", value: phone });
 
     if (taxCode) lookups.push({ field: "taxCode", value: taxCode });
 
     if (email) lookups.push({ field: "email", value: email });
-
-
 
     for (const lookup of lookups) {
 
@@ -526,8 +432,6 @@ export default function QuotationsPage() {
 
       );
 
-
-
       if (!snapshot.empty) {
 
         return snapshot.docs[0].id;
@@ -536,13 +440,9 @@ export default function QuotationsPage() {
 
     }
 
-
-
     return "";
 
   };
-
-
 
   const markAsPaid = async (
 
@@ -560,13 +460,9 @@ export default function QuotationsPage() {
 
     }
 
-
-
     const paymentMethodText =
 
       paymentMethod === "cash" ? "Tiền mặt" : "Chuyển khoản";
-
-
 
     try {
 
@@ -574,15 +470,11 @@ export default function QuotationsPage() {
 
       setPayingId(item.id);
 
-
-
       const quotationRef = doc(db, "quotations", item.id);
 
       const orderRef = doc(collection(db, "orders"));
 
       const orderCounterRef = doc(db, "settings", "order_counter");
-
-
 
       const existingCustomerId = await findExistingCustomerId(item.buyer);
 
@@ -592,17 +484,11 @@ export default function QuotationsPage() {
 
         : doc(collection(db, "customers"));
 
-
-
       let createdOrderCode = "";
-
-
 
       await runTransaction(db, async (transaction) => {
 
         const quotationSnap = await transaction.get(quotationRef);
-
-
 
         if (!quotationSnap.exists()) {
 
@@ -610,11 +496,7 @@ export default function QuotationsPage() {
 
         }
 
-
-
         const quotationData: any = quotationSnap.data();
-
-
 
         if (quotationData.status === "paid" || quotationData.orderId) {
 
@@ -622,15 +504,11 @@ export default function QuotationsPage() {
 
         }
 
-
-
         const quotationItems = Array.isArray(quotationData.items)
 
           ? quotationData.items
 
           : [];
-
-
 
         if (quotationItems.length === 0) {
 
@@ -638,15 +516,11 @@ export default function QuotationsPage() {
 
         }
 
-
-
         const stockItems = quotationItems.filter(
 
           (product: any) => !product.isManual
 
         );
-
-
 
         const counterSnap = await transaction.get(orderCounterRef);
 
@@ -656,11 +530,7 @@ export default function QuotationsPage() {
 
           : 1;
 
-
-
         createdOrderCode = `SON${String(nextNumber).padStart(5, "0")}`;
-
-
 
         const productRefs = stockItems.map((product: any) =>
 
@@ -668,11 +538,7 @@ export default function QuotationsPage() {
 
         );
 
-
-
         const productSnapshots: DocumentSnapshot<DocumentData>[] = [];
-
-
 
         for (const productRef of productRefs) {
 
@@ -680,21 +546,15 @@ export default function QuotationsPage() {
 
         }
 
-
-
         productSnapshots.forEach((snapshot, index) => {
 
           const quotationProduct = stockItems[index];
-
-
 
           if (!quotationProduct) {
 
             throw new Error("Dữ liệu sản phẩm báo giá không hợp lệ");
 
           }
-
-
 
           const productName =
 
@@ -708,29 +568,21 @@ export default function QuotationsPage() {
 
             "Không xác định";
 
-
-
           if (!snapshot.exists()) {
 
             throw new Error(`Không tìm thấy sản phẩm trong kho: ${productName}`);
 
           }
 
-
-
           const currentStock = Number(snapshot.data()?.stock || 0);
 
           const quantity = Number(quotationProduct.quantity || 0);
-
-
 
           if (quantity <= 0) {
 
             throw new Error(`Số lượng không hợp lệ: ${productName}`);
 
           }
-
-
 
           if (quantity > currentStock) {
 
@@ -743,8 +595,6 @@ export default function QuotationsPage() {
           }
 
         });
-
-
 
         const orderItems = quotationItems.map((product: any) => ({
 
@@ -812,8 +662,6 @@ export default function QuotationsPage() {
 
         }));
 
-
-
         const buyer = quotationData.buyer || {};
 
         const customerName =
@@ -832,15 +680,11 @@ export default function QuotationsPage() {
 
         const customerTaxCode = String(buyer.taxCode || "").trim();
 
-
-
         const orderTotal = Number(quotationData.total || 0);
 
         const cashAmount = paymentMethod === "cash" ? orderTotal : 0;
 
         const transferAmount = paymentMethod === "bank" ? orderTotal : 0;
-
-
 
         // Khi thanh toán báo giá, tự lưu khách hàng vào danh sách Khách hàng.
 
@@ -896,15 +740,11 @@ export default function QuotationsPage() {
 
         }
 
-
-
         transaction.set(orderRef, {
 
           orderCode: createdOrderCode,
 
           order_code: createdOrderCode,
-
-
 
           source: "quotation",
 
@@ -917,8 +757,6 @@ export default function QuotationsPage() {
             quotationData.quotation_code ||
 
             item.id,
-
-
 
           customer: {
 
@@ -958,13 +796,9 @@ export default function QuotationsPage() {
 
           customerTaxCode,
 
-
-
           items: orderItems,
 
           list: orderItems,
-
-
 
           subtotal: Number(quotationData.subtotal || 0),
 
@@ -982,8 +816,6 @@ export default function QuotationsPage() {
 
           discount: 0,
 
-
-
           total: orderTotal,
 
           finalTotal: orderTotal,
@@ -994,8 +826,6 @@ export default function QuotationsPage() {
 
           totalAmount: orderTotal,
 
-
-
           paymentMethod,
 
           payment_method: paymentMethod,
@@ -1003,8 +833,6 @@ export default function QuotationsPage() {
           paymentMethodText,
 
           payment_method_text: paymentMethodText,
-
-
 
           splitPayment: {
 
@@ -1030,8 +858,6 @@ export default function QuotationsPage() {
 
           moneyBank: transferAmount,
 
-
-
           paidAmount: orderTotal,
 
           paid_amount: orderTotal,
@@ -1050,8 +876,6 @@ export default function QuotationsPage() {
 
           debtAmount: 0,
 
-
-
           payments: [
 
             {
@@ -1066,8 +890,6 @@ export default function QuotationsPage() {
 
           ],
 
-
-
           status: "completed",
 
           stockDeducted: true,
@@ -1080,23 +902,17 @@ export default function QuotationsPage() {
 
         });
 
-
-
         stockItems.forEach((product: any, index: number) => {
 
           const snapshot = productSnapshots[index];
 
           const productRef = productRefs[index];
 
-
-
           if (!snapshot || !productRef) {
 
             throw new Error("Không tìm thấy dữ liệu sản phẩm để trừ kho");
 
           }
-
-
 
           const productData: any = snapshot.data();
 
@@ -1106,8 +922,6 @@ export default function QuotationsPage() {
 
           const newStock = currentStock - quantity;
 
-
-
           transaction.update(productRef, {
 
             stock: newStock,
@@ -1116,11 +930,7 @@ export default function QuotationsPage() {
 
           });
 
-
-
           const movementRef = doc(collection(db, "inventory_movements"));
-
-
 
           transaction.set(movementRef, {
 
@@ -1184,8 +994,6 @@ export default function QuotationsPage() {
 
         });
 
-
-
         transaction.set(
 
           orderCounterRef,
@@ -1195,8 +1003,6 @@ export default function QuotationsPage() {
           { merge: true }
 
         );
-
-
 
         transaction.update(quotationRef, {
 
@@ -1217,8 +1023,6 @@ export default function QuotationsPage() {
         });
 
       });
-
-
 
       setQuotations((prev) =>
 
@@ -1243,8 +1047,6 @@ export default function QuotationsPage() {
         )
 
       );
-
-
 
       alert(
 
@@ -1274,8 +1076,6 @@ export default function QuotationsPage() {
 
   };
 
-
-
   const deleteQuotation = async (item: Quotation) => {
 
     if (item.status === "paid") {
@@ -1286,37 +1086,25 @@ export default function QuotationsPage() {
 
     }
 
-
-
     const confirmed = window.confirm(
 
       `Bạn có chắc muốn xóa báo giá ${getQuotationCode(item)} không?\n\nThao tác này không thể hoàn tác.`
 
     );
 
-
-
     if (!confirmed) return;
-
-
 
     try {
 
       setDeletingId(item.id);
 
-
-
       await deleteDoc(doc(db, "quotations", item.id));
-
-
 
       setQuotations((prev) =>
 
         prev.filter((quotation) => quotation.id !== item.id)
 
       );
-
-
 
       alert("Đã xóa báo giá");
 
@@ -1334,8 +1122,6 @@ export default function QuotationsPage() {
 
   };
 
-
-
   return (
 
     <main className="min-h-screen bg-slate-100 p-5 text-black">
@@ -1352,8 +1138,6 @@ export default function QuotationsPage() {
 
             </h1>
 
-
-
             <p className="mt-1 text-sm text-slate-500">
 
               Xem lại, in lại và quản lý các bảng báo giá đã lưu.
@@ -1361,8 +1145,6 @@ export default function QuotationsPage() {
             </p>
 
           </div>
-
-
 
           <button
 
@@ -1380,8 +1162,6 @@ export default function QuotationsPage() {
 
         </div>
 
-
-
         <div className="mb-5 rounded-2xl bg-white p-4 shadow-sm">
 
           <input
@@ -1398,11 +1178,9 @@ export default function QuotationsPage() {
 
         </div>
 
+        <div className="overflow-visible rounded-2xl bg-white border border-slate-200 shadow-sm">
 
-
-        <div className="overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-sm">
-
-          <div className="overflow-x-auto">
+          <div className="max-lg:overflow-x-auto lg:overflow-visible">
 
             <table className="w-full min-w-[1200px] border-collapse">
 
@@ -1431,8 +1209,6 @@ export default function QuotationsPage() {
                 </tr>
 
               </thead>
-
-
 
               <tbody>
 
@@ -1490,8 +1266,6 @@ export default function QuotationsPage() {
 
                       </td>
 
-
-
                       <td className="p-3">
 
                         {formatDate(
@@ -1504,8 +1278,6 @@ export default function QuotationsPage() {
 
                       </td>
 
-
-
                       <td className="p-3">
 
                         <div className="font-semibold">
@@ -1513,8 +1285,6 @@ export default function QuotationsPage() {
                           {item.buyer?.companyName || "---"}
 
                         </div>
-
-
 
                         {(item.buyer?.phone || item.buyer?.email) && (
 
@@ -1532,8 +1302,6 @@ export default function QuotationsPage() {
 
                       </td>
 
-
-
                       <td className="px-4 py-3 text-center">
 
                         <div className="group relative inline-flex">
@@ -1543,8 +1311,6 @@ export default function QuotationsPage() {
                             {item.items?.length || 0}
 
                           </span>
-
-
 
                           {Array.isArray(item.items) && item.items.length > 0 && (
 
@@ -1557,8 +1323,6 @@ export default function QuotationsPage() {
                                   Sản phẩm trong báo giá ({item.items.length})
 
                                 </div>
-
-
 
                                 <div className="max-h-[360px] overflow-y-auto overscroll-contain p-2">
 
@@ -1576,8 +1340,6 @@ export default function QuotationsPage() {
 
                                       "Sản phẩm";
 
-
-
                                     const productCode =
 
                                       product.product_code ||
@@ -1586,15 +1348,11 @@ export default function QuotationsPage() {
 
                                       "";
 
-
-
                                     const quantity = Number(
 
                                       product.quantity || product.qty || 0
 
                                     );
-
-
 
                                     return (
 
@@ -1614,8 +1372,6 @@ export default function QuotationsPage() {
 
                                           </div>
 
-
-
                                           {productCode && (
 
                                             <div className="mt-0.5 text-xs text-slate-500">
@@ -1627,8 +1383,6 @@ export default function QuotationsPage() {
                                           )}
 
                                         </div>
-
-
 
                                         <div className="shrink-0 whitespace-nowrap rounded-lg bg-sky-50 px-2.5 py-1 text-sm font-bold text-sky-700">
 
@@ -1654,15 +1408,11 @@ export default function QuotationsPage() {
 
                       </td>
 
-
-
                       <td className="px-4 py-3 text-right">
 
                         {formatMoney(item.subtotal)}đ
 
                       </td>
-
-
 
                       <td className="px-4 py-3 text-right">
 
@@ -1670,15 +1420,11 @@ export default function QuotationsPage() {
 
                       </td>
 
-
-
                       <td className="px-4 py-3 text-right font-bold text-red-600">
 
                         {formatMoney(item.total)}đ
 
                       </td>
-
-
 
                       <td className="px-4 py-3 text-center">
 
@@ -1698,10 +1444,10 @@ export default function QuotationsPage() {
 
                       </td>
 
-
-
                       <td className="px-3 py-1">
+
                           <div className="ml-auto grid w-[210px] grid-cols-[65px_65px_65px] gap-x-0 gap-y-0.5">
+
                             <button
 
                             type="button"
@@ -1729,6 +1475,7 @@ export default function QuotationsPage() {
                             Xem
 
                           </button>
+
                             <button
 
                               type="button"
@@ -1750,6 +1497,7 @@ export default function QuotationsPage() {
                               {payingId === item.id ? "Đang xử lý" : "T.Toán"}
 
                             </button>
+
                             <button
 
                               type="button"
@@ -1759,8 +1507,6 @@ export default function QuotationsPage() {
                               onClick={() => {
 
                                 if (item.status === "paid") return;
-
-
 
                                 router.push(
 
@@ -1781,19 +1527,33 @@ export default function QuotationsPage() {
                               Sửa
 
                             </button>
+
                             <button
+
                               type="button"
+
                               onClick={() =>
+
                                 router.push(
+
                                   `/quotations/create?copyId=${encodeURIComponent(
+
                                     item.id
+
                                   )}`
+
                                 )
+
                               }
+
                               className="w-full leading-5 border-b border-slate-300 px-1 py-1 text-[11px] font-semibold text-violet-700 hover:bg-violet-50"
+
                             >
+
                               Sao chép
+
                             </button>
+
                             <button
 
                               type="button"
@@ -1821,6 +1581,7 @@ export default function QuotationsPage() {
                               In
 
                             </button>
+
                             <button
 
                               type="button"
@@ -1840,7 +1601,9 @@ export default function QuotationsPage() {
                               {deletingId === item.id ? "Đang xóa" : "Xóa"}
 
                             </button>
+
                           </div>
+
                         </td>
 
                     </tr>
@@ -1856,8 +1619,6 @@ export default function QuotationsPage() {
           </div>
 
         </div>
-
-
 
         <div className="mt-4 flex flex-col gap-3 text-sm text-slate-600 lg:flex-row lg:items-center lg:justify-end">
 
@@ -1895,8 +1656,6 @@ export default function QuotationsPage() {
 
             </div>
 
-
-
             <div className="whitespace-nowrap">
 
               Từ <strong>{listStart}</strong> đến <strong>{listEnd}</strong> trên tổng{" "}
@@ -1904,8 +1663,6 @@ export default function QuotationsPage() {
               <strong>{filteredQuotations.length}</strong>
 
             </div>
-
-
 
             <div className="flex items-center gap-1">
 
@@ -1928,8 +1685,6 @@ export default function QuotationsPage() {
                 &lt;
 
               </button>
-
-
 
               {visiblePages.map((page) => (
 
@@ -1958,8 +1713,6 @@ export default function QuotationsPage() {
                 </button>
 
               ))}
-
-
 
               <button
 
@@ -1993,8 +1746,6 @@ export default function QuotationsPage() {
 
       </div>
 
-
-
       {paymentQuotation && (
 
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -2007,15 +1758,11 @@ export default function QuotationsPage() {
 
             </h2>
 
-
-
             <p className="mt-2 text-sm text-slate-600">
 
               Báo giá <strong>{getQuotationCode(paymentQuotation)}</strong>
 
             </p>
-
-
 
             <p className="mt-3 text-sm text-slate-600">
 
@@ -2024,8 +1771,6 @@ export default function QuotationsPage() {
               sẽ tạo đơn hàng và trừ tồn kho các sản phẩm trong kho.
 
             </p>
-
-
 
             <div className="mt-5 grid grid-cols-2 gap-3">
 
@@ -2043,8 +1788,6 @@ export default function QuotationsPage() {
 
               </button>
 
-
-
               <button
 
                 type="button"
@@ -2060,8 +1803,6 @@ export default function QuotationsPage() {
               </button>
 
             </div>
-
-
 
             <button
 
