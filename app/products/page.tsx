@@ -1202,12 +1202,12 @@ successCount++;
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 px-3 py-4">
+    <main className="min-h-screen min-w-0 bg-slate-100 px-3 py-4">
       <div className="w-full max-w-none">
         {/* HEADER */}
         <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-sky-700">
+            <h1 className="text-2xl sm:text-3xl xl:text-4xl font-bold text-sky-700">
               Quản lý sản phẩm
             </h1>
 
@@ -1216,7 +1216,7 @@ successCount++;
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
             
             <input
               ref={fileInputRef}
@@ -1228,14 +1228,14 @@ successCount++;
 <button
   type="button"
   onClick={downloadProductTemplate}
-  className="border border-sky-500 text-sky-700 hover:bg-sky-50 px-5 py-3 rounded-2xl font-semibold transition"
+  className="border border-sky-500 text-sky-700 hover:bg-sky-50 px-2 sm:px-5 py-3 rounded-xl sm:rounded-2xl text-sm sm:text-base font-semibold transition"
 >
   Tải file mẫu
 </button>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="bg-white border border-sky-500 text-sky-700 hover:bg-sky-50 px-5 py-3 rounded-2xl font-semibold"
+              className="bg-white border border-sky-500 text-sky-700 hover:bg-sky-50 px-2 sm:px-5 py-3 rounded-xl sm:rounded-2xl text-sm sm:text-base font-semibold"
             >
               Nhập file
             </button>
@@ -1243,7 +1243,7 @@ successCount++;
             <button
               type="button"
               onClick={exportProductsToCSV}
-              className="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-2xl font-semibold"
+              className="bg-green-600 hover:bg-green-700 text-white px-2 sm:px-5 py-3 rounded-xl sm:rounded-2xl text-sm sm:text-base font-semibold"
             >
               Xuất file
             </button>
@@ -1257,7 +1257,7 @@ successCount++;
 
   setShowAddForm((prev) => !prev);
 }}
-              className="bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-2xl font-semibold"
+              className="bg-sky-600 hover:bg-sky-700 text-white px-2 sm:px-6 py-3 rounded-xl sm:rounded-2xl text-sm sm:text-base font-semibold"
             >
               {showAddForm ? "Ẩn form" : "+ Thêm sản phẩm"}
             </button>
@@ -1274,9 +1274,9 @@ successCount++;
         {/* ADD FORM */}
         
         {showAddForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
   <div
-    className="bg-white w-full max-w-7xl max-h-[90vh] overflow-y-auto p-7 rounded-3xl shadow-2xl border border-slate-200"
+    className="bg-white w-full max-w-7xl max-h-[90dvh] overflow-y-auto p-4 sm:p-7 rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200"
     onClick={(e) =>
       e.stopPropagation()
     }
@@ -1555,7 +1555,7 @@ successCount++;
 )}
 
         {/* SEARCH */}
-        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 mb-6">
+        <div className="bg-white p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 mb-4 sm:mb-6">
           <input
             type="text"
             placeholder="Tìm theo tên, mã sản phẩm hoặc vị trí..."
@@ -1569,8 +1569,41 @@ successCount++;
           />
         </div>
 
+        {/* MOBILE PRODUCT CARDS - giữ nguyên bảng desktop */}
+        <div className="md:hidden space-y-3">
+          {paginatedProducts.map((item: any) => (
+            <article key={item.id} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm min-w-0">
+              <div className="flex items-start gap-3 min-w-0">
+                {item.imageUrl && (
+                  <img src={item.imageUrl} alt="" className="h-14 w-14 shrink-0 rounded-lg border object-cover" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="break-words font-semibold text-slate-900">{item.short_name || item.main_name || item.name}</div>
+                  <div className="mt-0.5 break-words text-xs text-slate-500">{item.main_name || item.name}</div>
+                  <div className="mt-1 text-xs text-slate-600">Mã: <span className="font-semibold">{item.product_code || "---"}</span></div>
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-slate-100 pt-3 text-sm">
+                <div className="min-w-0"><div className="text-xs text-slate-500">Giá bán</div><div className="font-bold text-sky-700">{formatMoney(item.price)}</div></div>
+                {visibleColumns.stock && <div><div className="text-xs text-slate-500">Tồn kho</div><div className="font-semibold text-slate-900">{Number(item.stock || 0).toLocaleString("vi-VN")}</div></div>}
+                <div className="min-w-0"><div className="text-xs text-slate-500">Vị trí</div><div className="break-words text-slate-900">{item.product_location || "---"}</div></div>
+                <div><div className="text-xs text-slate-500">Đơn vị</div><div className="text-slate-900">{typeof item.unit === "string" ? item.unit || "cái" : item.unit?.name || "cái"}</div></div>
+                {canViewCostPrice && visibleColumns.importPrice && <div><div className="text-xs text-slate-500">Giá nhập</div><div className="text-slate-900">{formatMoney(item.import_price)}</div></div>}
+                {canViewCostPrice && visibleColumns.capitalPrice && <div><div className="text-xs text-slate-500">Giá vốn</div><div className="text-slate-900">{formatMoney(item.capital_price)}</div></div>}
+                {visibleColumns.vat && <div><div className="text-xs text-slate-500">VAT</div><div className="text-slate-900">{Number(item.tax || 0)}%</div></div>}
+              </div>
+              {visibleColumns.actions && <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+                {canEditProduct && <button type="button" onClick={() => openEditModal(item)} className="rounded-lg bg-yellow-500 px-3 py-2 text-sm font-semibold text-white">Sửa</button>}
+                <button type="button" onClick={() => copyProduct(item)} className="rounded-lg bg-sky-500 px-3 py-2 text-sm font-semibold text-white">Sao chép</button>
+                {canDeleteProduct && <button type="button" onClick={() => deleteProduct(item.id)} className="rounded-lg bg-red-500 px-3 py-2 text-sm font-semibold text-white">Xóa</button>}
+              </div>}
+            </article>
+          ))}
+          {filteredProducts.length === 0 && <div className="rounded-2xl bg-white p-6 text-center text-slate-500">Không tìm thấy sản phẩm phù hợp</div>}
+        </div>
+
         {/* TABLE */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-x-auto">
+        <div className="hidden md:block bg-white rounded-3xl shadow-sm border border-slate-200 overflow-x-auto">
           <table className="w-full min-w-[1400px]">
             <thead className="bg-slate-800 text-white">
               <tr>
@@ -1893,7 +1926,7 @@ successCount++;
 
         {/* PAGINATION */}
         {filteredProducts.length > 0 && (
-          <div className="bg-white mt-5 p-4 rounded-3xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-end gap-3">
+          <div className="bg-white mt-5 p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-center sm:justify-end gap-3">
             <div className="text-sm text-slate-600 whitespace-nowrap">
               Từ{" "}
               <span className="font-semibold text-black">
@@ -1985,8 +2018,8 @@ successCount++;
 
         {/* EDIT MODAL */}
         {editingProduct && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl shadow-xl w-full max-w-5xl p-7">
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-2 sm:p-4">
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl w-full max-w-5xl max-h-[95dvh] overflow-y-auto p-4 sm:p-7">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-800">
