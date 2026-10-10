@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -229,7 +230,7 @@ export default function InventoryCheckDetailPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-100 p-5">
-        <div className="mx-auto max-w-5xl rounded-2xl bg-white p-8 text-center border border-slate-200 shadow-sm">
+        <div className="w-full rounded-2xl bg-white p-8 text-center border border-slate-200 shadow-sm">
           Đang tải phiếu kiểm...
         </div>
       </main>
@@ -239,7 +240,7 @@ export default function InventoryCheckDetailPage() {
   if (!check) {
     return (
       <main className="min-h-screen bg-slate-100 p-5">
-        <div className="mx-auto max-w-5xl rounded-2xl bg-white p-8 text-center border border-slate-200 shadow-sm">
+        <div className="w-full rounded-2xl bg-white p-8 text-center border border-slate-200 shadow-sm">
           Không có dữ liệu phiếu kiểm.
         </div>
       </main>
@@ -247,8 +248,8 @@ export default function InventoryCheckDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 p-5 text-black">
-      <div className="mx-auto max-w-[1400px]">
+    <main className="min-h-screen bg-slate-100 p-4 text-black sm:p-5">
+      <div className="w-full max-w-none">
         <div className="mb-5 flex flex-col gap-3 rounded-2xl bg-white p-5 border border-slate-200 shadow-sm lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-sky-700">
