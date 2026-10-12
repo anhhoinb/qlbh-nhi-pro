@@ -2131,7 +2131,7 @@ successCount++;
                 </div>
 
 <div>
-  <label className="block mb-2 text-sm font-semibold text-black">Giá bán MIN (tham khảo cho nhân viên)</label>
+  <label className="block mb-2 text-sm font-semibold text-black">Giá MIN (tham khảo)</label>
   <input type="text" inputMode="numeric" placeholder="Chưa thiết lập"
     className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
     value={formatMoneyInput(editMinPrice)}

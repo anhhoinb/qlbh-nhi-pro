@@ -3005,9 +3005,9 @@ const itemShortName =
           <button
             type="button"
             onClick={() =>
-              router.push("/admin")
+              router.push("/")
             }
-            title="Về trang quản trị"
+            title="Về Dashboard Tổng quan"
             className="w-10 h-10 rounded-lg bg-sky-600 hover:bg-sky-700 flex items-center justify-center"
           >
             <svg
