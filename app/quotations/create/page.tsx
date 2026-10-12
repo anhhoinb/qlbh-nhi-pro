@@ -47,6 +47,7 @@ type Product = {
   product_code?: string;
 
   price?: number;
+  min_price?: number | null;
 
   tax?: number;
 
@@ -2104,6 +2105,10 @@ export default function CreateQuotationPage() {
 
                                   ĐVT: {getUnitText(product.unit)}
 
+                                </span>
+
+                                <span className="font-semibold text-orange-600">
+                                  MIN: {product.min_price != null ? `${formatMoney(Number(product.min_price))}đ` : "Chưa thiết lập"}
                                 </span>
 
                               </div>
