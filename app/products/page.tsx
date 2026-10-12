@@ -75,6 +75,7 @@ export default function ProductsPage() {
   const [productCode, setProductCode] = useState("");
   const [productLocation, setProductLocation] = useState("");
   const [price, setPrice] = useState("");
+  const [minPrice, setMinPrice] = useState("");
   const [importPrice, setImportPrice] = useState("");
   const [capitalPrice, setCapitalPrice] = useState("");
   const [stock, setStock] = useState("");
@@ -289,6 +290,7 @@ reader.readAsDataURL(file);
   const [editProductCode, setEditProductCode] = useState("");
   const [editProductLocation, setEditProductLocation] = useState("");
   const [editPrice, setEditPrice] = useState("");
+  const [editMinPrice, setEditMinPrice] = useState("");
   const [editImportPrice, setEditImportPrice] = useState("");
   const [editCapitalPrice, setEditCapitalPrice] = useState("");
   const [editStock, setEditStock] = useState("");
@@ -510,6 +512,7 @@ if (duplicateCode) {
         product_location: productLocation.trim(),
 
         price: Number(price || 0),
+        ...(minPrice !== "" ? { min_price: Number(minPrice) } : {}),
         import_price: Number(importPrice || 0),
         capital_price: Number(
   capitalPrice || 0
@@ -530,6 +533,7 @@ if (duplicateCode) {
       setProductCode("");
       setProductLocation("");
       setPrice("");
+      setMinPrice("");
       setImportPrice("");
       setCapitalPrice("");
       setStock("");
@@ -661,6 +665,7 @@ if (duplicateCode) {
     setEditProductCode(item.product_code || "");
     setEditProductLocation(item.product_location || "");
     setEditPrice(String(item.price || 0));
+    setEditMinPrice(item.min_price == null ? "" : String(item.min_price));
     setEditImportPrice(String(item.import_price || 0));
     setEditCapitalPrice(String(item.capital_price || 0));
     setEditStock(String(item.stock || 0));
@@ -760,6 +765,7 @@ if (duplicateCode) {
         price: Number(
           editPrice || 0
         ),
+        min_price: editMinPrice === "" ? null : Number(editMinPrice),
         import_price: Number(
           editImportPrice || 0
         ),
@@ -808,6 +814,7 @@ if (duplicateCode) {
     setProductCode(generateProductCode());
     setProductLocation(item.product_location || "");
     setPrice(String(item.price || 0));
+    setMinPrice(item.min_price == null ? "" : String(item.min_price));
     setImportPrice(String(item.import_price || 0));
     setCapitalPrice(String(item.capital_price || 0));
     setStock(String(item.stock || 0));
@@ -1358,6 +1365,15 @@ successCount++;
                   onChange={(e) => setPrice(e.target.value)}
                 />
               </div>
+
+<div>
+  <label className="block mb-2 text-sm font-semibold text-black">MIN</label>
+  <input type="text" inputMode="numeric" placeholder="Chưa thiết lập"
+    className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+    value={formatMoneyInput(minPrice)}
+    onChange={(e) => setMinPrice(getRawMoneyInput(e.target.value))}
+  />
+</div>
 
 {canViewCostPrice && (
 <>
@@ -2113,6 +2129,15 @@ successCount++;
                     }
                   />
                 </div>
+
+<div>
+  <label className="block mb-2 text-sm font-semibold text-black">Giá bán MIN (tham khảo cho nhân viên)</label>
+  <input type="text" inputMode="numeric" placeholder="Chưa thiết lập"
+    className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+    value={formatMoneyInput(editMinPrice)}
+    onChange={(e) => setEditMinPrice(getRawMoneyInput(e.target.value))}
+  />
+</div>
 
                 {canViewCostPrice && (
   <>
