@@ -96,6 +96,44 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
 
+  // Sửa nhanh vị trí sản phẩm ngay trong danh sách
+  const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
+  const [locationDraft, setLocationDraft] = useState("");
+  const [savingLocation, setSavingLocation] = useState(false);
+
+  const startEditLocation = (item: any) => {
+    if (!canEditProduct) return;
+    setEditingLocationId(item.id);
+    setLocationDraft(String(item.product_location || ""));
+  };
+
+  const saveQuickLocation = async (item: any) => {
+    if (!canEditProduct || savingLocation) return;
+    const nextLocation = locationDraft.trim();
+    if (nextLocation === String(item.product_location || "").trim()) {
+      setEditingLocationId(null);
+      return;
+    }
+    setSavingLocation(true);
+    try {
+      await updateDoc(doc(db, "products", item.id), {
+        product_location: nextLocation,
+      });
+      setProducts((previous) => previous.map((product) =>
+        product.id === item.id
+          ? { ...product, product_location: nextLocation }
+          : product
+      ));
+      setEditingLocationId(null);
+    } catch (error) {
+      console.error("Không cập nhật được vị trí sản phẩm", error);
+      alert("Không cập nhật được vị trí sản phẩm");
+    } finally {
+      setSavingLocation(false);
+    }
+  };
+
+
   const [imagePreview, setImagePreview] =
   useState("");
 
@@ -1594,7 +1632,7 @@ successCount++;
                   <img src={item.imageUrl} alt="" className="h-14 w-14 shrink-0 rounded-lg border object-cover" />
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="break-words font-semibold text-slate-900">{item.short_name || item.main_name || item.name}</div>
+                  <button type="button" onClick={() => openEditModal(item)} className="block w-full break-words text-left font-semibold text-slate-900 hover:text-sky-700 hover:underline" title="Nhấn để sửa sản phẩm">{item.short_name || item.main_name || item.name}</button>
                   <div className="mt-0.5 break-words text-xs text-slate-500">{item.main_name || item.name}</div>
                   <div className="mt-1 text-xs text-slate-600">Mã: <span className="font-semibold">{item.product_code || "---"}</span></div>
                 </div>
@@ -1602,7 +1640,22 @@ successCount++;
               <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-slate-100 pt-3 text-sm">
                 <div className="min-w-0"><div className="text-xs text-slate-500">Giá bán</div><div className="font-bold text-sky-700">{formatMoney(item.price)}</div></div>
                 {visibleColumns.stock && <div><div className="text-xs text-slate-500">Tồn kho</div><div className="font-semibold text-slate-900">{Number(item.stock || 0).toLocaleString("vi-VN")}</div></div>}
-                <div className="min-w-0"><div className="text-xs text-slate-500">Vị trí</div><div className="break-words text-slate-900">{item.product_location || "---"}</div></div>
+                <div className="min-w-0"><div className="text-xs text-slate-500">Vị trí</div><div className="break-words text-slate-900">{editingLocationId === item.id ? (
+                  <input autoFocus type="text" value={locationDraft} disabled={savingLocation}
+                    onChange={(e) => setLocationDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { e.preventDefault(); void saveQuickLocation(item); }
+                      if (e.key === "Escape") { e.stopPropagation(); setEditingLocationId(null); }
+                    }}
+                    onBlur={() => { if (!savingLocation) void saveQuickLocation(item); }}
+                    className="w-full min-w-0 rounded border border-sky-400 px-2 py-1 text-sm outline-none" />
+                ) : (
+                  <button type="button" disabled={!canEditProduct} onClick={() => startEditLocation(item)}
+                    className={canEditProduct ? "text-left text-sky-700 hover:underline" : "text-left"}
+                    title={canEditProduct ? "Nhấn để cập nhật vị trí" : undefined}>
+                    {item.product_location || "---"}
+                  </button>
+                )}</div></div>
                 <div><div className="text-xs text-slate-500">Đơn vị</div><div className="text-slate-900">{typeof item.unit === "string" ? item.unit || "cái" : item.unit?.name || "cái"}</div></div>
                 {canViewCostPrice && visibleColumns.importPrice && <div><div className="text-xs text-slate-500">Giá nhập</div><div className="text-slate-900">{formatMoney(item.import_price)}</div></div>}
                 {canViewCostPrice && visibleColumns.capitalPrice && <div><div className="text-xs text-slate-500">Giá vốn</div><div className="text-slate-900">{formatMoney(item.capital_price)}</div></div>}
@@ -1834,11 +1887,11 @@ successCount++;
     )}
 
     <div className="flex flex-col">
-      <span className="font-semibold text-black">
+      <button type="button" onClick={() => openEditModal(item)} className="text-left font-semibold text-black hover:text-sky-700 hover:underline cursor-pointer" title="Nhấn để sửa sản phẩm">
   {item.short_name ||
     item.main_name ||
     item.name}
-</span>
+</button>
       <span className="text-sm text-slate-500">{item.main_name || item.name}</span>
     </div>
 
@@ -1851,7 +1904,23 @@ successCount++;
                   </td>
 
                   <td className="p-4 text-black">
-                    {item.product_location || "---"}
+                    {editingLocationId === item.id ? (
+                      <input autoFocus type="text" value={locationDraft} disabled={savingLocation}
+                        onChange={(e) => setLocationDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") { e.preventDefault(); void saveQuickLocation(item); }
+                          if (e.key === "Escape") { e.stopPropagation(); setEditingLocationId(null); }
+                        }}
+                        onBlur={() => { if (!savingLocation) void saveQuickLocation(item); }}
+                        className="w-28 rounded-lg border border-sky-400 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-sky-100"
+                        placeholder="Nhập vị trí" />
+                    ) : (
+                      <button type="button" disabled={!canEditProduct} onClick={() => startEditLocation(item)}
+                        className={canEditProduct ? "text-left text-sky-700 hover:underline" : "text-left"}
+                        title={canEditProduct ? "Nhấn để cập nhật vị trí" : undefined}>
+                        {item.product_location || "---"}
+                      </button>
+                    )}
                   </td>
 
                   {canViewCostPrice &&

@@ -114,7 +114,7 @@ function formatDate(value: any, fallback?: string) {
 
     if (!Number.isNaN(date.getTime())) {
 
-      return date.toLocaleString("vi-VN");
+      return `${date.toLocaleTimeString("vi-VN", { hour12: false })}\n${date.toLocaleDateString("vi-VN")}`;
 
     }
 
@@ -1266,7 +1266,7 @@ export default function QuotationsPage() {
 
                       </td>
 
-                      <td className="p-3">
+                      <td className="p-3 whitespace-pre-line">
 
                         {formatDate(
 

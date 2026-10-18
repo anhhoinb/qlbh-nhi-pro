@@ -60,8 +60,17 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] =
     useState("all");
 
+  const [quickOrderFilter, setQuickOrderFilter] =
+    useState<"all" | "blue" | "red" | "cancelled">("all");
+
   const [timeFilter, setTimeFilter] =
     useState("today");
+
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+  const [customDateOpen, setCustomDateOpen] = useState(false);
+  const [draftStartDate, setDraftStartDate] = useState("");
+  const [draftEndDate, setDraftEndDate] = useState("");
 
   const [ordersPerPage, setOrdersPerPage] =
     useState(20);
@@ -553,6 +562,21 @@ export default function OrdersPage() {
 
     const date = getOrderDate(item);
     if (!date) return false;
+
+    if (filter === "custom") {
+      if (!customStartDate && !customEndDate) return true;
+      const parseLocalDate = (value: string) => {
+        const [year, month, day] = value.split("-").map(Number);
+        return new Date(year, month - 1, day);
+      };
+      if (customStartDate && date < parseLocalDate(customStartDate)) return false;
+      if (customEndDate) {
+        const end = parseLocalDate(customEndDate);
+        end.setDate(end.getDate() + 1);
+        if (date >= end) return false;
+      }
+      return true;
+    }
 
     const now = new Date();
 
@@ -1305,7 +1329,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [paymentFilter, statusFilter, timeFilter, ordersPerPage]);
+  }, [paymentFilter, statusFilter, timeFilter, customStartDate, customEndDate, ordersPerPage, quickOrderFilter]);
 
   const filteredOrders = orders.filter((order) => {
     const paymentMatches =
@@ -1341,17 +1365,31 @@ export default function OrdersPage() {
     0
   );
 
+  const filteredVatCompanyTotal = statisticOrders
+    .filter((order) => hasVatOrCompanyInfo(order))
+    .reduce((sum, order) => sum + getNetOrderRevenue(order), 0);
+
   const filteredOrderCount =
     statisticOrders.length;
 
+  // Bộ lọc nhanh chỉ áp dụng cho danh sách, không làm thay đổi số liệu thống kê.
+  const displayOrders = filteredOrders.filter((order) => {
+    if (quickOrderFilter === "all") return true;
+    if (quickOrderFilter === "cancelled") return order.status === "cancelled";
+    if (order.status === "cancelled") return false;
+    return quickOrderFilter === "red"
+      ? hasVatOrCompanyInfo(order)
+      : !hasVatOrCompanyInfo(order);
+  });
+
   const totalPages =
-    Math.ceil(filteredOrders.length / ordersPerPage);
+    Math.ceil(displayOrders.length / ordersPerPage);
 
   const startIndex =
     (currentPage - 1) * ordersPerPage;
 
   const currentOrders =
-    filteredOrders.slice(
+    displayOrders.slice(
       startIndex,
       startIndex + ordersPerPage
     );
@@ -2497,16 +2535,22 @@ export default function OrdersPage() {
           </select>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="relative z-20 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <label className="mb-2 block text-sm font-semibold text-slate-700">
             Thời gian
           </label>
 
           <select
             value={timeFilter}
-            onChange={(event) =>
-              setTimeFilter(event.target.value)
-            }
+            onChange={(event) => {
+              const value = event.target.value;
+              setTimeFilter(value);
+              setCustomDateOpen(value === "custom");
+              if (value === "custom") {
+                setDraftStartDate(customStartDate);
+                setDraftEndDate(customEndDate);
+              }
+            }}
             className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-sky-500"
           >
             <option value="today">Hôm nay</option>
@@ -2521,38 +2565,119 @@ export default function OrdersPage() {
             <option value="this_year">Năm nay</option>
             <option value="last_year">Năm trước</option>
             <option value="all">Tất cả</option>
+            <option value="custom">Tùy chọn ngày</option>
           </select>
+
+          {timeFilter === "custom" && !customDateOpen && (
+            <button type="button" onClick={() => {
+              setDraftStartDate(customStartDate);
+              setDraftEndDate(customEndDate);
+              setCustomDateOpen(true);
+            }} className="mt-2 text-xs font-medium text-sky-700 hover:underline">
+              {customStartDate || customEndDate
+                ? `${customStartDate || "Bắt đầu"} → ${customEndDate || "Hiện tại"} · Đổi ngày`
+                : "Chọn khoảng ngày"}
+            </button>
+          )}
+
+          {timeFilter === "custom" && customDateOpen && (
+            <div className="absolute right-0 top-full z-50 mt-2 w-[min(340px,calc(100vw-32px))] rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
+              <div className="mb-3 text-sm font-semibold text-slate-800">Chọn khoảng thời gian</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="min-w-0">
+                  <label className="mb-1 block text-xs font-medium text-slate-600">Từ ngày</label>
+                  <input type="date" value={draftStartDate} max={draftEndDate || undefined}
+                    onChange={(event) => setDraftStartDate(event.target.value)}
+                    className="w-full min-w-0 rounded-lg border border-slate-300 px-1 py-2 text-xs outline-none focus:border-sky-500" />
+                </div>
+                <div className="min-w-0">
+                  <label className="mb-1 block text-xs font-medium text-slate-600">Đến ngày</label>
+                  <input type="date" value={draftEndDate} min={draftStartDate || undefined}
+                    onChange={(event) => setDraftEndDate(event.target.value)}
+                    className="w-full min-w-0 rounded-lg border border-slate-300 px-1 py-2 text-xs outline-none focus:border-sky-500" />
+                </div>
+              </div>
+              <div className="mt-3 flex justify-end gap-2">
+                <button type="button" onClick={() => setCustomDateOpen(false)}
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700">Hủy</button>
+                <button type="button" onClick={() => {
+                  setCustomStartDate(draftStartDate);
+                  setCustomEndDate(draftEndDate);
+                  setCustomDateOpen(false);
+                }} className="rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white">Áp dụng</button>
+              </div>
+            </div>
+          )}
 
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 shadow-sm">
-            <div className="text-sm font-semibold text-sky-700">
-              Số đơn tính doanh thu
-            </div>
-            <div className="mt-1 text-2xl font-bold text-sky-800">
-              {filteredOrderCount}
-            </div>
-            <div className="mt-1 text-xs text-sky-600">
-              Không tính đơn đã hủy
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <div className="text-sm font-semibold text-sky-700">
+                  Số đơn tính doanh thu
+                </div>
+                <div className="mt-1 text-2xl font-bold text-sky-800">
+                  {filteredOrderCount}
+                </div>
+                <div className="mt-1 text-xs text-sky-600">
+                  Không tính đơn đã hủy
+                </div>
+              </div>
+              <div role="button" tabIndex={0} onClick={() => setQuickOrderFilter("all")} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setQuickOrderFilter("all"); } }} title="Hiện tất cả đơn" className={`cursor-pointer rounded-lg border-t border-sky-200 pt-3 transition-colors hover:bg-sky-100 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0 ${quickOrderFilter === "all" ? "ring-1 ring-sky-300" : ""}`}>
+                <div className="text-sm font-semibold text-sky-700">
+                  Tổng tiền theo bộ lọc
+                </div>
+                <div className="mt-1 text-2xl font-bold text-sky-700">
+                  {formatMoney(filteredTotalAmount)}đ
+                </div>
+                <div className="mt-1 text-xs text-sky-600">
+                  Đã trừ giá trị hàng trả và không tính hủy
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
-            <div className="text-sm font-semibold text-emerald-700">
-              Tổng tiền theo bộ lọc
-            </div>
-            <div className="mt-1 text-2xl font-bold text-emerald-800">
-              {formatMoney(filteredTotalAmount)}đ
-            </div>
-            <div className="mt-1 text-xs text-emerald-600">
-              Đã trừ giá trị hàng trả và không tính đơn đã hủy
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div role="button" tabIndex={0} onClick={() => setQuickOrderFilter(quickOrderFilter === "blue" ? "all" : "blue")} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setQuickOrderFilter(quickOrderFilter === "blue" ? "all" : "blue"); } }} title="Lọc danh sách đơn xanh" className={`cursor-pointer rounded-lg transition-colors hover:bg-emerald-100 ${quickOrderFilter === "blue" ? "ring-2 ring-emerald-400" : ""}`}>
+                <div className="text-sm font-semibold text-emerald-700">
+                  Tổng tiền đơn xanh
+                </div>
+                <div className="mt-1 text-2xl font-bold text-emerald-800">
+                  {formatMoney(filteredTotalAmount - filteredVatCompanyTotal)}đ
+                </div>
+                <div className="mt-1 text-xs text-emerald-600">
+                  Các đơn xanh theo bộ lọc
+                </div>
+              </div>
+              <div role="button" tabIndex={0} onClick={() => setQuickOrderFilter(quickOrderFilter === "red" ? "all" : "red")} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setQuickOrderFilter(quickOrderFilter === "red" ? "all" : "red"); } }} title="Lọc danh sách đơn đỏ" className={`cursor-pointer rounded-lg border-t border-emerald-200 pt-3 transition-colors hover:bg-rose-50 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0 ${quickOrderFilter === "red" ? "ring-2 ring-rose-400" : ""}`}>
+                <div className="text-sm font-semibold text-rose-600">
+                  Tổng tiền đơn đỏ
+                </div>
+                <div className="mt-1 text-2xl font-bold text-rose-600">
+                  {formatMoney(filteredVatCompanyTotal)}đ
+                </div>
+                <div className="mt-1 text-xs text-emerald-600">
+                  Các đơn đỏ theo bộ lọc
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-2 text-xs">
+          <span className="font-medium text-slate-600">
+            Đang xem: {quickOrderFilter === "blue" ? "Đơn xanh" : quickOrderFilter === "red" ? "Đơn đỏ" : quickOrderFilter === "cancelled" ? "Đơn hủy" : "Tất cả đơn"}
+          </span>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setQuickOrderFilter(quickOrderFilter === "cancelled" ? "all" : "cancelled")} className={`rounded-lg border px-3 py-1.5 font-semibold transition-colors ${quickOrderFilter === "cancelled" ? "border-rose-400 bg-rose-100 text-rose-700" : "border-slate-200 text-slate-600 hover:bg-slate-100"}`}>Đơn hủy</button>
+            {quickOrderFilter !== "all" && <button type="button" onClick={() => setQuickOrderFilter("all")} className="rounded-lg border border-sky-200 px-3 py-1.5 font-semibold text-sky-700 hover:bg-sky-50">Bỏ lọc</button>}
+          </div>
+        </div>
         <table className="hidden w-full md:table">
           <thead className="bg-slate-800 text-white">
             <tr>
@@ -2759,7 +2884,7 @@ export default function OrdersPage() {
           <div className="text-sm text-slate-600">
             Từ{" "}
             <strong>
-              {filteredOrders.length === 0
+              {displayOrders.length === 0
                 ? 0
                 : startIndex + 1}
             </strong>{" "}
@@ -2767,11 +2892,11 @@ export default function OrdersPage() {
             <strong>
               {Math.min(
                 startIndex + ordersPerPage,
-                filteredOrders.length
+                displayOrders.length
               )}
             </strong>{" "}
             trên tổng{" "}
-            <strong>{filteredOrders.length}</strong>
+            <strong>{displayOrders.length}</strong>
           </div>
 
           <div className="flex items-center gap-1">

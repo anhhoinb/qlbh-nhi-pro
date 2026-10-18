@@ -146,6 +146,8 @@ type OrderData = {
 
 type PaymentFilter = "all" | "cash" | "bank";
 
+type OrderColorFilter = "all" | "red" | "blue";
+
 export default function FinanceReportPage() {
 
   const [orders, setOrders] =
@@ -163,6 +165,8 @@ export default function FinanceReportPage() {
   const [paymentFilter, setPaymentFilter] =
 
     useState<PaymentFilter>("all");
+
+  const [orderColorFilter, setOrderColorFilter] = useState<OrderColorFilter>("all");
 
   const [expandedOrderId, setExpandedOrderId] =
 
@@ -844,6 +848,22 @@ export default function FinanceReportPage() {
 
   };
 
+  // Cùng điều kiện phân loại mã đơn đỏ/xanh tại trang Đơn hàng.
+  const hasVatOrCompanyInfo = (order: OrderData) => {
+    const data = order as any;
+    const customer = typeof data.customer === "object" && data.customer ? data.customer : {};
+    const companyName = data.customerCompanyName || data.customer_company_name ||
+      data.companyName || data.company_name || data.customerCompany ||
+      customer.companyName || customer.company_name || customer.company || "";
+    const taxCode = data.customerTaxCode || data.customer_tax_code ||
+      data.taxCode || data.tax_code || data.mst || data.customerMst ||
+      customer.taxCode || customer.tax_code || customer.mst || "";
+    const hasAppliedVat = data.useProductVat === true ||
+      data.use_product_vat === true || getOrderVat(order) > 0;
+    return String(companyName).trim() !== "" ||
+      String(taxCode).trim() !== "" || hasAppliedVat;
+  };
+
   const isSameDay = (
 
     date1: Date,
@@ -1158,9 +1178,21 @@ export default function FinanceReportPage() {
 
     ]);
 
+  const reportOrders = filteredOrders.filter((order) =>
+    orderColorFilter === "all" ||
+    (orderColorFilter === "red" ? hasVatOrCompanyInfo(order) : !hasVatOrCompanyInfo(order))
+  );
+
+  const redRevenue = reportOrders
+    .filter(hasVatOrCompanyInfo)
+    .reduce((sum, order) => sum + getNetOrderTotal(order), 0);
+  const blueRevenue = reportOrders
+    .filter((order) => !hasVatOrCompanyInfo(order))
+    .reduce((sum, order) => sum + getNetOrderTotal(order), 0);
+
   const totalRevenue =
 
-    filteredOrders.reduce(
+    reportOrders.reduce(
 
       (sum, order) =>
 
@@ -1174,7 +1206,7 @@ export default function FinanceReportPage() {
 
   const cashTotal =
 
-    filteredOrders.reduce(
+    reportOrders.reduce(
 
       (sum, order) => {
 
@@ -1238,7 +1270,7 @@ export default function FinanceReportPage() {
 
   const bankTotal =
 
-    filteredOrders.reduce(
+    reportOrders.reduce(
 
       (sum, order) => {
 
@@ -1346,7 +1378,7 @@ export default function FinanceReportPage() {
 
   const discountTotal =
 
-    filteredOrders.reduce(
+    reportOrders.reduce(
 
       (sum, order) =>
 
@@ -1362,7 +1394,7 @@ export default function FinanceReportPage() {
 
   const vatTotal =
 
-    filteredOrders.reduce(
+    reportOrders.reduce(
 
       (sum, order) =>
 
@@ -1378,7 +1410,7 @@ export default function FinanceReportPage() {
 
     const estimatedProfit =
 
-  filteredOrders.reduce(
+  reportOrders.reduce(
 
     (sum, order) => {
 
@@ -1432,7 +1464,7 @@ export default function FinanceReportPage() {
 
   const totalReturnedAmount =
 
-    filteredOrders.reduce(
+    reportOrders.reduce(
 
       (sum, order) =>
 
@@ -1452,7 +1484,7 @@ export default function FinanceReportPage() {
 
       Math.ceil(
 
-        filteredOrders.length /
+        reportOrders.length /
 
           ordersPerPage
 
@@ -1462,7 +1494,7 @@ export default function FinanceReportPage() {
 
   const currentOrders =
 
-    filteredOrders.slice(
+    reportOrders.slice(
 
       (currentPage - 1) *
 
@@ -1714,87 +1746,35 @@ export default function FinanceReportPage() {
 
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-2">
-
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-2">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2.5">
-
-            <p className="text-slate-500 text-xs">
-
-              Tổng doanh thu
-
-            </p>
-
-            <p className="text-xl font-bold text-sky-700 mt-1">
-
-              {formatMoney(totalRevenue)}đ
-
-            </p>
-
-            {totalReturnedAmount > 0 && (
-
-              <p className="mt-2 text-xs font-semibold text-rose-600">
-
-                Đã hoàn: {formatMoney(totalReturnedAmount)}đ
-
-              </p>
-
-            )}
-
+            <p className="text-slate-500 text-xs">Số đơn hàng</p>
+            <p className="text-xl font-bold text-amber-600 mt-1">{reportOrders.length}</p>
+            <div className="border-t border-slate-100 mt-2 pt-2">
+              <p className="text-slate-500 text-xs">Tổng doanh thu</p>
+              <p className="text-xl font-bold text-sky-700 mt-1">{formatMoney(totalRevenue)}đ</p>
+              {totalReturnedAmount > 0 && (
+                <p className="mt-2 text-xs font-semibold text-rose-600">Đã hoàn: {formatMoney(totalReturnedAmount)}đ</p>
+              )}
+            </div>
           </div>
-
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2.5">
-
-            <p className="text-slate-500 text-xs">
-
-              Tiền mặt
-
-            </p>
-
-            <p className="text-lg font-bold text-emerald-600 mt-0.5">
-
-              {formatMoney(cashTotal)}đ
-
-            </p>
-
+            <p className="text-slate-500 text-xs">Tiền mặt</p>
+            <p className="text-lg font-bold text-emerald-600 mt-1">{formatMoney(cashTotal)}đ</p>
+            <div className="border-t border-slate-100 mt-2 pt-2">
+              <p className="text-slate-500 text-xs">Chuyển khoản / thẻ</p>
+              <p className="text-lg font-bold text-violet-600 mt-1">{formatMoney(bankTotal)}đ</p>
+            </div>
           </div>
-
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2.5">
-
-            <p className="text-slate-500 text-xs">
-
-              Chuyển khoản / thẻ
-
-            </p>
-
-            <p className="text-xl font-bold text-violet-600 mt-1">
-
-              {formatMoney(bankTotal)}đ
-
-            </p>
-
+            <p className="text-slate-500 text-xs">Doanh thu đơn xanh</p>
+            <p className="text-lg font-bold text-sky-700 mt-1">{formatMoney(blueRevenue)}đ</p>
+            <div className="border-t border-slate-100 mt-2 pt-2">
+              <p className="text-slate-500 text-xs">Doanh thu đơn đỏ</p>
+              <p className="text-lg font-bold text-rose-600 mt-1">{formatMoney(redRevenue)}đ</p>
+            </div>
           </div>
-
-<div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2.5">
-
-  <p className="text-slate-500 text-xs">
-
-    Số đơn hàng
-
-  </p>
-
-  <p className="text-xl font-bold text-amber-600 mt-1">
-
-    {filteredOrders.filter(
-
-  (order) => !isCancelledOrder(order)
-
-).length}
-
-  </p>
-
-</div>
-
-<div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2.5">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2.5">
   <p className="text-slate-500 text-xs">Lãi tạm tính</p>
   <p className="text-lg font-bold text-emerald-600 mt-0.5">
     {formatMoney(estimatedProfit)}đ
@@ -1846,6 +1826,7 @@ export default function FinanceReportPage() {
   </div>
 
 </div>
+
 
         </div>
 
@@ -1949,9 +1930,31 @@ export default function FinanceReportPage() {
 
               >
 
-                ▼ Chuyển khoản / thẻ
+                ▼ Chuyển khoản
 
               </button>
+
+              <span className="mx-1 h-6 border-l border-slate-200" />
+              {(["all", "blue", "red"] as OrderColorFilter[]).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => {
+                    setOrderColorFilter(type);
+                    setCurrentPage(1);
+                    setExpandedOrderId(null);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold border ${
+                    orderColorFilter === type
+                      ? type === "red" ? "bg-rose-600 text-white border-rose-600"
+                        : type === "blue" ? "bg-sky-600 text-white border-sky-600"
+                        : "bg-slate-700 text-white border-slate-700"
+                      : "bg-white text-slate-700 hover:bg-slate-100 border-slate-200"
+                  }`}
+                >
+                  {type === "all" ? "Mọi đơn" : type === "red" ? "Đơn đỏ" : "Đơn xanh"}
+                </button>
+              ))}
 
             </div>
 
@@ -2203,7 +2206,7 @@ export default function FinanceReportPage() {
 
                                 }
 
-                                className="font-bold text-sky-700 hover:underline"
+                                className={`font-bold hover:underline ${hasVatOrCompanyInfo(order) ? "text-rose-600" : "text-sky-700"}`}
 
                               >
 
@@ -2927,7 +2930,7 @@ export default function FinanceReportPage() {
 
               <strong className="text-black">
 
-                {filteredOrders.length === 0
+                {reportOrders.length === 0
 
                   ? 0
 
@@ -2943,7 +2946,7 @@ export default function FinanceReportPage() {
 
                   currentPage * ordersPerPage,
 
-                  filteredOrders.length
+                  reportOrders.length
 
                 )}
 
@@ -2953,7 +2956,7 @@ export default function FinanceReportPage() {
 
               <strong className="text-black">
 
-                {filteredOrders.length}
+                {reportOrders.length}
 
               </strong>
 
