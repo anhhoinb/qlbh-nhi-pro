@@ -288,23 +288,23 @@ export default function InventoryPage() {
 
   return (
     <main className="min-h-screen bg-slate-100 px-3 py-4 text-black">
-      <div className="w-full max-w-none space-y-5">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="w-full max-w-none space-y-3">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800">
+            <h1 className="text-base font-bold text-slate-800">
               Quản lý tồn kho
             </h1>
 
-            <p className="text-slate-500 mt-1">
+            <p className="text-slate-500 text-xs mt-0.5">
               Trang này chỉ dùng để xem tồn kho. Muốn tăng tồn kho hãy vào trang Nhập hàng.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={exportInventoryToExcel}
-              className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-semibold transition"
+              className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition"
             >
               Xuất Excel
             </button>
@@ -312,33 +312,33 @@ export default function InventoryPage() {
             <button
               type="button"
               onClick={loadProducts}
-              className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl font-semibold transition"
+              className="bg-sky-600 hover:bg-sky-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition"
             >
               Tải lại tồn kho
             </button>
           </div>
         </div>
 
-        <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 ${
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 ${
           canViewCostPrice ? "xl:grid-cols-4" : "xl:grid-cols-3"
         }`}>
-  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[92px]">
-    <p className="text-slate-500 text-sm mb-2">
+  <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2 min-h-[66px]">
+    <p className="text-slate-500 text-xs mb-1">
       Tổng sản phẩm
     </p>
 
-    <p className="text-2xl font-bold text-sky-700">
+    <p className="text-xl font-bold text-sky-700">
       {products.length}
     </p>
   </div>
 
   {canViewCostPrice && (
-  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[92px]">
-    <p className="text-slate-500 text-sm mb-2">
+  <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2 min-h-[66px]">
+    <p className="text-slate-500 text-xs mb-1">
       Tổng giá trị tồn kho
     </p>
 
-    <p className="text-2xl font-bold text-violet-700">
+    <p className="text-xl font-bold text-violet-700">
       {formatMoney(totalInventoryValue)}đ
     </p>
   </div>
@@ -349,19 +349,20 @@ export default function InventoryPage() {
     onClick={() =>
       setPopupType("out")
     }
-    className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[92px] text-left hover:shadow-md hover:border-slate-300 transition cursor-pointer"
+    className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2 min-h-[66px] text-left hover:shadow-md hover:border-slate-300 transition cursor-pointer"
   >
-    <p className="text-slate-500 text-sm mb-2">
+    <p className="text-slate-500 text-xs mb-1">
       Sản phẩm hết hàng
     </p>
 
-    <p className="text-2xl font-bold text-rose-600">
-      {outOfStockProducts.length}
-    </p>
-
-    <p className="text-xs text-slate-400 mt-2">
-      Click để xem danh sách
-    </p>
+    <div className="flex items-center justify-between gap-2">
+      <p className="text-xl font-bold text-rose-600">
+        {outOfStockProducts.length}
+      </p>
+      <span className="text-[11px] text-slate-400 whitespace-nowrap">
+        Click để xem danh sách
+      </span>
+    </div>
   </button>
 
   <button
@@ -369,19 +370,20 @@ export default function InventoryPage() {
     onClick={() =>
       setPopupType("low")
     }
-    className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 min-h-[92px] text-left hover:shadow-md hover:border-slate-300 transition cursor-pointer"
+    className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2 min-h-[66px] text-left hover:shadow-md hover:border-slate-300 transition cursor-pointer"
   >
-    <p className="text-slate-500 text-sm mb-2">
+    <p className="text-slate-500 text-xs mb-1">
       Sản phẩm dưới định mức
     </p>
 
-    <p className="text-2xl font-bold text-amber-600">
-      {lowStockProducts.length}
-    </p>
-
-    <p className="text-xs text-slate-400 mt-2">
-      Click để xem danh sách
-    </p>
+    <div className="flex items-center justify-between gap-2">
+      <p className="text-xl font-bold text-amber-600">
+        {lowStockProducts.length}
+      </p>
+      <span className="text-[11px] text-slate-400 whitespace-nowrap">
+        Click để xem danh sách
+      </span>
+    </div>
   </button>
 </div>
 
@@ -391,13 +393,13 @@ export default function InventoryPage() {
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+            <div className="px-4 py-2 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-slate-800">
+                <h2 className="text-base font-bold text-slate-800">
                   Danh sách tồn kho
                 </h2>
 
-                <p className="text-slate-500 text-sm mt-1">
+                <p className="text-slate-500 text-xs mt-0.5">
                   Tồn kho được cập nhật từ nhập hàng và bán hàng, không chỉnh trực tiếp tại đây.
                 </p>
               </div>
@@ -624,7 +626,7 @@ export default function InventoryPage() {
               className={`${popupColor} text-white px-6 py-5 flex items-center justify-between`}
             >
               <div>
-                <h2 className="text-2xl font-bold text-white">
+                <h2 className="text-xl font-bold text-white">
                   {popupTitle}
                 </h2>
 

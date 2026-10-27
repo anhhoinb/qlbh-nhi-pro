@@ -1250,18 +1250,18 @@ successCount++;
     <main className="min-h-screen min-w-0 bg-slate-100 px-3 py-4">
       <div className="w-full max-w-none">
         {/* HEADER */}
-        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 mb-8">
+        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2 mb-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl xl:text-4xl font-bold text-sky-700">
+            <h1 className="text-xl sm:text-2xl font-bold text-sky-700">
               Quản lý sản phẩm
             </h1>
 
-            <p className="text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 mt-0.5">
               Quản lý danh sách sản phẩm, tồn kho, giá bán và VAT
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
+          <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
             
             <input
               ref={fileInputRef}
@@ -1273,14 +1273,14 @@ successCount++;
 <button
   type="button"
   onClick={downloadProductTemplate}
-  className="border border-sky-500 text-sky-700 hover:bg-sky-50 px-2 sm:px-5 py-3 rounded-xl sm:rounded-2xl text-sm sm:text-base font-semibold transition"
+  className="border border-sky-500 text-sky-700 hover:bg-sky-50 px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition"
 >
   Tải file mẫu
 </button>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="bg-white border border-sky-500 text-sky-700 hover:bg-sky-50 px-2 sm:px-5 py-3 rounded-xl sm:rounded-2xl text-sm sm:text-base font-semibold"
+              className="bg-white border border-sky-500 text-sky-700 hover:bg-sky-50 px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold"
             >
               Nhập file
             </button>
@@ -1288,7 +1288,7 @@ successCount++;
             <button
               type="button"
               onClick={exportProductsToCSV}
-              className="bg-green-600 hover:bg-green-700 text-white px-2 sm:px-5 py-3 rounded-xl sm:rounded-2xl text-sm sm:text-base font-semibold"
+              className="bg-green-600 hover:bg-green-700 text-white px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold"
             >
               Xuất file
             </button>
@@ -1302,7 +1302,7 @@ successCount++;
 
   setShowAddForm((prev) => !prev);
 }}
-              className="bg-sky-600 hover:bg-sky-700 text-white px-2 sm:px-6 py-3 rounded-xl sm:rounded-2xl text-sm sm:text-base font-semibold"
+              className="bg-sky-600 hover:bg-sky-700 text-white px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold"
             >
               {showAddForm ? "Ẩn form" : "+ Thêm sản phẩm"}
             </button>
@@ -1609,12 +1609,12 @@ successCount++;
 )}
 
         {/* SEARCH */}
-        <div className="bg-white p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 mb-4 sm:mb-6">
+        <div className="bg-white p-2 sm:p-3 rounded-xl shadow-sm border border-slate-200 mb-3">
           <input
             type="text"
             placeholder="Tìm theo tên, mã sản phẩm hoặc vị trí..."
             autoComplete="off"
-            className="w-full border border-slate-300 bg-white p-4 rounded-2xl text-black outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+            className="w-full border border-slate-300 bg-white px-3 py-2 rounded-lg text-sm text-black outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -1663,7 +1663,7 @@ successCount++;
               </div>
               {visibleColumns.actions && <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
                 {canEditProduct && <button type="button" onClick={() => openEditModal(item)} className="rounded-lg bg-yellow-500 px-3 py-2 text-sm font-semibold text-white">Sửa</button>}
-                <button type="button" onClick={() => copyProduct(item)} className="rounded-lg bg-sky-500 px-3 py-2 text-sm font-semibold text-white">Sao chép</button>
+                <button type="button" onClick={() => copyProduct(item)} className="rounded-lg bg-sky-500 px-3 py-2 text-sm font-semibold text-white">Coppy</button>
                 {canDeleteProduct && <button type="button" onClick={() => deleteProduct(item.id)} className="rounded-lg bg-red-500 px-3 py-2 text-sm font-semibold text-white">Xóa</button>}
               </div>}
             </article>
@@ -1872,16 +1872,16 @@ successCount++;
                   key={item.id}
                   className="border-b border-slate-200 hover:bg-slate-50"
                 >
-                  <td className="p-4">
+                  <td className="px-3 py-2">
 
-  <div className="flex items-center gap-3">
+  <div className="flex items-center gap-2">
 
     {item.imageUrl && (
 
       <img
         src={item.imageUrl}
         alt=""
-        className="w-12 h-12 object-cover rounded-lg border"
+        className="w-10 h-10 object-cover rounded-lg border"
       />
 
     )}
@@ -1899,11 +1899,11 @@ successCount++;
 
 </td>
 
-                  <td className="p-4 text-black">
+                  <td className="px-3 py-2 text-black">
                     {item.product_code || "---"}
                   </td>
 
-                  <td className="p-4 text-black">
+                  <td className="px-3 py-2 text-black">
                     {editingLocationId === item.id ? (
                       <input autoFocus type="text" value={locationDraft} disabled={savingLocation}
                         onChange={(e) => setLocationDraft(e.target.value)}
@@ -1925,48 +1925,48 @@ successCount++;
 
                   {canViewCostPrice &&
   visibleColumns.importPrice && (
-    <td className="p-4 text-right text-black">
+    <td className="px-3 py-2 text-right text-black">
       {formatMoney(item.import_price)}
     </td>
 )}
 
-                  <td className="p-4 text-right text-sky-700 font-semibold">
+                  <td className="px-3 py-2 text-right text-sky-700 font-semibold">
                     {formatMoney(item.price)}
                   </td>
 
                   {canViewCostPrice &&
   visibleColumns.capitalPrice && (
-    <td className="p-4 text-right text-black">
+    <td className="px-3 py-2 text-right text-black">
       {formatMoney(item.capital_price)}
     </td>
 )}
 
                   {visibleColumns.stock && (
-  <td className="p-4 text-right text-black font-semibold">
+  <td className="px-3 py-2 text-right text-black font-semibold">
     {Number(item.stock || 0).toLocaleString("vi-VN")}
   </td>
 )}
 
-                  <td className="p-4 text-black">
+                  <td className="px-3 py-2 text-black">
                     {typeof item.unit === "string"
                       ? item.unit || "cái"
                       : item.unit?.name || "cái"}
                   </td>
 
                   {visibleColumns.vat && (
-  <td className="p-4 text-center text-black">
+  <td className="px-3 py-2 text-center text-black">
     {Number(item.tax || 0)}%
   </td>
 )}
 
                   {visibleColumns.actions && (
-  <td className="p-4">
+  <td className="px-3 py-2">
     <div className="flex justify-center gap-2">
                       {canEditProduct && (
                         <button
                           type="button"
                           onClick={() => openEditModal(item)}
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-xl text-sm"
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 rounded-lg text-sm"
                         >
                           Sửa
                         </button>
@@ -1975,16 +1975,16 @@ successCount++;
                       <button
                         type="button"
                         onClick={() => copyProduct(item)}
-                        className="bg-sky-500 hover:bg-sky-600 text-white px-3 py-2 rounded-xl text-sm"
+                        className="bg-sky-500 hover:bg-sky-600 text-white px-3 py-1.5 rounded-lg text-sm"
                       >
-                        Sao chép
+                        Coppy
                       </button>
 
                       {canDeleteProduct && (
   <button
     type="button"
     onClick={() => deleteProduct(item.id)}
-    className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-xl text-sm"
+    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm"
   >
     Xóa
   </button>

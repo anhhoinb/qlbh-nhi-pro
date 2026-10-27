@@ -1124,21 +1124,21 @@ export default function QuotationsPage() {
 
   return (
 
-    <main className="min-h-screen bg-slate-100 p-5 text-black">
+    <main className="min-h-screen bg-slate-100 p-3 text-black">
 
       <div className="w-full max-w-none">
 
-        <div className="mb-5 flex flex-col gap-3 rounded-2xl bg-white p-5 border border-slate-200 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+        <div className="mb-3 flex flex-col gap-2 rounded-xl bg-white px-4 py-3 border border-slate-200 shadow-sm lg:flex-row lg:items-center lg:justify-between">
 
           <div>
 
-            <h1 className="text-3xl font-bold text-sky-700">
+            <h1 className="text-xl font-bold text-sky-700">
 
               Quản lý báo giá
 
             </h1>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-0.5 text-xs text-slate-500">
 
               Xem lại, in lại và quản lý các bảng báo giá đã lưu.
 
@@ -1152,7 +1152,7 @@ export default function QuotationsPage() {
 
             onClick={() => router.push("/quotations/create")}
 
-            className="rounded-xl bg-slate-800 px-5 py-3 font-semibold text-white hover:bg-sky-700"
+            className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700"
 
           >
 
@@ -1162,7 +1162,7 @@ export default function QuotationsPage() {
 
         </div>
 
-        <div className="mb-5 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="mb-3 rounded-xl bg-white p-2.5 shadow-sm">
 
           <input
 
@@ -1172,7 +1172,7 @@ export default function QuotationsPage() {
 
             placeholder="Tìm theo mã báo giá, tên công ty, số điện thoại hoặc email..."
 
-            className="w-full rounded-xl border p-3 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+            className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
 
           />
 
@@ -1399,9 +1399,15 @@ export default function QuotationsPage() {
 
                                         </div>
 
-                                        <div className="shrink-0 whitespace-nowrap rounded-lg bg-sky-50 px-2.5 py-1 text-sm font-bold text-sky-700">
+                                        <div className="shrink-0 whitespace-nowrap text-right">
 
-                                          SL: {quantity}
+                                          <div className="rounded-lg bg-sky-50 px-2.5 py-1 text-sm font-bold text-sky-700">
+                                            SL: {quantity}
+                                          </div>
+
+                                          <div className="mt-1 text-xs font-semibold text-slate-700">
+                                            Đơn giá: {formatMoney(product.price ?? product.unitPrice ?? product.sellPrice ?? 0)}đ
+                                          </div>
 
                                         </div>
 
