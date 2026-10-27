@@ -1286,18 +1286,33 @@ export default function QuotationsPage() {
 
                         </div>
 
-                        {(item.buyer?.phone || item.buyer?.email) && (
-
-                          <div className="mt-1 text-xs text-slate-500">
-
-                            {[item.buyer?.phone, item.buyer?.email]
-
-                              .filter(Boolean)
-
-                              .join(" • ")}
-
+                        {(item.buyer?.taxCode || item.buyer?.phone || item.buyer?.email) && (
+                          <div className="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-slate-500">
+                            {[
+                              item.buyer?.taxCode ? { label: `MST: ${item.buyer.taxCode}`, value: item.buyer.taxCode } : null,
+                              item.buyer?.phone ? { label: item.buyer.phone, value: item.buyer.phone } : null,
+                              item.buyer?.email ? { label: item.buyer.email, value: item.buyer.email } : null,
+                            ].filter((entry): entry is { label: string; value: string } => Boolean(entry)).map((entry, index) => (
+                              <span key={index} className="inline-flex items-center gap-1 whitespace-nowrap">
+                                {index > 0 && <span className="text-slate-400">•</span>}
+                                <button
+                                  type="button"
+                                  className="cursor-copy text-left hover:text-sky-700 hover:underline"
+                                  title={`Nhấn để sao chép ${entry.label}`}
+                                  onClick={async () => {
+                                    try {
+                                      await navigator.clipboard.writeText(entry.value);
+                                    } catch (error) {
+                                      console.error("Không thể sao chép thông tin khách hàng:", error);
+                                      alert("Không thể sao chép. Vui lòng kiểm tra quyền truy cập clipboard.");
+                                    }
+                                  }}
+                                >
+                                  {entry.label}
+                                </button>
+                              </span>
+                            ))}
                           </div>
-
                         )}
 
                       </td>
