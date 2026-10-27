@@ -91,6 +91,12 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
+  // Sắp xếp tồn kho tạm thời; tải lại trang sẽ trở về thứ tự mặc định.
+  const [stockSort, setStockSort] = useState<"desc" | "asc" | null>(null);
+  const toggleStockSort = () => {
+    setStockSort((previous) => previous === "desc" ? "asc" : "desc");
+    setCurrentPage(1);
+  };
 
   // DATA
   const [loading, setLoading] = useState(true);
@@ -1201,6 +1207,14 @@ successCount++;
     );
   });
 
+  // Sắp xếp toàn bộ kết quả trước khi phân trang, không sửa dữ liệu gốc.
+  const displayedProducts = stockSort
+    ? [...filteredProducts].sort((a: any, b: any) => {
+        const difference = Number(a.stock || 0) - Number(b.stock || 0);
+        return stockSort === "desc" ? -difference : difference;
+      })
+    : filteredProducts;
+
   const totalPages = Math.ceil(
     filteredProducts.length / itemsPerPage
   );
@@ -1209,7 +1223,7 @@ successCount++;
     (currentPage - 1) * itemsPerPage;
 
   const paginatedProducts =
-    filteredProducts.slice(
+    displayedProducts.slice(
       startIndex,
       startIndex + itemsPerPage
     );
@@ -1843,8 +1857,10 @@ successCount++;
 )}
 
                 {visibleColumns.stock && (
-  <th className="p-4 text-right">
-    Tồn kho
+  <th className="p-4 text-right" aria-sort={stockSort === "desc" ? "descending" : stockSort === "asc" ? "ascending" : "none"}>
+    <button type="button" onClick={toggleStockSort} className="inline-flex items-center gap-1 hover:text-sky-200 cursor-pointer" title="Nhấn để sắp xếp tồn kho cao đến thấp hoặc ngược lại">
+      Tồn kho {stockSort === "desc" ? "↓" : stockSort === "asc" ? "↑" : ""}
+    </button>
   </th>
 )}
 
