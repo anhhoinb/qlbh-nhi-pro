@@ -16,8 +16,10 @@ import {
 
 import { db } from "@/lib/firebase";
 import { checkAdmin } from "@/lib/checkAdmin";
+import { useToast } from "@/components/ToastProvider";
 
 export default function OrdersPage() {
+  const toast = useToast();
   const [orders, setOrders] =
     useState<any[]>([]);
 
@@ -163,7 +165,7 @@ export default function OrdersPage() {
       }, 1200);
     } catch (error) {
       console.error("COPY ERROR:", error);
-      alert("Không thể sao chép nội dung");
+      toast.error("Không thể sao chép nội dung");
     }
   };
 
@@ -861,7 +863,7 @@ export default function OrdersPage() {
     }
 
     if (exportOrders.length === 0) {
-      alert(
+      toast.error(
         exportMode === "month"
           ? `Không có đơn hàng trong tháng ${exportMonth}/${exportYear}`
           : exportMode === "year"
@@ -1049,7 +1051,7 @@ export default function OrdersPage() {
         .filter((line) => line.trim() !== "");
 
       if (lines.length <= 1) {
-        alert("File không có dữ liệu đơn hàng");
+        toast.error("File không có dữ liệu đơn hàng");
         event.target.value = "";
         setImporting(false);
         return;
@@ -1078,7 +1080,7 @@ export default function OrdersPage() {
       );
 
       if (!isValidFile) {
-        alert(
+        toast.error(
           "File không đúng định dạng. Vui lòng dùng file CSV chi tiết được xuất từ hệ thống."
         );
         event.target.value = "";
@@ -1260,7 +1262,7 @@ export default function OrdersPage() {
         Object.values(groupedOrders);
 
       if (ordersToImport.length === 0) {
-        alert("Không tìm thấy đơn hàng hợp lệ trong file");
+        toast.error("Không tìm thấy đơn hàng hợp lệ trong file");
         event.target.value = "";
         setImporting(false);
         return;
@@ -1273,7 +1275,7 @@ export default function OrdersPage() {
         );
       }
 
-      alert(
+      toast.success(
         `Đã nhập ${ordersToImport.length} đơn hàng từ file chi tiết`
       );
 
@@ -1282,7 +1284,7 @@ export default function OrdersPage() {
       await loadOrders();
     } catch (error) {
       console.error(error);
-      alert("Có lỗi khi nhập file. Vui lòng kiểm tra lại file CSV.");
+      toast.error("Có lỗi khi nhập file. Vui lòng kiểm tra lại file CSV.");
     }
 
     setImporting(false);
@@ -1464,7 +1466,7 @@ export default function OrdersPage() {
 
   const printSelectedOrders = () => {
   if (selectedOrders.length === 0) {
-    alert("Vui lòng tích chọn đơn hàng cần in");
+    toast.error("Vui lòng tích chọn đơn hàng cần in");
     return;
   }
 
@@ -1486,7 +1488,7 @@ export default function OrdersPage() {
     );
 
     if (!printWindow) {
-      alert(
+      toast.error(
         "Trình duyệt đang chặn cửa sổ in. Vui lòng cho phép popup."
       );
     }
@@ -1516,14 +1518,14 @@ export default function OrdersPage() {
 
   const deleteSelectedPaidOrder = async () => {
     if (!isAdmin) {
-      alert(
+      toast.error(
         "Chỉ tài khoản Admin mới được xóa đơn hàng"
       );
       return;
     }
 
     if (selectedOrders.length !== 1) {
-      alert(
+      toast.error(
         "Vui lòng chọn đúng 1 đơn hàng cần xóa"
       );
       return;
@@ -1533,7 +1535,7 @@ export default function OrdersPage() {
       selectedOrders[0];
 
     if (!order?.id) {
-      alert("Không tìm thấy đơn hàng");
+      toast.error("Không tìm thấy đơn hàng");
       return;
     }
 
@@ -1548,14 +1550,14 @@ export default function OrdersPage() {
       status === "return" ||
       status === "partially_returned"
     ) {
-      alert(
+      toast.error(
         "Không xóa bằng chức năng này với đơn đã hủy hoặc đã phát sinh trả hàng"
       );
       return;
     }
 
     if (!isFullyPaidOrder(order)) {
-      alert(
+      toast.error(
         "Chỉ được xóa đơn đã thanh toán đủ số tiền"
       );
       return;
@@ -1588,7 +1590,7 @@ export default function OrdersPage() {
 
       await loadOrders();
 
-      alert(
+      toast.success(
         `Đã xóa đơn ${orderCode}. Tồn kho không thay đổi.`
       );
     } catch (error: any) {
@@ -1597,7 +1599,7 @@ export default function OrdersPage() {
         error
       );
 
-      alert(
+      toast.error(
         error?.message ||
           "Không xóa được đơn hàng"
       );
@@ -1608,7 +1610,7 @@ export default function OrdersPage() {
 
   const cancelSelectedOrders = async () => {
   if (selectedOrders.length === 0) {
-    alert("Vui lòng tích chọn đơn hàng cần hủy");
+    toast.error("Vui lòng tích chọn đơn hàng cần hủy");
     return;
   }
 
@@ -1655,7 +1657,7 @@ export default function OrdersPage() {
     });
   }
 
-  alert("Đã hủy đơn hàng");
+  toast.success("Đã hủy đơn hàng");
 
   setSelectedOrderIds([]);
 
@@ -1666,7 +1668,7 @@ export default function OrdersPage() {
 
   if (selectedOrders.length !== 1) {
 
-    alert(
+    toast.error(
       "Vui lòng chọn đúng 1 đơn hàng"
     );
 
@@ -1681,7 +1683,7 @@ export default function OrdersPage() {
 
   if (!orderId) {
 
-    alert(
+    toast.error(
       "Không tìm thấy đơn hàng"
     );
 
@@ -1734,21 +1736,21 @@ export default function OrdersPage() {
 
   const openReturnModal = () => {
     if (selectedOrders.length !== 1) {
-      alert("Vui lòng chọn đúng 1 đơn hàng để trả hàng");
+      toast.error("Vui lòng chọn đúng 1 đơn hàng để trả hàng");
       return;
     }
 
     const order = selectedOrders[0];
 
     if (order.status === "cancelled") {
-      alert("Đơn hàng đã hủy, không thể trả hàng");
+      toast.error("Đơn hàng đã hủy, không thể trả hàng");
       return;
     }
 
     const items = getItems(order);
 
     if (items.length === 0) {
-      alert("Đơn hàng không có sản phẩm để trả");
+      toast.error("Đơn hàng không có sản phẩm để trả");
       return;
     }
 
@@ -1798,7 +1800,7 @@ export default function OrdersPage() {
       );
 
     if (!hasReturnableItem) {
-      alert("Đơn hàng này đã được trả hết");
+      toast.error("Đơn hàng này đã được trả hết");
       return;
     }
 
@@ -1850,7 +1852,7 @@ export default function OrdersPage() {
     if (
       selectedReturnItems.length === 0
     ) {
-      alert(
+      toast.error(
         "Vui lòng chọn ít nhất một sản phẩm cần trả"
       );
       return;
@@ -1870,7 +1872,7 @@ export default function OrdersPage() {
           item.remainingQuantity || 0
         )
       ) {
-        alert(
+        toast.error(
           `Số lượng trả của "${getProductName(
             item
           )}" vượt quá số lượng còn có thể trả`
@@ -2204,7 +2206,7 @@ export default function OrdersPage() {
         }
       );
 
-      alert("Đã tạo phiếu trả hàng");
+      toast.success("Đã tạo phiếu trả hàng");
 
       closeReturnModal();
       setSelectedOrderIds([]);
@@ -2215,7 +2217,7 @@ export default function OrdersPage() {
         error
       );
 
-      alert(
+      toast.error(
         error?.message ||
           "Không xử lý được trả hàng"
       );
@@ -2417,7 +2419,7 @@ export default function OrdersPage() {
 
     if (selectedOrders.length !== 1) {
 
-      alert(
+      toast.error(
         "Chỉ chọn 1 đơn hàng"
       );
 
@@ -2429,7 +2431,7 @@ export default function OrdersPage() {
 
     if (!order?.id) {
 
-      alert(
+      toast.error(
         "Không tìm thấy đơn hàng"
       );
 

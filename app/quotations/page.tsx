@@ -33,6 +33,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { useToast } from "@/components/ToastProvider";
 
 type Quotation = {
 
@@ -181,6 +182,7 @@ function getStatusClass(status?: string) {
 export default function QuotationsPage() {
 
   const router = useRouter();
+  const toast = useToast();
 
   const [quotations, setQuotations] = useState<Quotation[]>([]);
 
@@ -262,7 +264,7 @@ export default function QuotationsPage() {
 
       console.error(error);
 
-      alert("Không tải được danh sách báo giá");
+      toast.error("Không tải được danh sách báo giá");
 
     } finally {
 
@@ -454,7 +456,7 @@ export default function QuotationsPage() {
 
     if (item.status === "paid") {
 
-      alert("Báo giá này đã được thanh toán và đã tạo đơn hàng.");
+      toast.error("Báo giá này đã được thanh toán và đã tạo đơn hàng.");
 
       return;
 
@@ -1048,7 +1050,7 @@ export default function QuotationsPage() {
 
       );
 
-      alert(
+      toast.success(
 
         `Đã thanh toán ${getQuotationCode(item)}.\n\nĐã tạo đơn hàng: ${createdOrderCode}\nĐã trừ tồn kho các sản phẩm trong kho.`
 
@@ -1058,7 +1060,7 @@ export default function QuotationsPage() {
 
       console.error("PAY QUOTATION ERROR:", error);
 
-      alert(
+      toast.error(
 
         `Không thể chuyển báo giá thành đơn hàng.\n\n${
 
@@ -1080,7 +1082,7 @@ export default function QuotationsPage() {
 
     if (item.status === "paid") {
 
-      alert("Báo giá đã thanh toán không thể xóa.");
+      toast.error("Báo giá đã thanh toán không thể xóa.");
 
       return;
 
@@ -1106,13 +1108,13 @@ export default function QuotationsPage() {
 
       );
 
-      alert("Đã xóa báo giá");
+      toast.success("Đã xóa báo giá");
 
     } catch (error) {
 
       console.error(error);
 
-      alert("Không xóa được báo giá");
+      toast.error("Không xóa được báo giá");
 
     } finally {
 
@@ -1304,7 +1306,7 @@ export default function QuotationsPage() {
                                       await navigator.clipboard.writeText(entry.value);
                                     } catch (error) {
                                       console.error("Không thể sao chép thông tin khách hàng:", error);
-                                      alert("Không thể sao chép. Vui lòng kiểm tra quyền truy cập clipboard.");
+                                      toast.error("Không thể sao chép. Vui lòng kiểm tra quyền truy cập clipboard.");
                                     }
                                   }}
                                 >

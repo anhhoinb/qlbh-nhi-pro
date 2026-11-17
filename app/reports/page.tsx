@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ToastProvider";
 
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
@@ -41,6 +42,7 @@ type OrderData = {
 
 export default function SalesReportPage() {
   const router = useRouter();
+  const toast = useToast();
 
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [filterType, setFilterType] = useState("7days");
@@ -651,7 +653,7 @@ const isCancelledOrder = (order: OrderData) => {
   try {
 
     if (filteredOrders.length === 0) {
-      alert("Không có dữ liệu để xuất");
+      toast.error("Không có dữ liệu để xuất");
       return;
     }
 
@@ -804,13 +806,13 @@ const isCancelledOrder = (order: OrderData) => {
       `bao-cao-ban-hang-${Date.now()}.xlsx`
     );
 
-    alert("Xuất file Excel thành công");
+    toast.success("Xuất file Excel thành công");
 
   } catch (error) {
 
     console.error(error);
 
-    alert("Lỗi xuất file Excel");
+    toast.error("Lỗi xuất file Excel");
   }
 };
 

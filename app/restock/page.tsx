@@ -9,6 +9,7 @@ import {
   runTransaction,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useToast } from "@/components/ToastProvider";
 
 type Product = {
   id: string;
@@ -138,6 +139,7 @@ function generateRestockCode() {
 }
 
 export default function RestockPage() {
+  const toast = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [items, setItems] = useState<RestockItem[]>([]);
   const [search, setSearch] = useState("");
@@ -182,7 +184,7 @@ export default function RestockPage() {
       setProducts(result);
     } catch (error) {
       console.error(error);
-      alert("Không tải được danh sách sản phẩm");
+      toast.error("Không tải được danh sách sản phẩm");
     } finally {
       setLoadingProducts(false);
     }
@@ -254,7 +256,7 @@ export default function RestockPage() {
         (item) => item.productId === product.id
       )
     ) {
-      alert("Sản phẩm đã có trong đơn nhập");
+      toast.error("Sản phẩm đã có trong đơn nhập");
       return;
     }
 
@@ -328,7 +330,7 @@ export default function RestockPage() {
     if (saving) return;
 
     if (items.length === 0) {
-      alert("Vui lòng chọn sản phẩm cần nhập");
+      toast.error("Vui lòng chọn sản phẩm cần nhập");
       return;
     }
 
@@ -343,7 +345,7 @@ export default function RestockPage() {
     });
 
     if (invalidQuantity) {
-      alert(
+      toast.error(
         `Số lượng không hợp lệ: ${invalidQuantity.productName}`
       );
       return;
@@ -361,7 +363,7 @@ export default function RestockPage() {
       });
 
       if (invalidPrice) {
-        alert(
+        toast.error(
           `Giá nhập không hợp lệ: ${invalidPrice.productName}`
         );
         return;
@@ -371,7 +373,7 @@ export default function RestockPage() {
     const user = readCurrentUser();
 
     if (!user.uid && !user.username) {
-      alert(
+      toast.error(
         "Không xác định được tài khoản đăng nhập. Vui lòng đăng nhập lại."
       );
       return;
@@ -487,7 +489,7 @@ export default function RestockPage() {
         });
       });
 
-      alert(
+      toast.success(
         `Tạo đơn nhập hàng thành công: ${restockCode}`
       );
 
@@ -499,7 +501,7 @@ export default function RestockPage() {
     } catch (error: any) {
       console.error("Lỗi nhập hàng:", error);
 
-      alert(
+      toast.error(
         error?.message ||
           "Nhập hàng thất bại. Vui lòng thử lại."
       );

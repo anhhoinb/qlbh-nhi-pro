@@ -31,6 +31,7 @@ import {
 
 
 import { db } from "@/lib/firebase";
+import { useToast } from "@/components/ToastProvider";
 
 
 
@@ -166,6 +167,7 @@ function getUnitText(unit: Product["unit"]) {
 export default function CreateQuotationPage() {
 
   const router = useRouter();
+  const toast = useToast();
 
   const searchParams = useSearchParams();
 
@@ -225,6 +227,8 @@ export default function CreateQuotationPage() {
 
 
 
+  const [savingDefaultTerm, setSavingDefaultTerm] = useState<"deliveryTime" | "warrantyTime" | null>(null);
+
   const [shippingIncluded, setShippingIncluded] = useState(false);
 
   const [shippingNote, setShippingNote] = useState("");
@@ -246,6 +250,50 @@ export default function CreateQuotationPage() {
   });
 
 
+
+  // Chỉ nạp mặc định khi tạo báo giá mới. Báo giá sửa/sao chép giữ điều khoản riêng.
+  useEffect(() => {
+    if (editId || copyId) return;
+    let active = true;
+    const loadDefaultTerms = async () => {
+      try {
+        const snapshot = await getDoc(doc(db, "settings", "quotation_default_terms"));
+        if (!active || !snapshot.exists()) return;
+        const data = snapshot.data();
+        if (typeof data.deliveryTime === "string") setDeliveryTime(data.deliveryTime);
+        if (typeof data.warrantyTime === "string") setWarrantyTime(data.warrantyTime);
+      } catch (error) {
+        console.error("LOAD DEFAULT QUOTATION TERMS ERROR:", error);
+        // Không chặn tạo báo giá khi chưa đọc được cài đặt.
+      }
+    };
+    void loadDefaultTerms();
+    return () => { active = false; };
+  }, [editId, copyId]);
+
+  const saveDefaultTerm = async (field: "deliveryTime" | "warrantyTime") => {
+    const value = (field === "deliveryTime" ? deliveryTime : warrantyTime).trim();
+    if (!value) {
+      toast.error("Vui lòng nhập nội dung trước khi lưu mặc định");
+      return;
+    }
+    try {
+      setSavingDefaultTerm(field);
+      await setDoc(
+        doc(db, "settings", "quotation_default_terms"),
+        { [field]: value, updatedAt: serverTimestamp() },
+        { merge: true }
+      );
+      toast.success(field === "deliveryTime"
+        ? "Đã lưu mặc định thời gian giao hàng"
+        : "Đã lưu mặc định thời gian bảo hành");
+    } catch (error) {
+      console.error("SAVE DEFAULT QUOTATION TERM ERROR:", error);
+      toast.error("Không lưu được mặc định. Kiểm tra quyền ghi Firestore.");
+    } finally {
+      setSavingDefaultTerm(null);
+    }
+  };
 
   useEffect(() => {
 
@@ -312,7 +360,7 @@ export default function CreateQuotationPage() {
 
         if (!quotationSnap.exists()) {
 
-          alert("Không tìm thấy báo giá cần sửa");
+          toast.error("Không tìm thấy báo giá cần sửa");
 
           router.push("/quotations");
 
@@ -481,7 +529,7 @@ export default function CreateQuotationPage() {
 
         console.error("LOAD QUOTATION FOR EDIT ERROR:", error);
 
-        alert("Không tải được báo giá cần sửa");
+        toast.error("Không tải được báo giá cần sửa");
 
       } finally {
 
@@ -553,7 +601,7 @@ export default function CreateQuotationPage() {
 
         console.error(error);
 
-        alert("Không tải được danh sách sản phẩm");
+        toast.error("Không tải được danh sách sản phẩm");
 
       } finally {
 
@@ -937,7 +985,7 @@ export default function CreateQuotationPage() {
 
     if (!buyer.companyName.trim()) {
 
-      alert("Vui lòng nhập tên công ty mua hàng");
+      toast.error("Vui lòng nhập tên công ty mua hàng");
 
       return false;
 
@@ -947,7 +995,7 @@ export default function CreateQuotationPage() {
 
     if (items.length === 0) {
 
-      alert("Vui lòng thêm ít nhất một sản phẩm");
+      toast.error("Vui lòng thêm ít nhất một sản phẩm");
 
       return false;
 
@@ -1083,7 +1131,7 @@ export default function CreateQuotationPage() {
 
       if (!previewWindow) {
 
-        alert(
+        toast.error(
 
           "Trình duyệt đang chặn cửa sổ xem trước. Vui lòng cho phép mở cửa sổ bật lên."
 
@@ -1095,7 +1143,7 @@ export default function CreateQuotationPage() {
 
       console.error("PREVIEW QUOTATION ERROR:", error);
 
-      alert("Không thể xem trước báo giá");
+      toast.error("Không thể xem trước báo giá");
 
     }
 
@@ -1258,6 +1306,11 @@ export default function CreateQuotationPage() {
 
 
       if (openPrint) {
+        toast.success(
+          isEditMode
+            ? `Đã cập nhật báo giá ${quotationCode}`
+            : `Đã lưu báo giá ${quotationCode}`
+        );
 
         const printUrl = `/quotations/print?id=${encodeURIComponent(
 
@@ -1279,7 +1332,7 @@ export default function CreateQuotationPage() {
 
       } else {
 
-        alert(
+        toast.success(
 
           isEditMode
 
@@ -1307,7 +1360,7 @@ export default function CreateQuotationPage() {
 
 
 
-      alert(
+      toast.error(
 
         `${
 
@@ -1762,6 +1815,13 @@ export default function CreateQuotationPage() {
                     placeholder="Nhập thời gian giao hàng"
 
                   />
+                  <div className="mt-1 flex justify-end">
+                    <button type="button" onClick={() => saveDefaultTerm("deliveryTime")}
+                      disabled={savingDefaultTerm !== null}
+                      className="rounded-md border border-emerald-600 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">
+                      {savingDefaultTerm === "deliveryTime" ? "Đang lưu..." : "✓ Lưu mặc định"}
+                    </button>
+                  </div>
 
                 </div>
 
@@ -1788,6 +1848,13 @@ export default function CreateQuotationPage() {
                     placeholder="Nhập thời gian bảo hành"
 
                   />
+                  <div className="mt-1 flex justify-end">
+                    <button type="button" onClick={() => saveDefaultTerm("warrantyTime")}
+                      disabled={savingDefaultTerm !== null}
+                      className="rounded-md border border-emerald-600 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">
+                      {savingDefaultTerm === "warrantyTime" ? "Đang lưu..." : "✓ Lưu mặc định"}
+                    </button>
+                  </div>
 
                 </div>
 

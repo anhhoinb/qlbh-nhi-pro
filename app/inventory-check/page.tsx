@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { useToast } from "@/components/ToastProvider";
 
 type InventoryCheckItem = {
   productId?: string;
@@ -87,6 +88,7 @@ function getDifference(item: InventoryCheckItem) {
 }
 
 export default function InventoryCheckPage() {
+  const toast = useToast();
   const [checks, setChecks] = useState<InventoryCheck[]>([]);
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
@@ -136,7 +138,7 @@ export default function InventoryCheckPage() {
         setChecks(data);
       } catch (error) {
         console.error(error);
-        alert("Không tải được danh sách phiếu kiểm hàng");
+        toast.error("Không tải được danh sách phiếu kiểm hàng");
       } finally {
         setLoading(false);
       }

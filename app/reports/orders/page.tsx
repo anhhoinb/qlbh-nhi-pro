@@ -136,6 +136,14 @@ type OrderData = {
   customerName?: string;
   customerPhone?: string;
   customerCode?: string;
+  mst?: string | number;
+  taxCode?: string | number;
+  tax_code?: string | number;
+  customerMst?: string | number;
+  customerMST?: string | number;
+  customerTaxCode?: string | number;
+  customer_tax_code?: string | number;
+  companyTaxCode?: string | number;
 };
 
 const FILTER_OPTIONS = [
@@ -160,6 +168,9 @@ export default function OrdersReportPage() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [openOrderId, setOpenOrderId] = useState("");
+  const [mstOnly, setMstOnly] = useState(false);
+  const [transferOnly, setTransferOnly] = useState(false);
+  const [cashOnly, setCashOnly] = useState(false);
 
   const [printPaperOrder, setPrintPaperOrder] =
     useState<OrderData | null>(null);
@@ -398,6 +409,28 @@ export default function OrdersReportPage() {
     return String(value || "")
       .toLowerCase()
       .trim();
+  };
+
+  const hasOrderMst = (order: OrderData) => {
+    const customer = order.customer || {};
+    const candidates = [
+      order.mst,
+      order.taxCode,
+      order.tax_code,
+      order.customerMst,
+      order.customerMST,
+      order.customerTaxCode,
+      order.customer_tax_code,
+      order.companyTaxCode,
+      customer.mst,
+      customer.MST,
+      customer.taxCode,
+      customer.tax_code,
+      customer.taxNumber,
+      customer.tax_number,
+    ];
+
+    return candidates.some((value) => String(value ?? "").trim() !== "");
   };
 
   const getPaymentMethod = (order: OrderData) => {
@@ -861,13 +894,18 @@ export default function OrdersReportPage() {
   }, [orders, filterType, customFrom, customTo]);
 
   const sortedOrders = useMemo(() => {
-    return [...filteredOrders].sort((a, b) => {
+    return filteredOrders.filter((order) => {
+      if (mstOnly) return hasOrderMst(order) && order.status !== "cancelled" && order.status !== "returned";
+      if (transferOnly) return getTransferAmount(order) > 0 && order.status !== "cancelled" && order.status !== "returned";
+      if (cashOnly) return getCashAmount(order) > 0 && order.status !== "cancelled" && order.status !== "returned";
+      return true;
+    }).sort((a, b) => {
       const dateA = getOrderDate(a)?.getTime() || 0;
       const dateB = getOrderDate(b)?.getTime() || 0;
 
       return dateB - dateA;
     });
-  }, [filteredOrders]);
+  }, [filteredOrders, mstOnly, transferOnly, cashOnly]);
 
   const totalPages = Math.ceil(sortedOrders.length / itemsPerPage);
 
@@ -906,7 +944,7 @@ export default function OrdersReportPage() {
   }, [currentPage, totalPages]);
 
   const summary = useMemo(() => {
-  return sortedOrders.reduce(
+  return filteredOrders.reduce(
     (result, order) => {
 
       if (
@@ -917,6 +955,9 @@ export default function OrdersReportPage() {
       }
 
       result.total += getOrderTotal(order);
+      if (hasOrderMst(order)) {
+        result.mstMoney += getOrderTotal(order);
+      }
       result.cash += getCashAmount(order);
       result.transfer += getTransferAmount(order);
       result.cod += getCodAmount(order);
@@ -928,6 +969,7 @@ export default function OrdersReportPage() {
     },
     {
       total: 0,
+      mstMoney: 0,
       cash: 0,
       transfer: 0,
       cod: 0,
@@ -936,7 +978,7 @@ export default function OrdersReportPage() {
       items: 0,
     }
   );
-}, [sortedOrders]);
+}, [filteredOrders]);
 
   const loadOrders = async () => {
     const querySnapshot = await getDocs(
@@ -962,7 +1004,7 @@ export default function OrdersReportPage() {
   useEffect(() => {
     setCurrentPage(1);
     setOpenOrderId("");
-  }, [filterType, customFrom, customTo]);
+  }, [filterType, customFrom, customTo, mstOnly, transferOnly, cashOnly]);
 
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
@@ -1034,7 +1076,7 @@ export default function OrdersReportPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
           <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
             <p className="text-slate-500">
               Số đơn hàng
@@ -1071,25 +1113,47 @@ export default function OrdersReportPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-            <p className="text-slate-500">
-              Tiền mặt
-            </p>
-
+          <button
+            type="button"
+            onClick={() => {
+              setCashOnly((value) => !value);
+              setTransferOnly(false);
+              setMstOnly(false);
+            }}
+            aria-pressed={cashOnly}
+            title={cashOnly ? "Nhấn để xem tất cả đơn hàng" : "Nhấn để lọc đơn có thanh toán tiền mặt"}
+            className={`rounded-2xl border p-4 shadow-sm text-left transition cursor-pointer ${
+              cashOnly
+                ? "bg-emerald-50 border-emerald-400 ring-1 ring-emerald-200"
+                : "bg-white border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/40"
+            }`}
+          >
+            <p className="text-slate-500">Tiền mặt</p>
             <p className="text-2xl font-bold text-emerald-600 mt-2">
               {formatMoney(summary.cash)}
             </p>
-          </div>
+          </button>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-            <p className="text-slate-500">
-              CK / thẻ
-            </p>
-
+          <button
+            type="button"
+            onClick={() => {
+              setTransferOnly((value) => !value);
+              setMstOnly(false);
+              setCashOnly(false);
+            }}
+            aria-pressed={transferOnly}
+            title={transferOnly ? "Nhấn để xem tất cả đơn hàng" : "Nhấn để lọc đơn có thanh toán chuyển khoản hoặc thẻ"}
+            className={`rounded-2xl border p-4 shadow-sm text-left transition cursor-pointer ${
+              transferOnly
+                ? "bg-sky-50 border-sky-400 ring-1 ring-sky-200"
+                : "bg-white border-slate-200 hover:border-sky-300 hover:bg-sky-50/40"
+            }`}
+          >
+            <p className="text-slate-500">CK / thẻ</p>
             <p className="text-2xl font-bold text-sky-600 mt-2">
               {formatMoney(summary.transfer)}
             </p>
-          </div>
+          </button>
 
           <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
             <p className="text-slate-500">
@@ -1100,6 +1164,26 @@ export default function OrdersReportPage() {
               {formatMoney(summary.capital)}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setMstOnly((value) => !value);
+              setTransferOnly(false);
+              setCashOnly(false);
+            }}
+            aria-pressed={mstOnly}
+            title={mstOnly ? "Nhấn để xem tất cả đơn hàng" : "Nhấn để lọc đơn hàng có MST"}
+            className={`rounded-2xl border p-4 shadow-sm text-left transition cursor-pointer ${
+              mstOnly
+                ? "bg-rose-50 border-rose-400 ring-1 ring-rose-200"
+                : "bg-white border-slate-200 hover:border-rose-300 hover:bg-rose-50/40"
+            }`}
+          >
+            <p className="text-slate-500">Tiền</p>
+            <p className="text-2xl font-bold text-rose-600 mt-2">
+              {formatMoney(summary.mstMoney)}
+            </p>
+          </button>
         </div>
 
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">

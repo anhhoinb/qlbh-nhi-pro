@@ -8,8 +8,10 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { useToast } from "@/components/ToastProvider";
 
 export default function InventoryPage() {
+  const toast = useToast();
   const [products, setProducts] =
     useState<any[]>([]);
 
@@ -221,7 +223,7 @@ export default function InventoryPage() {
   // EXPORT EXCEL (.XLS)
   const exportInventoryToExcel = () => {
     if (products.length === 0) {
-      alert("Chưa có sản phẩm để xuất file");
+      toast.error("Chưa có sản phẩm để xuất file");
       return;
     }
 

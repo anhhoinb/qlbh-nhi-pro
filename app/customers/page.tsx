@@ -16,8 +16,10 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { useToast } from "@/components/ToastProvider";
 
 export default function CustomersPage() {
+  const toast = useToast();
   const [customers, setCustomers] = useState<any[]>([]);
 
   const [search, setSearch] = useState("");
@@ -301,12 +303,12 @@ export default function CustomersPage() {
     const email = newCustomer.email.trim();
 
     if (!name) {
-      alert("Vui lòng nhập tên khách hàng");
+      toast.error("Vui lòng nhập tên khách hàng");
       return;
     }
 
     if (!phone) {
-      alert("Vui lòng nhập số điện thoại");
+      toast.error("Vui lòng nhập số điện thoại");
       return;
     }
 
@@ -317,7 +319,7 @@ export default function CustomersPage() {
     });
 
     if (duplicate) {
-      alert(getDuplicateMessage(duplicate, { phone, taxCode, email }));
+      toast.error(getDuplicateMessage(duplicate, { phone, taxCode, email }));
       return;
     }
 
@@ -339,10 +341,10 @@ export default function CustomersPage() {
       setShowAddModal(false);
       await loadCustomers();
 
-      alert("Đã thêm khách hàng mới");
+      toast.success("Đã thêm khách hàng mới");
     } catch (error) {
       console.error(error);
-      alert("Có lỗi khi thêm khách hàng");
+      toast.error("Có lỗi khi thêm khách hàng");
     } finally {
       setSaving(false);
     }
@@ -467,12 +469,12 @@ export default function CustomersPage() {
     const email = editCustomer.email.trim();
 
     if (!name) {
-      alert("Vui lòng nhập tên khách hàng");
+      toast.error("Vui lòng nhập tên khách hàng");
       return;
     }
 
     if (!phone) {
-      alert("Vui lòng nhập số điện thoại");
+      toast.error("Vui lòng nhập số điện thoại");
       return;
     }
 
@@ -482,7 +484,7 @@ export default function CustomersPage() {
     );
 
     if (duplicate) {
-      alert(getDuplicateMessage(duplicate, { phone, taxCode, email }));
+      toast.error(getDuplicateMessage(duplicate, { phone, taxCode, email }));
       return;
     }
 
@@ -505,10 +507,10 @@ export default function CustomersPage() {
       await loadCustomers();
       closeEditCustomer();
 
-      alert("Đã cập nhật khách hàng");
+      toast.success("Đã cập nhật khách hàng");
     } catch (error) {
       console.error(error);
-      alert("Có lỗi khi cập nhật khách hàng");
+      toast.error("Có lỗi khi cập nhật khách hàng");
     } finally {
       setSavingEdit(false);
     }
@@ -569,9 +571,7 @@ export default function CustomersPage() {
         await loadCustomers();
         closeEditCustomer();
 
-        alert(
-          "Khách hàng đã có giao dịch nên không bị xóa. Hệ thống đã chuyển khách hàng sang trạng thái Ngừng sử dụng."
-        );
+        toast.success("Khách hàng đã có giao dịch nên không bị xóa. Hệ thống đã chuyển khách hàng sang trạng thái Ngừng sử dụng.");
         return;
       }
 
@@ -582,10 +582,10 @@ export default function CustomersPage() {
       await loadCustomers();
       closeEditCustomer();
 
-      alert("Đã xóa khách hàng");
+      toast.success("Đã xóa khách hàng");
     } catch (error) {
       console.error(error);
-      alert("Không thể xóa hoặc ngừng sử dụng khách hàng");
+      toast.error("Không thể xóa hoặc ngừng sử dụng khách hàng");
     } finally {
       setDeletingCustomer(false);
     }
@@ -640,10 +640,10 @@ export default function CustomersPage() {
           : prev
       );
 
-      alert("Đã kích hoạt lại khách hàng");
+      toast.success("Đã kích hoạt lại khách hàng");
     } catch (error) {
       console.error(error);
-      alert("Không thể kích hoạt lại khách hàng");
+      toast.error("Không thể kích hoạt lại khách hàng");
     } finally {
       setSavingEdit(false);
     }

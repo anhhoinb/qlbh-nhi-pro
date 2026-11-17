@@ -21,6 +21,7 @@ import {
 import {
   db
 } from "@/lib/firebase";
+import { useToast } from "@/components/ToastProvider";
 
 type InventoryMovement = {
   id: string;
@@ -43,6 +44,7 @@ type InventoryMovement = {
 };
 
 export default function ProductsPage() {
+  const toast = useToast();
   const unitOptions = [
     "Cái",
     "Mét",
@@ -131,9 +133,10 @@ export default function ProductsPage() {
           : product
       ));
       setEditingLocationId(null);
+      toast.success("Đã cập nhật vị trí sản phẩm");
     } catch (error) {
       console.error("Không cập nhật được vị trí sản phẩm", error);
-      alert("Không cập nhật được vị trí sản phẩm");
+      toast.error("Không cập nhật được vị trí sản phẩm");
     } finally {
       setSavingLocation(false);
     }
@@ -443,7 +446,7 @@ reader.readAsDataURL(file);
     } catch (error) {
       console.log(error);
 
-      alert("Không tải được sản phẩm");
+      toast.error("Không tải được sản phẩm");
     }
 
     setLoading(false);
@@ -502,7 +505,7 @@ reader.readAsDataURL(file);
   const addProduct = async () => {
     try {
       if (!mainName || !productCode || !price) {
-  alert("Nhập đầy đủ thông tin bắt buộc");
+  toast.error("Nhập đầy đủ thông tin bắt buộc");
   return;
 }
 
@@ -527,7 +530,7 @@ if (
     mainName
   )
 ) {
-  alert(
+  toast.error(
     `Tên sản phẩm "${mainName.trim()}" đã tồn tại`
   );
   return;
@@ -541,7 +544,7 @@ const duplicateCode = latestProducts.find(
 );
 
 if (duplicateCode) {
-  alert("Mã sản phẩm đã tồn tại");
+  toast.error("Mã sản phẩm đã tồn tại");
   return;
 }
 
@@ -569,7 +572,7 @@ if (duplicateCode) {
         createdAt: new Date(),
       });
 
-      alert("Thêm sản phẩm thành công");
+      toast.success("Thêm sản phẩm thành công");
 
       setName("");
       setMainName("");
@@ -591,7 +594,7 @@ if (duplicateCode) {
     } catch (error) {
       console.log(error);
 
-      alert("Không thể thêm sản phẩm");
+      toast.error("Không thể thêm sản phẩm");
     }
   };
 
@@ -678,7 +681,7 @@ if (duplicateCode) {
       setStockHistory(data);
     } catch (error) {
       console.error(error);
-      alert("Không tải được lịch sử kho của sản phẩm");
+      toast.error("Không tải được lịch sử kho của sản phẩm");
     } finally {
       setLoadingStockHistory(false);
     }
@@ -694,7 +697,7 @@ if (duplicateCode) {
   // OPEN EDIT MODAL
   const openEditModal = (item: any) => {
     if (!canEditProduct) {
-      alert("Bạn không có quyền sửa sản phẩm");
+      toast.error("Bạn không có quyền sửa sản phẩm");
       return;
     }
 
@@ -728,7 +731,7 @@ if (duplicateCode) {
   if (!editingProduct) return;
 
   if (!canEditProduct) {
-    alert("Bạn không có quyền sửa sản phẩm");
+    toast.error("Bạn không có quyền sửa sản phẩm");
     return;
   }
 
@@ -762,7 +765,7 @@ if (duplicateCode) {
         editingProduct.id
       )
     ) {
-      alert(`Tên sản phẩm "${editMainName.trim()}" đã tồn tại`);
+      toast.error(`Tên sản phẩm "${editMainName.trim()}" đã tồn tại`);
       return;
     }
 
@@ -784,7 +787,7 @@ if (duplicateCode) {
       );
 
       if (duplicateCode) {
-        alert(`Mã sản phẩm "${editProductCode}" đã tồn tại`);
+        toast.error(`Mã sản phẩm "${editProductCode}" đã tồn tại`);
         return;
       }
     }
@@ -828,7 +831,7 @@ if (duplicateCode) {
       }
     );
 
-    alert("Cập nhật thành công");
+    toast.success("Cập nhật sản phẩm thành công");
 
     setEditingProduct(null);
 
@@ -838,7 +841,7 @@ if (duplicateCode) {
 
     console.log(error);
 
-    alert("Cập nhật thất bại");
+    toast.error("Cập nhật thất bại");
   }
 };
 
@@ -884,12 +887,12 @@ if (duplicateCode) {
 
     try {
       await deleteDoc(doc(db, "products", id));
-
+      toast.success("Đã xóa sản phẩm thành công");
       loadProducts();
     } catch (error) {
       console.log(error);
 
-      alert("Xóa sản phẩm thất bại");
+      toast.error("Xóa sản phẩm thất bại");
     }
   };
 
@@ -924,7 +927,7 @@ if (duplicateCode) {
   // EXPORT CSV
   const exportProductsToCSV = () => {
     if (products.length === 0) {
-      alert("Chưa có sản phẩm để xuất file");
+      toast.error("Chưa có sản phẩm để xuất file");
       return;
     }
 
@@ -1034,7 +1037,7 @@ if (duplicateCode) {
         .filter(Boolean);
 
       if (lines.length < 2) {
-        alert("File không có dữ liệu sản phẩm");
+        toast.error("File không có dữ liệu sản phẩm");
         event.target.value = "";
         return;
       }
@@ -1047,7 +1050,7 @@ if (duplicateCode) {
         headers.includes("main_name") || headers.includes("name");
 
       if (!hasMainName) {
-        alert(
+        toast.error(
           "File CSV cần có cột main_name (Tên chính). File mẫu mới gồm: main_name,short_name,product_location,price,import_price,capital_price,stock,unit,tax"
         );
         event.target.value = "";
@@ -1170,7 +1173,7 @@ nextProductNumber++;
 successCount++;
       }
 
-      alert(
+      toast.success(
         `Nhập file xong. Thành công: ${successCount}. Bỏ qua: ${skipCount}.`
       );
 
@@ -1181,7 +1184,7 @@ successCount++;
     } catch (error) {
       console.log(error);
 
-      alert("Nhập file thất bại. Vui lòng kiểm tra lại file CSV.");
+      toast.error("Nhập file thất bại. Vui lòng kiểm tra lại file CSV.");
 
       event.target.value = "";
     }

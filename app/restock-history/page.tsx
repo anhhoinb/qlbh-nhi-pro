@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useToast } from "@/components/ToastProvider";
 
 type RestockItem = {
   productId: string;
@@ -255,6 +256,7 @@ function normalizeOrder(
 }
 
 export default function RestockHistoryPage() {
+  const toast = useToast();
   const [orders, setOrders] = useState<RestockOrder[]>(
     []
   );
@@ -305,7 +307,7 @@ export default function RestockHistoryPage() {
       setOrders(result);
     } catch (error) {
       console.error("Lỗi tải lịch sử nhập hàng:", error);
-      alert("Không tải được lịch sử nhập hàng");
+      toast.error("Không tải được lịch sử nhập hàng");
     } finally {
       setLoading(false);
     }

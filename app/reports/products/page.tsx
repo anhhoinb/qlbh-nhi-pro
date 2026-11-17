@@ -92,6 +92,20 @@ export default function ProductsReportPage() {
   const [currentPage, setCurrentPage] =
     useState(1);
 
+  const [groupByProduct, setGroupByProduct] = useState(false);
+  const [sortBy, setSortBy] = useState<"date" | "quantity" | "total">("date");
+  const [sortDirection, setSortDirection] = useState<"desc" | "asc">("desc");
+
+  const changeSort = (column: "quantity" | "total") => {
+    if (sortBy === column) {
+      setSortDirection((prev) => prev === "desc" ? "asc" : "desc");
+    } else {
+      setSortBy(column);
+      setSortDirection("desc");
+    }
+    setCurrentPage(1);
+  };
+
   const itemsPerPage = 20;
 
   const formatMoney = (value: any) => {
@@ -444,8 +458,49 @@ export default function ProductsReportPage() {
     });
   }, [filteredOrders]);
 
+  const displayRows = useMemo(() => {
+    let result: ProductReportRow[];
+    if (groupByProduct) {
+      const grouped = new Map<string, ProductReportRow>();
+      for (const row of rows) {
+        const code = row.productCode.trim();
+        const key = code && code !== "---"
+          ? `code:${code.toLocaleLowerCase("vi-VN")}`
+          : `name:${row.productName.trim().toLocaleLowerCase("vi-VN")}`;
+        const existing = grouped.get(key);
+        if (!existing) {
+          grouped.set(key, { ...row, id: key, dateText: "—" });
+        } else {
+          existing.quantity += row.quantity;
+          existing.productMoney += row.productMoney;
+          existing.discount += row.discount;
+          existing.taxAmount += row.taxAmount;
+          existing.total += row.total;
+          // Nhiều mức VAT khác nhau: không hiển thị một mức thuế duy nhất.
+          if (existing.hasVat !== row.hasVat || existing.taxRate !== row.taxRate) {
+            existing.taxRate = -1;
+          }
+        }
+      }
+      result = Array.from(grouped.values());
+    } else {
+      result = [...rows];
+    }
+    if (sortBy !== "date") {
+      result.sort((a, b) => {
+        const diff = sortBy === "quantity"
+          ? a.quantity - b.quantity
+          : a.total - b.total;
+        return sortDirection === "desc" ? -diff : diff;
+      });
+    } else if (groupByProduct) {
+      result.sort((a, b) => (b.date?.getTime() || 0) - (a.date?.getTime() || 0));
+    }
+    return result;
+  }, [rows, groupByProduct, sortBy, sortDirection]);
+
   const totalPages = Math.ceil(
-    rows.length / itemsPerPage
+    displayRows.length / itemsPerPage
   );
 
   const paginatedRows = useMemo(() => {
@@ -455,8 +510,8 @@ export default function ProductsReportPage() {
     const endIndex =
       startIndex + itemsPerPage;
 
-    return rows.slice(startIndex, endIndex);
-  }, [rows, currentPage]);
+    return displayRows.slice(startIndex, endIndex);
+  }, [displayRows, currentPage]);
 
   const visiblePages = useMemo(() => {
     const pages: number[] = [];
@@ -529,7 +584,7 @@ export default function ProductsReportPage() {
       "Thành tiền",
     ];
 
-    const csvRows = rows.map((item) => [
+    const csvRows = displayRows.map((item) => [
       item.dateText,
       item.productSecondaryName
         ? `${item.productName} | ${item.productSecondaryName}`
@@ -539,7 +594,7 @@ export default function ProductsReportPage() {
       item.quantity,
       item.productMoney,
       item.discount,
-      item.hasVat ? `${item.taxRate}%` : "",
+      item.hasVat && item.taxRate >= 0 ? `${item.taxRate}%` : "",
       item.total,
     ]);
 
@@ -609,6 +664,7 @@ export default function ProductsReportPage() {
     filterType,
     customFrom,
     customTo,
+    groupByProduct,
   ]);
 
   useEffect(() => {
@@ -762,13 +818,19 @@ export default function ProductsReportPage() {
               <p className="text-slate-500 text-sm mt-1">
                 Hiển thị{" "}
                 {paginatedRows.length} /{" "}
-                {rows.length} dòng sản phẩm
+                {displayRows.length} dòng sản phẩm
               </p>
             </div>
 
-            <p className="text-sm text-slate-500">
-              20 dòng / trang
-            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                <input type="checkbox" checked={groupByProduct}
+                  onChange={(e) => setGroupByProduct(e.target.checked)}
+                  className="accent-sky-600 w-4 h-4" />
+                Gộp theo sản phẩm
+              </label>
+              <span className="text-sm text-slate-500">20 dòng / trang</span>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -784,7 +846,11 @@ export default function ProductsReportPage() {
                   </th>
 
                   <th className="p-4 text-center w-[140px]">
-                    SL hàng bán
+                    <button type="button" onClick={() => changeSort("quantity")}
+                      className="inline-flex items-center justify-center gap-1 whitespace-nowrap font-bold hover:text-sky-700 cursor-pointer"
+                      title="Nhấn để sắp xếp số lượng bán">
+                      <span>SL hàng bán</span><span>{sortBy === "quantity" ? (sortDirection === "desc" ? "▼" : "▲") : "↕"}</span>
+                    </button>
                   </th>
 
                   <th className="p-4 text-right w-[170px]">
@@ -800,7 +866,11 @@ export default function ProductsReportPage() {
                   </th>
 
                   <th className="p-4 text-right w-[170px]">
-                    Thành tiền
+                    <button type="button" onClick={() => changeSort("total")}
+                      className="font-bold hover:text-sky-700 cursor-pointer"
+                      title="Nhấn để sắp xếp thành tiền">
+                      Thành tiền {sortBy === "total" ? (sortDirection === "desc" ? "▼" : "▲") : "↕"}
+                    </button>
                   </th>
                 </tr>
               </thead>
@@ -811,8 +881,12 @@ export default function ProductsReportPage() {
                     key={item.id}
                     className="border-t hover:bg-slate-50"
                   >
-                    <td className="p-4 whitespace-nowrap">
-                      {item.dateText}
+                    <td className="p-4">
+                      <div className="whitespace-nowrap">{item.dateText}</div>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                        <span className="whitespace-nowrap">Mã: <span className="font-medium text-slate-600">{item.productCode || "---"}</span></span>
+                        <span className="whitespace-nowrap">Vị trí: <span className="font-medium text-slate-600">{item.productLocation || "---"}</span></span>
+                      </div>
                     </td>
 
                     <td className="p-4">
@@ -826,21 +900,7 @@ export default function ProductsReportPage() {
                         </div>
                       )}
 
-                      <div className="mt-1 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-slate-500">
-                        <span>
-                          Mã:{" "}
-                          <span className="font-medium text-slate-600">
-                            {item.productCode || "---"}
-                          </span>
-                        </span>
 
-                        <span>
-                          Vị trí:{" "}
-                          <span className="font-medium text-slate-600">
-                            {item.productLocation || "---"}
-                          </span>
-                        </span>
-                      </div>
                     </td>
 
                     <td className="p-4 text-center font-semibold">
@@ -885,7 +945,7 @@ export default function ProductsReportPage() {
             </table>
           </div>
 
-          {rows.length > 0 && (
+          {displayRows.length > 0 && (
             <div className="p-4 border-t flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <p className="text-sm text-slate-500">
                 Trang {currentPage} /{" "}

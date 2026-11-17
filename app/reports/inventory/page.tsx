@@ -80,6 +80,8 @@ export default function InventoryReportPage() {
 
   const [inventoryPerPage, setInventoryPerPage] = useState(20);
 
+  const [searchTerm, setSearchTerm] = useState("");
+
 
 
   const formatMoney = (value: any) => {
@@ -634,11 +636,19 @@ totalInventoryValue += stock * capitalPrice;
 
 
 
+  const normalizedSearch = searchTerm.trim().toLocaleLowerCase("vi-VN");
+
+  const filteredProducts = products.filter((product) => {
+    if (!normalizedSearch) return true;
+    return [getProductName(product), getProductSecondaryName(product), getProductSku(product)]
+      .some((value) => String(value || "").toLocaleLowerCase("vi-VN").includes(normalizedSearch));
+  });
+
   const inventoryTotalPages =
 
     Math.ceil(
 
-      products.length / inventoryPerPage
+      filteredProducts.length / inventoryPerPage
 
     ) || 1;
 
@@ -652,7 +662,7 @@ totalInventoryValue += stock * capitalPrice;
 
 
 
-  const sortedProducts = [...products].sort(
+  const sortedProducts = [...filteredProducts].sort(
 
     (a, b) => {
 
@@ -974,11 +984,25 @@ const valueB =
 
 
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 mt-3 mb-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[minmax(260px,7fr)_minmax(130px,3fr)_minmax(190px,4fr)_minmax(140px,3fr)_minmax(140px,3fr)] gap-2 mt-3 mb-3">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2 flex flex-col justify-center min-w-0">
+            <label htmlFor="inventory-report-search" className="text-xs text-slate-500 mb-1">Tìm kiếm sản phẩm</label>
+            <div className="relative">
+              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+              <input
+                id="inventory-report-search"
+                type="search"
+                value={searchTerm}
+                onChange={(event) => { setSearchTerm(event.target.value); setInventoryPage(1); }}
+                placeholder="Tên chính, tên phụ hoặc SKU..."
+                className="w-full h-9 rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+              />
+            </div>
+          </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-3">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2">
 
-            <p className="text-sm text-slate-500 mb-1">
+            <p className="text-xs text-slate-500 mb-1">
 
               Tổng sản phẩm
 
@@ -986,7 +1010,7 @@ const valueB =
 
 
 
-            <p className="text-2xl font-bold text-sky-700">
+            <p className="text-xl font-bold text-sky-700">
 
               {products.length}
 
@@ -996,9 +1020,9 @@ const valueB =
 
 
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-3">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2">
 
-            <p className="text-sm text-slate-500 mb-1">
+            <p className="text-xs text-slate-500 mb-1">
 
               Giá trị tồn kho
 
@@ -1006,7 +1030,7 @@ const valueB =
 
 
 
-            <p className="text-2xl font-bold text-emerald-600">
+            <p className="text-xl font-bold text-emerald-600">
 
               {formatMoney(inventoryValue)}đ
 
@@ -1016,9 +1040,9 @@ const valueB =
 
 
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-3 relative group">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2 relative group">
 
-            <p className="text-sm text-slate-500 mb-1">
+            <p className="text-xs text-slate-500 mb-1">
 
               Sản phẩm hết hàng
 
@@ -1036,7 +1060,7 @@ const valueB =
 
               }
 
-              className="text-2xl font-bold text-rose-600 cursor-pointer"
+              className="text-xl font-bold text-rose-600 cursor-pointer"
 
             >
 
@@ -1058,7 +1082,7 @@ const valueB =
 
 
 
-            <div className="hidden group-hover:block absolute right-0 top-24 z-50 w-96 bg-white border border-slate-200 rounded-2xl shadow-xl p-4">
+            <div className="hidden group-hover:block absolute right-0 top-20 z-50 w-96 bg-white border border-slate-200 rounded-2xl shadow-xl p-4">
 
               <h3 className="font-bold text-rose-600 mb-3">
 
@@ -1082,9 +1106,9 @@ const valueB =
 
 
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-3 relative group">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2 relative group">
 
-            <p className="text-sm text-slate-500 mb-1">
+            <p className="text-xs text-slate-500 mb-1">
 
               Sản phẩm dưới định mức
 
@@ -1102,7 +1126,7 @@ const valueB =
 
               }
 
-              className="text-2xl font-bold text-amber-600 cursor-pointer"
+              className="text-xl font-bold text-amber-600 cursor-pointer"
 
             >
 
@@ -1124,7 +1148,7 @@ const valueB =
 
 
 
-            <div className="hidden group-hover:block absolute right-0 top-24 z-50 w-96 bg-white border border-slate-200 rounded-2xl shadow-xl p-4">
+            <div className="hidden group-hover:block absolute right-0 top-20 z-50 w-96 bg-white border border-slate-200 rounded-2xl shadow-xl p-4">
 
               <h3 className="font-bold text-amber-600 mb-3">
 
@@ -1176,11 +1200,11 @@ const valueB =
 
             <div className="text-sm text-slate-600">
 
-              Tổng sản phẩm:{" "}
+              Sản phẩm hiển thị:{" "}
 
               <span className="font-bold text-black">
 
-                {products.length}
+                {filteredProducts.length}
 
               </span>
 
@@ -1482,7 +1506,7 @@ const total =
 
 
 
-                {products.length === 0 && (
+                {filteredProducts.length === 0 && (
 
                   <tr>
 
@@ -1494,7 +1518,7 @@ const total =
 
                     >
 
-                      Chưa có dữ liệu tồn kho
+                      {normalizedSearch ? "Không tìm thấy sản phẩm phù hợp" : "Chưa có dữ liệu tồn kho"}
 
                     </td>
 
@@ -1510,7 +1534,7 @@ const total =
 
 
 
-          {products.length > 0 && (
+          {filteredProducts.length > 0 && (
             <div className="mt-3 flex flex-wrap items-center justify-end gap-2 text-xs text-slate-600">
               <span>Hiển thị</span>
               <select
@@ -1527,7 +1551,7 @@ const total =
               </select>
               <span>kết quả</span>
               <span className="whitespace-nowrap">
-                Từ {inventoryStartIndex + 1} đến {Math.min(inventoryStartIndex + inventoryPerPage, products.length)} trên tổng {products.length}
+                Từ {inventoryStartIndex + 1} đến {Math.min(inventoryStartIndex + inventoryPerPage, filteredProducts.length)} trên tổng {filteredProducts.length}
               </span>
               <button type="button" disabled={inventoryPage === 1}
                 onClick={() => setInventoryPage((page) => Math.max(1, page - 1))}
