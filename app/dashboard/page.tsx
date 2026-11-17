@@ -67,6 +67,9 @@ type ProductData = {
   purchasePrice?: number;
   minStock?: number;
   min_stock?: number;
+  location?: string;
+  position?: string;
+  shelf?: string;
 };
 
 type RangeOption =
@@ -111,6 +114,12 @@ export default function DashboardPage() {
 
   const [topProductRangeFilter, setTopProductRangeFilter] =
     useState<RangeOption>("7days");
+
+  const [topProductPage, setTopProductPage] = useState(1);
+  const TOP_PRODUCTS_PER_PAGE = 10;
+  const [showOutOfStock, setShowOutOfStock] = useState(false);
+  const [outOfStockPage, setOutOfStockPage] = useState(1);
+  const OUT_OF_STOCK_PER_PAGE = 10;
 
   const formatMoney = (value: any) => {
     return Number(value || 0).toLocaleString("vi-VN");
@@ -940,40 +949,57 @@ export default function DashboardPage() {
 
     return Array.from(map.values())
       .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, 5);
+      .slice(0, 100);
   }, [filteredOrdersForTopProducts]);
 
+  const topProductTotalPages = Math.max(1, Math.ceil(topProducts.length / TOP_PRODUCTS_PER_PAGE));
+  const paginatedTopProducts = topProducts.slice(
+    (topProductPage - 1) * TOP_PRODUCTS_PER_PAGE,
+    topProductPage * TOP_PRODUCTS_PER_PAGE
+  );
+
+  useEffect(() => {
+    setTopProductPage(1);
+  }, [topProductRangeFilter]);
+
+  useEffect(() => {
+    if (topProductPage > topProductTotalPages) setTopProductPage(topProductTotalPages);
+  }, [topProductPage, topProductTotalPages]);
+
+  // Chỉ tính sản phẩm thực sự hết hàng, không tính các sản phẩm còn 1–5 chiếc.
+  const outOfStockProducts = useMemo(() => {
+    return products.filter((product) => getProductStock(product) <= 0)
+      .sort((a, b) => getProductName(a).localeCompare(getProductName(b), "vi"));
+  }, [products]);
+
+  const outOfStockTotalPages = Math.max(1, Math.ceil(outOfStockProducts.length / OUT_OF_STOCK_PER_PAGE));
+  const paginatedOutOfStock = outOfStockProducts.slice(
+    (outOfStockPage - 1) * OUT_OF_STOCK_PER_PAGE,
+    outOfStockPage * OUT_OF_STOCK_PER_PAGE
+  );
+
+  useEffect(() => {
+    if (!showOutOfStock) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setShowOutOfStock(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showOutOfStock]);
+
   const inventoryStats = useMemo(() => {
-    const lowStock = products.filter((product) => {
-      const minStock = getProductMinStock(product);
-
-      if (minStock <= 0) {
-        return false;
-      }
-
-      return getProductStock(product) <= minStock;
-    }).length;
-
     const totalStock = products.reduce(
-      (sum, product) =>
-        sum + getProductStock(product),
-      0
+      (sum, product) => sum + getProductStock(product), 0
     );
-
     const inventoryValue = products.reduce(
-      (sum, product) =>
-        sum +
-        getProductStock(product) *
-          getProductCost(product),
-      0
+      (sum, product) => sum + getProductStock(product) * getProductCost(product), 0
     );
-
     return {
-      lowStock,
+      lowStock: outOfStockProducts.length,
       totalStock,
       inventoryValue,
     };
-  }, [products]);
+  }, [products, outOfStockProducts]);
 
   const StatCard = ({
     label,
@@ -1009,17 +1035,17 @@ export default function DashboardPage() {
     value: number;
   }) => {
     return (
-      <div className="bg-slate-50 rounded-xl p-4 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-base shrink-0">
+      <div className="bg-slate-50 rounded-lg px-2.5 py-2 flex items-center gap-2 min-w-0">
+        <div className="w-7 h-7 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-sm shrink-0">
           {icon}
         </div>
 
         <div>
-          <p className="text-sm text-slate-500">
+          <p className="text-xs text-slate-500 leading-tight">
             {label}
           </p>
 
-          <p className="font-bold text-lg text-slate-900">
+          <p className="font-bold text-base text-slate-900">
             {value}
           </p>
         </div>
@@ -1103,13 +1129,19 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)] gap-3 p-3 items-start">
+          <div className="min-w-0 flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-end gap-2 px-1">
+              <div className="flex flex-wrap items-center gap-2">
             <select
               value={branchFilter}
               onChange={(e) =>
                 setBranchFilter(e.target.value)
               }
-              className="border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white outline-none min-w-[140px] focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+              className="border border-slate-300 rounded-xl px-2 py-1.5 text-xs bg-white outline-none min-w-0 focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             >
               <option value="all">
                 Tất cả chi nhánh
@@ -1127,9 +1159,8 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-[1.9fr_1fr] gap-4 p-4">
+            </div>
+            <div className="min-w-0 rounded-xl bg-white p-1">
           <div className="min-w-0">
             <div className="h-[245px] relative border-b border-slate-200 overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-full flex flex-col justify-between text-xs text-slate-500 pointer-events-none">
@@ -1221,166 +1252,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-slate-50 rounded-2xl p-3 min-w-0 h-full">
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <div>
-                <h2 className="font-bold text-lg text-slate-900">
-                  Top sản phẩm
-                </h2>
-
-                <p className="text-sm text-slate-500 mt-1">
-                  5 sản phẩm bán chạy
-                </p>
-              </div>
-
-              <TopProductRangeSelect />
             </div>
-
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              {topProducts.length > 0 ? (
-                <div className="divide-y divide-slate-100">
-                  {topProducts.map((product, index) => {
-                    const maxQuantity =
-                      topProducts[0]?.quantity || 1;
-
-                    const percent =
-                      Math.max(
-                        8,
-                        Math.round(
-                          (product.quantity / maxQuantity) *
-                            100
-                        )
-                      );
-
-                    return (
-                      <div
-                        key={`${product.sku}-${product.name}-${index}`}
-                        className="px-3 py-2.5 hover:bg-slate-50 transition"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
-                              index === 0
-                                ? "bg-sky-600 text-white"
-                                : index === 1
-                                ? "bg-sky-100 text-sky-700"
-                                : index === 2
-                                ? "bg-orange-100 text-orange-700"
-                                : "bg-slate-100 text-slate-600"
-                            }`}
-                          >
-                            {index + 1}
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="font-semibold text-base text-slate-900 truncate">
-                                {product.name}
-                              </div>
-
-                              <div className="text-base font-bold text-sky-700 shrink-0">
-                                {product.quantity}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between gap-3 mt-0.5">
-                              <div className="text-xs text-slate-500 truncate">
-                                Mã: {product.sku || "---"}
-                              </div>
-
-                              <div className="text-xs text-slate-400 shrink-0">
-                                đã bán
-                              </div>
-                            </div>
-
-                            <div className="mt-1.5 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-sky-600 rounded-full"
-                                style={{
-                                  width: `${percent}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {Array.from({
-                    length: Math.max(
-                      0,
-                      5 - topProducts.length
-                    ),
-                  }).map((_, index) => (
-                    <div
-                      key={`empty-top-product-${index}`}
-                      className="px-3 py-2.5 opacity-50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-sm font-bold shrink-0">
-                          {topProducts.length + index + 1}
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="text-base text-slate-400">
-                              Chưa có dữ liệu
-                            </div>
-
-                            <div className="text-base font-bold text-slate-300">
-                              0
-                            </div>
-                          </div>
-
-                          <div className="mt-1.5 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-slate-200 rounded-full w-[8%]" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {Array.from({
-                    length: 5,
-                  }).map((_, index) => (
-                    <div
-                      key={`empty-top-product-${index}`}
-                      className="px-3 py-2.5 opacity-60"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-sm font-bold shrink-0">
-                          {index + 1}
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="text-base text-slate-400">
-                              Chưa có dữ liệu
-                            </div>
-
-                            <div className="text-base font-bold text-slate-300">
-                              0
-                            </div>
-                          </div>
-
-                          <div className="mt-1.5 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-slate-200 rounded-full w-[8%]" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 min-w-0">
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 px-4 py-3 border-b border-slate-200">
             <div>
@@ -1402,7 +1275,7 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3">
             <PendingItem
               icon="📋"
               label="Chờ duyệt"
@@ -1442,7 +1315,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-slate-200">
             <div>
               <h2 className="font-bold text-lg text-slate-900">
                 Thông tin kho
@@ -1458,7 +1331,7 @@ export default function DashboardPage() {
               onChange={(e) =>
                 setBranchFilter(e.target.value)
               }
-              className="border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white outline-none min-w-[140px] focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+              className="border border-slate-300 rounded-xl px-2 py-1.5 text-xs bg-white outline-none min-w-0 focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             >
               <option value="all">
                 Tất cả chi nhánh
@@ -1469,10 +1342,11 @@ export default function DashboardPage() {
             </select>
           </div>
 
-          <div className="p-4 space-y-3">
-            <Link
-              href="/reports/inventory?filter=low-stock"
-              className="bg-slate-50 hover:bg-sky-50 rounded-xl p-4 flex items-center justify-between transition cursor-pointer group"
+          <div className="p-2 space-y-2">
+            <button
+              type="button"
+              onClick={() => { setOutOfStockPage(1); setShowOutOfStock(true); }}
+              className="w-full text-left bg-slate-50 hover:bg-sky-50 rounded-xl px-3 py-2.5 flex items-center justify-between transition cursor-pointer group"
             >
               <div>
                 <div className="text-sm text-slate-500">
@@ -1487,11 +1361,11 @@ export default function DashboardPage() {
               <span className="text-2xl text-slate-400 group-hover:text-sky-700">
                 ›
               </span>
-            </Link>
+            </button>
 
             <Link
               href="/reports/inventory"
-              className="bg-slate-50 hover:bg-sky-50 rounded-xl p-4 flex items-center justify-between transition cursor-pointer group"
+              className="bg-slate-50 hover:bg-sky-50 rounded-xl px-3 py-2.5 flex items-center justify-between transition cursor-pointer group"
             >
               <div>
                 <div className="text-sm text-slate-500">
@@ -1511,7 +1385,7 @@ export default function DashboardPage() {
             {canViewCostPrice && (
               <Link
                 href="/reports/inventory"
-                className="bg-slate-50 hover:bg-sky-50 rounded-xl p-4 flex items-center justify-between transition cursor-pointer group"
+                className="bg-slate-50 hover:bg-sky-50 rounded-xl px-3 py-2.5 flex items-center justify-between transition cursor-pointer group"
               >
                 <div>
                   <div className="text-sm text-slate-500">
@@ -1530,7 +1404,219 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+            </div>
+          </div>
+          <div className="bg-slate-50 rounded-2xl p-3 min-w-0 h-full">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <h2 className="font-bold text-lg text-slate-900">
+                  Top sản phẩm
+                </h2>
+
+                <p className="text-sm text-slate-500 mt-1">
+                  Top 100 sản phẩm bán chạy
+                </p>
+              </div>
+
+              <TopProductRangeSelect />
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              {topProducts.length > 0 ? (
+                <div className="divide-y divide-slate-100">
+                  {paginatedTopProducts.map((product, index) => {
+                    const rank = (topProductPage - 1) * TOP_PRODUCTS_PER_PAGE + index;
+                    const maxQuantity =
+                      topProducts[0]?.quantity || 1;
+
+                    const percent =
+                      Math.max(
+                        8,
+                        Math.round(
+                          (product.quantity / maxQuantity) *
+                            100
+                        )
+                      );
+
+                    return (
+                      <div
+                        key={`${product.sku}-${product.name}-${index}`}
+                        className="px-2.5 py-1.5 hover:bg-slate-50 transition"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                              rank === 0
+                                ? "bg-sky-600 text-white"
+                                : rank === 1
+                                ? "bg-sky-100 text-sky-700"
+                                : rank === 2
+                                ? "bg-orange-100 text-orange-700"
+                                : "bg-slate-100 text-slate-600"
+                            }`}
+                          >
+                            {rank + 1}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="font-semibold text-sm text-slate-900 truncate">
+                                {product.name}
+                              </div>
+
+                              <div className="text-sm font-bold text-sky-700 shrink-0">
+                                {product.quantity}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3 mt-0.5">
+                              <div className="text-xs text-slate-500 truncate">
+                                Mã: {product.sku || "---"}
+                              </div>
+
+                              <div className="text-xs text-slate-400 shrink-0">
+                                đã bán
+                              </div>
+                            </div>
+
+                            <div className="mt-1.5 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-sky-600 rounded-full"
+                                style={{
+                                  width: `${percent}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {Array.from({
+                    length: Math.max(
+                      0,
+                      TOP_PRODUCTS_PER_PAGE - paginatedTopProducts.length
+                    ),
+                  }).map((_, index) => (
+                    <div
+                      key={`empty-top-product-${index}`}
+                      className="px-3 py-2.5 opacity-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-sm font-bold shrink-0">
+                          {paginatedTopProducts.length + index + 1}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="text-base text-slate-400">
+                              Chưa có dữ liệu
+                            </div>
+
+                            <div className="text-base font-bold text-slate-300">
+                              0
+                            </div>
+                          </div>
+
+                          <div className="mt-1.5 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-slate-200 rounded-full w-[8%]" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {Array.from({
+                    length: TOP_PRODUCTS_PER_PAGE,
+                  }).map((_, index) => (
+                    <div
+                      key={`empty-top-product-${index}`}
+                      className="px-3 py-2.5 opacity-60"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-sm font-bold shrink-0">
+                          {index + 1}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="text-base text-slate-400">
+                              Chưa có dữ liệu
+                            </div>
+
+                            <div className="text-base font-bold text-slate-300">
+                              0
+                            </div>
+                          </div>
+
+                          <div className="mt-1.5 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-slate-200 rounded-full w-[8%]" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-2 mt-2 text-xs text-slate-500">
+              <span>Hiển thị {topProducts.length ? (topProductPage - 1) * TOP_PRODUCTS_PER_PAGE + 1 : 0}–{Math.min(topProductPage * TOP_PRODUCTS_PER_PAGE, topProducts.length)} / {topProducts.length} sản phẩm</span>
+              <div className="flex items-center gap-2">
+                <button type="button" disabled={topProductPage <= 1} onClick={() => setTopProductPage((p) => Math.max(1, p - 1))} className="px-2 py-1 rounded-md border border-slate-300 bg-white text-slate-700 disabled:opacity-40">Trước</button>
+                <span className="font-semibold text-slate-700">{topProductPage}/{topProductTotalPages}</span>
+                <button type="button" disabled={topProductPage >= topProductTotalPages} onClick={() => setTopProductPage((p) => Math.min(topProductTotalPages, p + 1))} className="px-2 py-1 rounded-md border border-slate-300 bg-white text-slate-700 disabled:opacity-40">Sau</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
+
+      {showOutOfStock && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-3 sm:p-5"
+          onMouseDown={(event) => { if (event.target === event.currentTarget) setShowOutOfStock(false); }}
+        >
+          <div role="dialog" aria-modal="true" aria-label="Danh sách sản phẩm hết hàng" className="w-full max-w-3xl max-h-[85vh] flex flex-col rounded-2xl bg-white shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Danh sách sản phẩm hết hàng</h3>
+                <p className="text-xs text-slate-500 mt-1">Tổng cộng {outOfStockProducts.length} sản phẩm có tồn kho bằng 0 hoặc thấp hơn</p>
+              </div>
+              <button type="button" onClick={() => setShowOutOfStock(false)} aria-label="Đóng" className="rounded-lg px-3 py-1.5 text-xl text-slate-500 hover:bg-slate-100">×</button>
+            </div>
+            <div className="overflow-y-auto flex-1 min-h-0 px-3 py-2">
+              {paginatedOutOfStock.length ? (
+                <div className="divide-y divide-slate-100">
+                  {paginatedOutOfStock.map((product, index) => (
+                    <div key={product.id} className="flex items-center gap-3 px-2 py-2.5 hover:bg-slate-50">
+                      <span className="w-7 shrink-0 text-center text-xs text-slate-500">{(outOfStockPage - 1) * OUT_OF_STOCK_PER_PAGE + index + 1}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-slate-900 break-words">{getProductName(product)}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">Mã: {getProductSku(product) || "---"} <span className="mx-2">|</span> Vị trí: {product.location || product.position || product.shelf || "---"}</p>
+                      </div>
+                      <span className="shrink-0 text-sm font-bold text-rose-600">{getProductStock(product)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="py-10 text-center text-sm text-slate-500">Không có sản phẩm hết hàng.</p>
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-2 border-t border-slate-200 px-4 py-3 text-xs text-slate-500">
+              <span>Hiển thị {outOfStockProducts.length ? (outOfStockPage - 1) * OUT_OF_STOCK_PER_PAGE + 1 : 0}–{Math.min(outOfStockPage * OUT_OF_STOCK_PER_PAGE, outOfStockProducts.length)} / {outOfStockProducts.length}</span>
+              <div className="flex items-center gap-2">
+                <button type="button" disabled={outOfStockPage <= 1} onClick={() => setOutOfStockPage((p) => Math.max(1, p - 1))} className="rounded-md border border-slate-300 px-2.5 py-1.5 disabled:opacity-40">Trước</button>
+                <span className="font-semibold text-slate-700">{outOfStockPage}/{outOfStockTotalPages}</span>
+                <button type="button" disabled={outOfStockPage >= outOfStockTotalPages} onClick={() => setOutOfStockPage((p) => Math.min(outOfStockTotalPages, p + 1))} className="rounded-md border border-slate-300 px-2.5 py-1.5 disabled:opacity-40">Sau</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }
