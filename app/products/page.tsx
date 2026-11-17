@@ -103,6 +103,26 @@ export default function ProductsPage() {
   // DATA
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [bulkAction, setBulkAction] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [showBulkStock, setShowBulkStock] = useState(false);
+  const [showBarcodeSetup, setShowBarcodeSetup] = useState(false);
+  const [barcodeShowCode, setBarcodeShowCode] = useState(true);
+  const [barcodeShowPrice, setBarcodeShowPrice] = useState(false);
+  const [barcodeRows, setBarcodeRows] = useState<{ id: string; code: string; name: string; quantity: number; price: number }[]>([]);
+  const openBarcodeSetup = () => {
+    setBarcodeRows(selectedProducts.map((p: any) => ({
+      id: String(p.id),
+      code: String(p.product_code || ''),
+      name: String(p.short_name || p.main_name || p.name || ''),
+      quantity: 1,
+      price: Number(p.price || 0),
+    })));
+    setShowBarcodeSetup(true);
+  };
+
+
 
   // Sửa nhanh vị trí sản phẩm ngay trong danh sách
   const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
@@ -443,6 +463,7 @@ reader.readAsDataURL(file);
 });
 
       setProducts(data);
+      setSelectedProductIds((old) => old.filter((id) => data.some((p) => p.id === id)));
     } catch (error) {
       console.log(error);
 
@@ -1231,6 +1252,111 @@ successCount++;
       startIndex + itemsPerPage
     );
 
+  const pageIds = paginatedProducts.map((p: any) => String(p.id));
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedProductIds.includes(id));
+  const selectedProducts = products.filter((p: any) => selectedProductIds.includes(String(p.id)));
+  const toggleSelectProduct = (id: string) => {
+    setSelectedProductIds((old) => old.includes(id) ? old.filter((x) => x !== id) : [...old, id]);
+  };
+  const toggleSelectPage = () => {
+    setSelectedProductIds((old) => allPageSelected
+      ? old.filter((id) => !pageIds.includes(id))
+      : Array.from(new Set([...old, ...pageIds])));
+  };
+
+  const printSelectedBarcodes = () => {
+    // CODE39: hỗ trợ chữ in hoa, số và dấu gạch ngang của mã sản phẩm.
+    const patterns: Record<string, string> = {
+      '0':'nnnwwnwnn','1':'wnnwnnnnw','2':'nnwwnnnnw','3':'wnwwnnnnn',
+      '4':'nnnwwnnnw','5':'wnnwwnnnn','6':'nnwwwnnnn','7':'nnnwnnwnw',
+      '8':'wnnwnnwnn','9':'nnwwnnwnn','A':'wnnnnwnnw','B':'nnwnnwnnw',
+      'C':'wnwnnwnnn','D':'nnnnwwnnw','E':'wnnnwwnnn','F':'nnwnwwnnn',
+      'G':'nnnnnwwnw','H':'wnnnnwwnn','I':'nnwnnwwnn','J':'nnnnwwwnn',
+      'K':'wnnnnnnww','L':'nnwnnnnww','M':'wnwnnnnwn','N':'nnnnwnnww',
+      'O':'wnnnwnnwn','P':'nnwnwnnwn','Q':'nnnnnnwww','R':'wnnnnnwwn',
+      'S':'nnwnnnwwn','T':'nnnnwnwwn','U':'wwnnnnnnw','V':'nwwnnnnnw',
+      'W':'wwwnnnnnn','X':'nwnnwnnnw','Y':'wwnnwnnnn','Z':'nwwnwnnnn',
+      '-':'nwnnnnwnw','.':'wwnnnnwnn',' ':'nwwnnnwnn','$':'nwnwnwnnn',
+      '/':'nwnwnnnwn','+':'nwnnnwnwn','%':'nnnwnwnwn','*':'nwnnwnwnn'
+    };
+    const esc = (v: any) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c] || c));
+    const barcode = (raw: string) => {
+      const code = raw.trim().toUpperCase();
+      if (!code || [...code].some((ch) => !patterns[ch])) return '';
+      let x = 0;
+      const bars: string[] = [];
+      for (const ch of `*${code}*`) {
+        const pattern = patterns[ch];
+        for (let i = 0; i < pattern.length; i++) {
+          const width = pattern[i] === 'w' ? 3 : 1;
+          if (i % 2 === 0) bars.push(`<rect x="${x}" y="0" width="${width}" height="42"/>`);
+          x += width;
+        }
+        x += 1;
+      }
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${x} 42" preserveAspectRatio="none">${bars.join('')}</svg>`;
+    };
+    const invalid = barcodeRows.filter((p) => !barcode(p.code));
+    if (invalid.length) { toast.error('Có mã sản phẩm không hỗ trợ in CODE39. Kiểm tra lại mã đã chọn.'); return; }
+    const popup = window.open('', '_blank', 'width=850,height=650');
+    if (!popup) { toast.error('Trình duyệt đang chặn cửa sổ in mã vạch'); return; }
+    // Giấy tem đôi: 2 tem 35 x 22 mm trên một hàng, tổng khổ danh nghĩa 70 x 22 mm.
+    // Nếu giấy có khoảng hở giữa hai tem, cần hiệu chỉnh theo kích thước bước tem thực tế.
+    const labels = barcodeRows.flatMap((p) => Array.from({ length: p.quantity }, () => {
+      const codeText = barcodeShowCode ? `<span>${esc(p.code)}</span>` : '';
+      const priceText = barcodeShowPrice ? `<span>${esc(Number(p.price).toLocaleString('vi-VN'))}đ</span>` : '';
+      const footer = (barcodeShowCode || barcodeShowPrice)
+        ? `<div class="footer ${barcodeShowCode && barcodeShowPrice ? 'both' : 'single'}">${codeText}${priceText}</div>` : '';
+      return `<div class="label"><div class="name">${esc(p.name)}</div>${barcode(p.code)}${footer}</div>`;
+    }));
+    if (labels.length % 2 !== 0) labels.push('<div class="label empty"></div>');
+    const sheets = Array.from({ length: labels.length / 2 }, (_, i) => `<div class="sheet">${labels[i * 2]}${labels[i * 2 + 1]}</div>`).join('');
+    popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>In mã vạch - tem đôi 35x22 mm</title><style>
+      @page{size:70mm 22mm;margin:0}
+      *{box-sizing:border-box}
+      html,body{margin:0;padding:0;width:70mm;font-family:Arial,sans-serif;color:#000}
+      .sheet{width:70mm;height:22mm;display:grid;grid-template-columns:35mm 35mm;break-after:page;page-break-after:always;overflow:hidden}
+      .sheet:last-child{break-after:auto;page-break-after:auto}
+      .label{width:35mm;height:22mm;padding:1mm 1.5mm;overflow:hidden;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4mm}
+      .name{width:100%;font-size:8px;line-height:1.15;height:7mm;overflow:hidden;overflow-wrap:anywhere;display:flex;align-items:center;justify-content:center}
+      .label svg{width:29mm;height:7mm;display:block;flex-shrink:0}
+      .footer{width:29mm;font-size:9px;font-weight:400;line-height:1.1;min-height:3mm;display:flex;align-items:center}
+      .footer.both{justify-content:space-between;padding:0}
+      .footer.single{justify-content:center}
+      @media screen{body{background:#eee}.sheet{background:white;outline:1px solid #ddd;margin-bottom:3mm}}
+      @media print{html,body{background:white!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+    </style></head><body>${sheets}</body></html>`);
+    popup.document.close();
+    popup.focus();
+    popup.setTimeout(() => popup.print(), 350);
+  };
+
+  const runBulkAction = async () => {
+    if (!bulkAction || selectedProducts.length === 0 || bulkBusy) return;
+    if (bulkAction === 'stock') { setShowBulkStock(true); setBulkAction(''); return; }
+    if (bulkAction === 'print') { openBarcodeSetup(); setBulkAction(''); return; }
+    if (!canEditProduct && bulkAction !== 'delete') { toast.error('Bạn không có quyền chỉnh sửa sản phẩm'); return; }
+    if (bulkAction === 'delete' && !canDeleteProduct) { toast.error('Bạn không có quyền xóa sản phẩm'); return; }
+    const label = bulkAction === 'delete' ? 'XÓA' : bulkAction === 'inactive' ? 'NGỪNG GIAO DỊCH' : 'CHO GIAO DỊCH';
+    if (!window.confirm(`Bạn có chắc muốn ${label} ${selectedProducts.length} sản phẩm đã chọn?`)) return;
+    setBulkBusy(true);
+    let done = 0;
+    try {
+      for (const p of selectedProducts) {
+        try {
+          if (bulkAction === 'delete') await deleteDoc(doc(db, 'products', p.id));
+          else await updateDoc(doc(db, 'products', p.id), { isActive: bulkAction === 'active', status: bulkAction === 'active' ? 'active' : 'inactive' });
+          done++;
+        } catch (error) { console.error('Thao tác hàng loạt thất bại:', p.id, error); }
+      }
+      if (done === selectedProducts.length) toast.success(`Đã xử lý ${done} sản phẩm`);
+      else toast.error(`Thành công ${done}/${selectedProducts.length} sản phẩm. Vui lòng kiểm tra lại.`);
+      setSelectedProductIds([]);
+      setBulkAction('');
+      await loadProducts();
+    } finally { setBulkBusy(false); }
+  };
+
   const visiblePageNumbers = (() => {
     const maxButtons = 5;
 
@@ -1640,11 +1766,78 @@ successCount++;
           />
         </div>
 
+        {selectedProductIds.length > 0 && (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm">
+            <span className="font-semibold text-sky-800">Đã chọn {selectedProductIds.length} sản phẩm</span>
+            <select value={bulkAction} onChange={(e) => setBulkAction(e.target.value)} className="rounded-lg border border-sky-300 bg-white px-3 py-2 text-sm text-slate-900">
+              <option value="">Chọn thao tác</option>
+              <option value="stock">Kiểm tra tồn kho</option>
+              <option value="print">In mã vạch</option>
+              {canEditProduct && <option value="active">Đang giao dịch</option>}
+              {canEditProduct && <option value="inactive">Ngừng giao dịch</option>}
+              {canDeleteProduct && <option value="delete">Xóa sản phẩm</option>}
+            </select>
+            <button type="button" disabled={!bulkAction || bulkBusy} onClick={() => void runBulkAction()} className="rounded-lg bg-sky-600 px-3 py-2 font-semibold text-white disabled:opacity-40">{bulkBusy ? 'Đang xử lý...' : 'Thực hiện'}</button>
+            <button type="button" onClick={() => { setSelectedProductIds([]); setBulkAction(''); }} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-700">Bỏ chọn</button>
+          </div>
+        )}
+        {showBarcodeSetup && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-3" onClick={() => setShowBarcodeSetup(false)}>
+            <div className="w-full max-w-3xl max-h-[88vh] overflow-y-auto rounded-xl bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <h2 className="text-lg font-bold text-slate-900">Thiết lập in mã vạch</h2>
+                <button type="button" onClick={() => setShowBarcodeSetup(false)} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm">Đóng</button>
+              </div>
+              <p className="mb-3 text-xs text-slate-500">Máy in 350B · Giấy tem đôi 35 × 22 mm (2 tem/hàng). Sửa tên và số tem từng sản phẩm; không thay đổi dữ liệu gốc. Khi in chọn tỷ lệ 100%, lề 0, tắt đầu/chân trang.</p>
+              <div className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-800">
+                <span className="font-medium">Thông tin dưới mã vạch:</span>
+                <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" checked={barcodeShowCode} onChange={(e) => setBarcodeShowCode(e.target.checked)} /> Hiện mã sản phẩm</label>
+                <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" checked={barcodeShowPrice} onChange={(e) => setBarcodeShowPrice(e.target.checked)} /> Hiện giá bán</label>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[660px] text-sm">
+                  <thead className="bg-slate-100 text-slate-800"><tr><th className="p-2 text-left">Mã SP</th><th className="p-2 text-left">Tên in trên tem</th><th className="w-32 p-2 text-center">Giá in trên tem</th><th className="w-28 p-2 text-center">Số tem</th></tr></thead>
+                  <tbody>{barcodeRows.map((row, index) => (
+                    <tr key={row.id} className="border-b border-slate-100">
+                      <td className="p-2 font-semibold text-slate-700">{row.code}</td>
+                      <td className="p-2"><input aria-label={`Tên tem ${row.code}`} className="w-full rounded-lg border border-slate-300 px-2 py-2 text-slate-900" value={row.name} onChange={(e) => setBarcodeRows((prev) => prev.map((r, i) => i === index ? { ...r, name: e.target.value } : r))} /></td>
+                      <td className="p-2"><input aria-label={`Giá tem ${row.code}`} type="number" min={0} step={1} className="w-full rounded-lg border border-slate-300 px-2 py-2 text-right text-slate-900 disabled:bg-slate-100" disabled={!barcodeShowPrice} value={row.price} onChange={(e) => setBarcodeRows((prev) => prev.map((r, i) => i === index ? { ...r, price: Number(e.target.value) } : r))} /></td>
+                      <td className="p-2"><input aria-label={`Số tem ${row.code}`} type="number" min={1} max={1000} step={1} className="w-full rounded-lg border border-slate-300 px-2 py-2 text-center text-slate-900" value={row.quantity} onChange={(e) => setBarcodeRows((prev) => prev.map((r, i) => i === index ? { ...r, quantity: Number(e.target.value) } : r))} /></td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-3">
+                <span className="text-sm font-semibold text-slate-700">Tổng số tem: {barcodeRows.reduce((sum, row) => sum + (Number.isInteger(row.quantity) && row.quantity > 0 ? row.quantity : 0), 0)}</span>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setShowBarcodeSetup(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Hủy</button>
+                  <button type="button" onClick={() => {
+                    if (barcodeShowPrice && barcodeRows.some((r) => !Number.isFinite(r.price) || r.price < 0)) { toast.error('Giá in trên tem phải là số không âm'); return; }
+                    if (barcodeRows.some((r) => !r.name.trim() || !Number.isInteger(r.quantity) || r.quantity < 1 || r.quantity > 1000)) { toast.error('Nhập tên tem và số lượng nguyên từ 1 đến 1000 cho mỗi sản phẩm'); return; }
+                    if (barcodeRows.reduce((sum, r) => sum + r.quantity, 0) > 5000) { toast.error('Chỉ in tối đa 5.000 tem mỗi lần'); return; }
+                    printSelectedBarcodes();
+                  }} className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">In tem</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {showBulkStock && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-3" onClick={() => setShowBulkStock(false)}>
+            <div className="max-h-[85vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-bold text-slate-900">Kiểm tra tồn kho ({selectedProducts.length} sản phẩm)</h2><button onClick={() => setShowBulkStock(false)} className="rounded-lg bg-slate-100 px-3 py-1">Đóng</button></div>
+              <p className="mb-2 text-xs text-slate-500">Đây là bảng xem nhanh tồn kho hiện tại, không tạo phiếu kiểm kho và không thay đổi số lượng.</p>
+              <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="bg-slate-100 text-left"><th className="p-2">Mã SP</th><th className="p-2">Tên sản phẩm</th><th className="p-2">Vị trí</th><th className="p-2 text-right">Tồn kho</th></tr></thead><tbody>{selectedProducts.map((p: any) => <tr key={p.id} className="border-b"><td className="p-2">{p.product_code}</td><td className="p-2">{p.short_name || p.main_name || p.name}</td><td className="p-2">{p.product_location || '---'}</td><td className="p-2 text-right font-semibold">{Number(p.stock || 0).toLocaleString('vi-VN')}</td></tr>)}</tbody></table></div>
+            </div>
+          </div>
+        )}
+
         {/* MOBILE PRODUCT CARDS - giữ nguyên bảng desktop */}
         <div className="md:hidden space-y-3">
           {paginatedProducts.map((item: any) => (
             <article key={item.id} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm min-w-0">
               <div className="flex items-start gap-3 min-w-0">
+                <input type="checkbox" aria-label={`Chọn ${item.product_code || item.name}`} checked={selectedProductIds.includes(String(item.id))} onChange={() => toggleSelectProduct(String(item.id))} className="mt-1 h-4 w-4 shrink-0 accent-sky-600" />
                 {item.imageUrl && (
                   <img src={item.imageUrl} alt="" className="h-14 w-14 shrink-0 rounded-lg border object-cover" />
                 )}
@@ -1696,6 +1889,7 @@ successCount++;
                 <th className="p-4 text-left">
 
   <div className="flex items-center gap-2">
+    <input type="checkbox" aria-label="Chọn tất cả sản phẩm trên trang" title="Chọn tất cả sản phẩm trên trang" checked={allPageSelected} onChange={toggleSelectPage} className="h-4 w-4 accent-sky-500" />
 
     <button
       ref={columnButtonRef}
@@ -1894,6 +2088,7 @@ successCount++;
                   <td className="px-3 py-2">
 
   <div className="flex items-center gap-2">
+    <input type="checkbox" aria-label={`Chọn ${item.product_code || item.name}`} checked={selectedProductIds.includes(String(item.id))} onChange={() => toggleSelectProduct(String(item.id))} className="h-4 w-4 shrink-0 accent-sky-600" />
 
     {item.imageUrl && (
 
