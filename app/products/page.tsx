@@ -130,13 +130,12 @@ export default function ProductsPage() {
   const [savingLocation, setSavingLocation] = useState(false);
 
   const startEditLocation = (item: any) => {
-    if (!canEditProduct) return;
     setEditingLocationId(item.id);
     setLocationDraft(String(item.product_location || ""));
   };
 
   const saveQuickLocation = async (item: any) => {
-    if (!canEditProduct || savingLocation) return;
+    if (savingLocation) return;
     const nextLocation = locationDraft.trim();
     if (nextLocation === String(item.product_location || "").trim()) {
       setEditingLocationId(null);
@@ -1860,9 +1859,9 @@ successCount++;
                     onBlur={() => { if (!savingLocation) void saveQuickLocation(item); }}
                     className="w-full min-w-0 rounded border border-sky-400 px-2 py-1 text-sm outline-none" />
                 ) : (
-                  <button type="button" disabled={!canEditProduct} onClick={() => startEditLocation(item)}
-                    className={canEditProduct ? "text-left text-sky-700 hover:underline" : "text-left"}
-                    title={canEditProduct ? "Nhấn để cập nhật vị trí" : undefined}>
+                  <button type="button" onClick={() => startEditLocation(item)}
+                    className="text-left text-sky-700 hover:underline"
+                    title="Nhấn để cập nhật vị trí">
                     {item.product_location || "---"}
                   </button>
                 )}</div></div>
@@ -1883,10 +1882,24 @@ successCount++;
 
         {/* TABLE */}
         <div className="hidden md:block bg-white rounded-3xl shadow-sm border border-slate-200 overflow-x-auto">
-          <table className="w-full min-w-[1400px]">
+          <table className="w-full min-w-[1120px] table-fixed">
+            <colgroup>
+              <col style={{ width: "56%" }} />
+              {(() => {
+                const count = 4
+                  + (canViewCostPrice && visibleColumns.importPrice ? 1 : 0)
+                  + (canViewCostPrice && visibleColumns.capitalPrice ? 1 : 0)
+                  + (visibleColumns.stock ? 1 : 0)
+                  + (visibleColumns.vat ? 1 : 0)
+                  + (visibleColumns.actions ? 1 : 0);
+                return Array.from({ length: count }, (_, index) => (
+                  <col key={index} style={{ width: `${44 / count}%` }} />
+                ));
+              })()}
+            </colgroup>
             <thead className="bg-slate-800 text-white">
               <tr>
-                <th className="p-4 text-left">
+                <th className="px-2 py-3 text-left">
 
   <div className="flex items-center gap-2">
     <input type="checkbox" aria-label="Chọn tất cả sản phẩm trên trang" title="Chọn tất cả sản phẩm trên trang" checked={allPageSelected} onChange={toggleSelectPage} className="h-4 w-4 accent-sky-500" />
@@ -2027,52 +2040,52 @@ successCount++;
   )}
 
 </th>
-                <th className="p-4 text-left">
+                <th className="px-1 py-3 text-center">
                   Mã SP
                 </th>
 
-                <th className="p-4 text-left">
+                <th className="px-1 py-3 text-center">
                   Vị trí
                 </th>
 
                 {canViewCostPrice &&
   visibleColumns.importPrice && (
-    <th className="p-4 text-right">
+    <th className="px-1 py-3 text-center">
       Giá nhập
     </th>
 )}
 
-                <th className="p-4 text-right">
+                <th className="px-1 py-3 text-center">
                   Giá bán
                 </th>
 
                 {canViewCostPrice &&
   visibleColumns.capitalPrice && (
-    <th className="p-4 text-right">
+    <th className="px-1 py-3 text-center">
       Giá vốn
     </th>
 )}
 
                 {visibleColumns.stock && (
-  <th className="p-4 text-right" aria-sort={stockSort === "desc" ? "descending" : stockSort === "asc" ? "ascending" : "none"}>
+  <th className="px-1 py-3 text-center" aria-sort={stockSort === "desc" ? "descending" : stockSort === "asc" ? "ascending" : "none"}>
     <button type="button" onClick={toggleStockSort} className="inline-flex items-center gap-1 hover:text-sky-200 cursor-pointer" title="Nhấn để sắp xếp tồn kho cao đến thấp hoặc ngược lại">
       Tồn kho {stockSort === "desc" ? "↓" : stockSort === "asc" ? "↑" : ""}
     </button>
   </th>
 )}
 
-                <th className="p-4 text-left">
+                <th className="px-1 py-3 text-center">
                   Đơn vị
                 </th>
 
                 {visibleColumns.vat && (
-  <th className="p-4 text-center">
+  <th className="px-1 py-3 text-center">
     VAT
   </th>
 )}
 
                 {visibleColumns.actions && (
-<th className="p-4 text-center">
+<th className="px-1 py-3 text-center">
   Hành động
 </th>
 )}
@@ -2085,7 +2098,7 @@ successCount++;
                   key={item.id}
                   className="border-b border-slate-200 hover:bg-slate-50"
                 >
-                  <td className="px-3 py-2">
+                  <td className="px-2 py-2">
 
   <div className="flex items-center gap-2">
     <input type="checkbox" aria-label={`Chọn ${item.product_code || item.name}`} checked={selectedProductIds.includes(String(item.id))} onChange={() => toggleSelectProduct(String(item.id))} className="h-4 w-4 shrink-0 accent-sky-600" />
@@ -2113,11 +2126,11 @@ successCount++;
 
 </td>
 
-                  <td className="px-3 py-2 text-black">
+                  <td className="px-1 py-2 text-center text-black">
                     {item.product_code || "---"}
                   </td>
 
-                  <td className="px-3 py-2 text-black">
+                  <td className="px-1 py-2 text-center text-black">
                     {editingLocationId === item.id ? (
                       <input autoFocus type="text" value={locationDraft} disabled={savingLocation}
                         onChange={(e) => setLocationDraft(e.target.value)}
@@ -2126,12 +2139,12 @@ successCount++;
                           if (e.key === "Escape") { e.stopPropagation(); setEditingLocationId(null); }
                         }}
                         onBlur={() => { if (!savingLocation) void saveQuickLocation(item); }}
-                        className="w-28 rounded-lg border border-sky-400 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-sky-100"
+                        className="w-full min-w-0 rounded-lg border border-sky-400 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-sky-100"
                         placeholder="Nhập vị trí" />
                     ) : (
-                      <button type="button" disabled={!canEditProduct} onClick={() => startEditLocation(item)}
-                        className={canEditProduct ? "text-left text-sky-700 hover:underline" : "text-left"}
-                        title={canEditProduct ? "Nhấn để cập nhật vị trí" : undefined}>
+                      <button type="button" onClick={() => startEditLocation(item)}
+                        className="text-center text-sky-700 hover:underline"
+                        title="Nhấn để cập nhật vị trí">
                         {item.product_location || "---"}
                       </button>
                     )}
@@ -2139,42 +2152,42 @@ successCount++;
 
                   {canViewCostPrice &&
   visibleColumns.importPrice && (
-    <td className="px-3 py-2 text-right text-black">
+    <td className="px-1 py-2 text-center text-black">
       {formatMoney(item.import_price)}
     </td>
 )}
 
-                  <td className="px-3 py-2 text-right text-sky-700 font-semibold">
+                  <td className="px-1 py-2 text-center text-sky-700 font-semibold">
                     {formatMoney(item.price)}
                   </td>
 
                   {canViewCostPrice &&
   visibleColumns.capitalPrice && (
-    <td className="px-3 py-2 text-right text-black">
+    <td className="px-1 py-2 text-center text-black">
       {formatMoney(item.capital_price)}
     </td>
 )}
 
                   {visibleColumns.stock && (
-  <td className="px-3 py-2 text-right text-black font-semibold">
+  <td className="px-1 py-2 text-center text-black font-semibold">
     {Number(item.stock || 0).toLocaleString("vi-VN")}
   </td>
 )}
 
-                  <td className="px-3 py-2 text-black">
+                  <td className="px-1 py-2 text-center text-black">
                     {typeof item.unit === "string"
                       ? item.unit || "cái"
                       : item.unit?.name || "cái"}
                   </td>
 
                   {visibleColumns.vat && (
-  <td className="px-3 py-2 text-center text-black">
+  <td className="px-1 py-2 text-center text-black">
     {Number(item.tax || 0)}%
   </td>
 )}
 
                   {visibleColumns.actions && (
-  <td className="px-3 py-2">
+  <td className="px-1 py-2">
     <div className="flex justify-center gap-2">
                       {canEditProduct && (
                         <button

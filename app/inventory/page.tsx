@@ -24,6 +24,8 @@ export default function InventoryPage() {
   const [popupType, setPopupType] =
     useState<"out" | "low" | null>(null);
 
+  const [search, setSearch] = useState("");
+
   // PAGINATION
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
@@ -175,17 +177,25 @@ export default function InventoryPage() {
     }
   }, [popupCurrentPage, popupTotalPages]);
 
+  // Lọc danh sách theo tên chính, tên phụ hoặc mã sản phẩm.
+  const normalizedSearch = search.trim().toLocaleLowerCase("vi-VN");
+  const filteredProducts = products.filter((item) =>
+    [item.name, item.main_name, item.short_name, item.product_code].some((value) =>
+      String(value || "").toLocaleLowerCase("vi-VN").includes(normalizedSearch)
+    )
+  );
+
   // PAGINATION
   const totalPages = Math.max(
     1,
-    Math.ceil(products.length / itemsPerPage)
+    Math.ceil(filteredProducts.length / itemsPerPage)
   );
 
   const startIndex =
     (currentPage - 1) * itemsPerPage;
 
   const paginatedProducts =
-    products.slice(
+    filteredProducts.slice(
       startIndex,
       startIndex + itemsPerPage
     );
@@ -219,6 +229,10 @@ export default function InventoryPage() {
       setCurrentPage(totalPages);
     }
   }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   // EXPORT EXCEL (.XLS)
   const exportInventoryToExcel = () => {
@@ -321,9 +335,19 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 ${
-          canViewCostPrice ? "xl:grid-cols-4" : "xl:grid-cols-3"
-        }`}>
+        <div className="flex flex-col xl:flex-row xl:items-stretch gap-2">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2 min-h-[66px] xl:w-[35%] xl:shrink-0 flex flex-col justify-center">
+            <label htmlFor="inventory-search" className="text-slate-500 text-xs mb-1">Tìm kiếm sản phẩm</label>
+            <input
+              id="inventory-search"
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Nhập tên hoặc mã sản phẩm..."
+              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+            />
+          </div>
+          <div className={`grid flex-1 min-w-0 grid-cols-1 sm:grid-cols-2 gap-2 ${canViewCostPrice ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
   <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2 min-h-[66px]">
     <p className="text-slate-500 text-xs mb-1">
       Tổng sản phẩm
@@ -388,6 +412,7 @@ export default function InventoryPage() {
     </div>
   </button>
 </div>
+        </div>
 
         {loading ? (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-lg">
@@ -408,34 +433,40 @@ export default function InventoryPage() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px]">
+              <table className="w-full min-w-[1000px] table-fixed">
+                <colgroup>
+                  <col style={{ width: "56%" }} />
+                  {Array.from({ length: canViewCostPrice ? 6 : 4 }, (_, index) => (
+                    <col key={index} style={{ width: `${44 / (canViewCostPrice ? 6 : 4)}%` }} />
+                  ))}
+                </colgroup>
                 <thead className="bg-slate-800 text-white">
                   <tr>
-                    <th className="px-4 py-3 text-left">
+                    <th className="px-2.5 py-3 text-left">
                       Sản phẩm
                     </th>
 
-                    <th className="px-4 py-3 text-left">
-                      Giá bán
-                    </th>
+                    <th className="px-2.5 py-3 text-center">Mã SP</th>
+
+                    <th className="px-2.5 py-3 text-center">Giá bán</th>
 
                     {canViewCostPrice && (
-                      <th className="px-4 py-3 text-left">
+                      <th className="px-2.5 py-3 text-center">
                         Giá vốn
                       </th>
                     )}
 
-                    <th className="px-4 py-3 text-left">
+                    <th className="px-2.5 py-3 text-center">
                       Tồn kho
                     </th>
 
                     {canViewCostPrice && (
-                      <th className="px-4 py-3 text-left">
+                      <th className="px-2.5 py-3 text-center">
                         Tổng tồn
                       </th>
                     )}
 
-                    <th className="px-4 py-3 text-left">
+                    <th className="px-2.5 py-3 text-center">
                       Trạng thái
                     </th>
                   </tr>
@@ -460,7 +491,7 @@ export default function InventoryPage() {
                         key={item.id}
                         className="border-b border-slate-200 hover:bg-slate-50"
                       >
-                        <td className="px-4 py-3">
+                        <td className="px-2.5 py-3">
                           <div className="flex flex-col">
                             <span className="font-semibold text-slate-900">
                               {item.main_name || item.name || "---"}
@@ -473,18 +504,22 @@ export default function InventoryPage() {
                           </div>
                         </td>
 
-                        <td className="px-4 py-3 text-sky-700 font-medium">
+                        <td className="px-2.5 py-3 text-center text-slate-700 font-medium whitespace-nowrap">
+                          {item.product_code || "---"}
+                        </td>
+
+                        <td className="px-2.5 py-3 text-center text-sky-700 font-medium">
                           {formatMoney(item.price)}đ
                         </td>
 
                         {canViewCostPrice && (
-                          <td className="px-4 py-3 text-amber-600 font-semibold">
+                          <td className="px-2.5 py-3 text-center text-amber-600 font-semibold">
                             {formatMoney(item.capital_price)}đ
                           </td>
                         )}
 
                         <td
-                          className={`px-4 py-3 font-bold ${
+                          className={`px-2.5 py-3 text-center font-bold ${
                             stock === 0
                               ? "text-rose-600"
                               : stock <= 5
@@ -497,12 +532,12 @@ export default function InventoryPage() {
                         </td>
 
                         {canViewCostPrice && (
-                          <td className="px-4 py-3 font-bold text-violet-700">
+                          <td className="px-2.5 py-3 text-center font-bold text-violet-700">
                             {formatMoney(inventoryValue)}đ
                           </td>
                         )}
 
-                        <td className="px-4 py-3">
+                        <td className="px-2.5 py-3 text-center">
                           <span
                             className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${status.className}`}
                           >
@@ -513,13 +548,13 @@ export default function InventoryPage() {
                     );
                   })}
 
-                  {products.length === 0 && (
+                  {filteredProducts.length === 0 && (
                     <tr>
                       <td
-                        colSpan={canViewCostPrice ? 6 : 4}
+                        colSpan={canViewCostPrice ? 7 : 5}
                         className="p-8 text-center text-slate-500"
                       >
-                        Chưa có dữ liệu tồn kho
+                        {products.length === 0 ? "Chưa có dữ liệu tồn kho" : "Không tìm thấy sản phẩm phù hợp"}
                       </td>
                     </tr>
                   )}
@@ -527,7 +562,7 @@ export default function InventoryPage() {
               </table>
             </div>
 
-            {products.length > 0 && (
+            {filteredProducts.length > 0 && (
               <div className="px-5 py-4 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-end gap-3">
                 <div className="text-sm text-slate-600 whitespace-nowrap">
                   Từ{" "}
@@ -538,12 +573,12 @@ export default function InventoryPage() {
                   <span className="font-semibold text-slate-900">
                     {Math.min(
                       startIndex + itemsPerPage,
-                      products.length
+                      filteredProducts.length
                     )}
                   </span>
                   {" "}trên tổng{" "}
                   <span className="font-semibold text-slate-900">
-                    {products.length}
+                    {filteredProducts.length}
                   </span>
                 </div>
 
