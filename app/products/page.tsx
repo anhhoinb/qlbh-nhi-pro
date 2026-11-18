@@ -43,6 +43,17 @@ type InventoryMovement = {
   createdAt?: any;
 };
 
+type ProductActionIconProps = { kind: "edit" | "copy" | "delete" };
+
+function ProductActionIcon({ kind }: ProductActionIconProps) {
+  const paths = {
+    edit: <><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.8 1.8-.06-.06A1.7 1.7 0 0 0 16.06 18a1.7 1.7 0 0 0-1.06 1.56V20h-2.5v-.44A1.7 1.7 0 0 0 11.44 18a1.7 1.7 0 0 0-1.88.34l-.06.06-1.8-1.8.06-.06A1.7 1.7 0 0 0 8.1 14.66 1.7 1.7 0 0 0 6.54 13.6H6.1v-2.5h.44A1.7 1.7 0 0 0 8.1 10.04a1.7 1.7 0 0 0-.34-1.88L7.7 8.1l1.8-1.8.06.06a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 12.5 5.14V4.7H15v.44a1.7 1.7 0 0 0 1.06 1.56 1.7 1.7 0 0 0 1.88-.34L18 6.3l1.8 1.8-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.56 1.06h.44v2.5h-.44A1.7 1.7 0 0 0 19.4 15Z" transform="translate(-1.75 -0.35) scale(.97)"/></>,
+    copy: <><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></>,
+    delete: <><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></>,
+  };
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[kind]}</svg>;
+}
+
 export default function ProductsPage() {
   const toast = useToast();
   const unitOptions = [
@@ -1870,10 +1881,10 @@ successCount++;
                 {canViewCostPrice && visibleColumns.capitalPrice && <div><div className="text-xs text-slate-500">Giá vốn</div><div className="text-slate-900">{formatMoney(item.capital_price)}</div></div>}
                 {visibleColumns.vat && <div><div className="text-xs text-slate-500">VAT</div><div className="text-slate-900">{Number(item.tax || 0)}%</div></div>}
               </div>
-              {visibleColumns.actions && <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
-                {canEditProduct && <button type="button" onClick={() => openEditModal(item)} className="rounded-lg bg-yellow-500 px-3 py-2 text-sm font-semibold text-white">Sửa</button>}
-                <button type="button" onClick={() => copyProduct(item)} className="rounded-lg bg-sky-500 px-3 py-2 text-sm font-semibold text-white">Coppy</button>
-                {canDeleteProduct && <button type="button" onClick={() => deleteProduct(item.id)} className="rounded-lg bg-red-500 px-3 py-2 text-sm font-semibold text-white">Xóa</button>}
+              {visibleColumns.actions && <div className="mt-3 flex flex-wrap gap-1 border-t border-slate-100 pt-3">
+                {canEditProduct && <button type="button" onClick={() => openEditModal(item)} title="Sửa" aria-label="Sửa sản phẩm" className="inline-flex h-[26px] w-[26px] items-center justify-center rounded bg-yellow-500 text-white hover:bg-yellow-600"><ProductActionIcon kind="edit" /></button>}
+                <button type="button" onClick={() => copyProduct(item)} title="Sao chép" aria-label="Sao chép sản phẩm" className="inline-flex h-[26px] w-[26px] items-center justify-center rounded bg-sky-500 text-white hover:bg-sky-600"><ProductActionIcon kind="copy" /></button>
+                {canDeleteProduct && <button type="button" onClick={() => deleteProduct(item.id)} title="Xóa" aria-label="Xóa sản phẩm" className="inline-flex h-[26px] w-[26px] items-center justify-center rounded bg-red-500 text-white hover:bg-red-600"><ProductActionIcon kind="delete" /></button>}
               </div>}
             </article>
           ))}
@@ -2187,37 +2198,23 @@ successCount++;
 )}
 
                   {visibleColumns.actions && (
-  <td className="px-1 py-2">
-    <div className="flex justify-center gap-2">
-                      {canEditProduct && (
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(item)}
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 rounded-lg text-sm"
-                        >
-                          Sửa
+                    <td className="px-1 py-2">
+                      <div className="flex items-center justify-center gap-1">
+                        {canEditProduct && (
+                          <button type="button" onClick={() => openEditModal(item)} title="Sửa" aria-label="Sửa sản phẩm" className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-yellow-500 text-white hover:bg-yellow-600">
+                            <ProductActionIcon kind="edit" />
+                          </button>
+                        )}
+                        <button type="button" onClick={() => copyProduct(item)} title="Sao chép" aria-label="Sao chép sản phẩm" className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-sky-500 text-white hover:bg-sky-600">
+                          <ProductActionIcon kind="copy" />
                         </button>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => copyProduct(item)}
-                        className="bg-sky-500 hover:bg-sky-600 text-white px-3 py-1.5 rounded-lg text-sm"
-                      >
-                        Coppy
-                      </button>
-
-                      {canDeleteProduct && (
-  <button
-    type="button"
-    onClick={() => deleteProduct(item.id)}
-    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm"
-  >
-    Xóa
-  </button>
-)}
-                    </div>
-                  </td>
+                        {canDeleteProduct && (
+                          <button type="button" onClick={() => deleteProduct(item.id)} title="Xóa" aria-label="Xóa sản phẩm" className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-red-500 text-white hover:bg-red-600">
+                            <ProductActionIcon kind="delete" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
                   )}
                 </tr>
               ))}
